@@ -2,7 +2,7 @@ import PricingCard from '@/components/big/pricing/pricing_card'
 import Link from "next/link";
 
 interface ProfileSettingsPageProps {
-    searchParams?: { [key: string]: string | string[] | undefined }
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 /**
