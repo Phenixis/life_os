@@ -81,10 +81,6 @@ export const userSubscription = pgTable('user_subscription', {
     stripe_price_id: varchar('stripe_price_id', { length: 255 }).notNull(),
     
     status: varchar('status', { length: 50 }).notNull(),
-    current_period_start: timestamp('current_period_start').notNull(),
-    current_period_end: timestamp('current_period_end').notNull(),
-    trial_start: timestamp('trial_start'),
-    trial_end: timestamp('trial_end'),
     canceled_at: timestamp('canceled_at'),
     cancel_at_period_end: boolean('cancel_at_period_end').notNull().default(false),
     

@@ -1,12 +1,17 @@
 # Life OS
 
-Current Version: **V1.4.41**
+Current Version: **V1.4.42**
 
 ## Your life, all in one place.
 
 Life OS is a personal knowledge management system designed to help you organize and manage your life in one place.
 
 ## Roadmap
+
+### Next Important Problem
+
+- [ ] Manage the subscription in a settings page
+- [ ] Verify that the user has an active subscription before accessing the app
 
 ### Dumping todos
 
@@ -71,14 +76,19 @@ Life OS is a personal knowledge management system designed to help you organize 
 
 ### Official V1
 
+- [x] Logo
+- [ ] Stripe for payments
+    - [ ] Make the checkout a Server Component
+    - [ ] Save the subscription in the database
+    - [ ] Tests what's happening when the user cancels the subscription
 - [ ] Free user, paid user
+    - [ ] Create a fonction to check which plan the user is on and so which features he has access to
+    - [ ] Allow the user to upgrade/downgrade his plan in the Settings page
 - [ ] Good landing page
     - [ ] Picture of myself
     - [ ] Screenshots for the features section
     - [ ] Video demo
-- [ ] Stripe for payments
+- [ ] Logs
 - [ ] Markdown formatting in notes
 - [ ] GDPR compliance
-- [x] Logo
-- [ ] Logs
 

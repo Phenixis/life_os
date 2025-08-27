@@ -24,8 +24,10 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import { useSearchParams } from "next/navigation"
 
 export default function SignUp() {
+    const searchParams = useSearchParams()
     const firstNameRef = useRef<HTMLInputElement>(null)
     const lastNameRef = useRef<HTMLInputElement>(null)
     const emailRef = useRef<HTMLInputElement>(null)
@@ -73,6 +75,16 @@ export default function SignUp() {
                     <CardTitle>Welcome</CardTitle>
                 </CardHeader>
                 <CardContent className="w-full">
+                    {
+                        Array.from(searchParams.entries()).map(([key, value]) => (
+                            <input
+                                key={key}
+                                type="hidden"
+                                name={key}
+                                value={value}
+                            />
+                        ))
+                    }
                     <div className="flex space-x-4">
                         <div>
                             <Label required>First Name</Label>
@@ -122,7 +134,16 @@ export default function SignUp() {
                     >Request an account</Button>
                 </CardFooter>
             </Card>
-            <Link href="/login" className="text-sm text-gray-300 lg:text-gray-500 lg:hover:text-gray-300 underline lg:no-underline lg:hover:underline">Already have an account?</Link>
+            {/* Preserve all search params when linking to login */}
+            <Link
+                href={{
+                    pathname: "/login",
+                    query: Object.fromEntries(searchParams.entries()),
+                }}
+                className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline"
+            >
+                Already have an account?
+            </Link>
 
             {showDialog && (
                 <Dialog open={showDialog} onOpenChange={setShowDialog}>

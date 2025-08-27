@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
-import { stripe } from "@/lib/services/stripe"
+import { stripe } from "@/lib/services/payments/stripe"
 import { db } from "@/lib/db/drizzle"
 import { eq, and } from "drizzle-orm"
 import * as Schema from "@/lib/db/schema"
@@ -46,8 +46,7 @@ export async function POST(request: NextRequest) {
             .where(eq(Schema.userSubscription.stripe_subscription_id, subscription.stripe_subscription_id))
 
         return NextResponse.json({
-            message: "Subscription will be cancelled at the end of the current period",
-            cancelDate: subscription.current_period_end
+            message: "Subscription will be cancelled at the end of the current period"
         })
 
     } catch (error) {

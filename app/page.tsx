@@ -4,13 +4,13 @@ import React, { useState, useRef } from 'react'
 import { useScroll, useTransform, useInView } from 'framer-motion'
 import { MotionDiv, MotionA, MotionButton, MotionH1, MotionH2, MotionP, MotionSpan, MotionSection, MotionUl, MotionLi, MotionFooter } from "@/lib/services/motion"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, Zap, Shield, Target, Users, Sparkles, ArrowRight, Menu, X } from "lucide-react"
 import Link from "next/link"
 import Logo from "@/components/big/logo"
 import PricingCard from '@/components/big/pricing/pricing_card'
-import { Switch } from "@/components/ui/switch"
 
 export default function LandingPage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)

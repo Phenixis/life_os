@@ -586,6 +586,7 @@ export async function createMeteo(userId: string, dayOrMeteo: string | Schema.Ne
 // ## Read
 
 export async function getMeteoByDay(userId: string, day: string) {
+	console.log("Getting meteo for user:", userId, "and day:", day);
 	return await db
 		.select()
 		.from(Schema.meteo)

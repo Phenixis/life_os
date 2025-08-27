@@ -66,7 +66,7 @@ export function ForgotPasswordForm() {
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger className="text-sm text-gray-300 lg:text-gray-500 lg:hover:text-gray-300 underline lg:no-underline lg:hover:underline cursor-pointer">
+            <DialogTrigger className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline cursor-pointer">
                 Forgot password?
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">

@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
 
     const savedMeteo = await getMeteoByDay(verification.userId, day);
 
+    console.log("Saved meteo:", savedMeteo);
+
     const oneHourAgo = new Date(Date.now() - 3600 * 1000);
 
     if (savedMeteo.length === 0 || savedMeteo[0].updated_at < oneHourAgo) { // Update every hour

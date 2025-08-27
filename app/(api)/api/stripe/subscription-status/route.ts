@@ -35,12 +35,9 @@ export async function GET(request: NextRequest) {
             subscription: {
                 id: activeSubscription.stripe_subscription_id,
                 status: activeSubscription.status,
-                currentPeriodStart: activeSubscription.current_period_start,
-                currentPeriodEnd: activeSubscription.current_period_end,
                 cancelAtPeriodEnd: activeSubscription.cancel_at_period_end,
                 productId: activeSubscription.stripe_product_id,
                 priceId: activeSubscription.stripe_price_id,
-                trialEnd: activeSubscription.trial_end,
                 canceledAt: activeSubscription.canceled_at
             }
         })

@@ -15,9 +15,9 @@ async function ProfileContent() {
 
 export default function ProfileSettingsPage() {
     return (
-        <section className="page">
-            <h1 className="page-title">Profile Settings</h1>
-            <p className="page-description">
+        <section className="">
+            <h1 className="">Profile Settings</h1>
+            <p className="">
                 Manage your personal information and account details.
             </p>
             <div className="mt-8">

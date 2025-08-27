@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation"
 import { useDarkMode } from "@/hooks/use-dark-mode"
 import { useTaskModal, useNoteModal, useDailyMoodModal } from "@/contexts/modal-commands-context"
 import { tools } from "@/lib/tools-data"
+import { toast } from "sonner"
 
 const items = {
     "Suggestions": [
@@ -28,6 +29,7 @@ const items = {
         href: tool.href,
     })),
     "Settings": [
+        { name: "Settings", href: "/my/settings" },
         { name: "Profile", href: "/my/settings/profile" },
         { name: "Appearance", href: "/my/settings/appearance" },
         { name: "Security", href: "/my/settings/security" },
@@ -104,9 +106,19 @@ export default function Menu() {
                         >
                             Enter my mood
                         </CommandItem>
+                        <CommandItem
+                            onSelect={() => {
+                                toast.loading("Logging out...", {
+                                    id: "logout"
+                                })
+                                runCommand(() => router.push("/api/auth/logout"))
+                            }}
+                        >
+                            Log out
+                        </CommandItem>
                     </CommandGroup>
-            </CommandList>
-        </CommandDialog >
+                </CommandList>
+            </CommandDialog >
         </>
     )
 }

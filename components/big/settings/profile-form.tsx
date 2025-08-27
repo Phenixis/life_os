@@ -131,7 +131,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     }
 
     return (
-        <Card className="max-w-2xl">
+        <Card className="w-full">
             <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
                 <CardDescription>

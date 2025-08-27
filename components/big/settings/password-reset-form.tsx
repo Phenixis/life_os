@@ -77,7 +77,7 @@ export function PasswordResetForm({ user }: PasswordResetFormProps) {
     }
 
     return (
-        <Card className="max-w-2xl">
+        <Card className="">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Shield className="size-5" />

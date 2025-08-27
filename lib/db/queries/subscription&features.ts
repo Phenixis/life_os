@@ -1,7 +1,7 @@
 import { db } from '@/lib/db/drizzle';
 import { feature, planFeature, userSubscription } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { getStripeProduct } from '@/lib/services/stripe';
+import { getStripeProduct } from '@/lib/services/payments/stripe';
 
 /**
  * Get user's active subscription (there should only be one)
@@ -56,7 +56,7 @@ export async function getUserAvailableFeatures(userId: string, activeOnly = true
             .where(
                 eq(planFeature.stripe_product_id, stripeProductId)
             )).map(f => f.feature);
-        
+
         if (activeOnly) {
             planFeatures = planFeatures.filter(f => f.is_active);
         }
@@ -97,4 +97,69 @@ export async function getUserCurrentPlan(userId: string) {
         stripe_product_id: activeSubscription.stripe_product_id,
         subscription: activeSubscription
     };
+}
+
+export async function createSubscription(
+    userId: string,
+    stripeCustomerId: string,
+    stripeSubscriptionId: string,
+    stripeProductId: string,
+    stripePriceId: string,
+    status: string,
+    canceledAt: Date | null,
+    cancelAtPeriodEnd: boolean
+) {
+    const newSubscription = {
+        user_id: userId,
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: stripeSubscriptionId,
+        stripe_product_id: stripeProductId,
+        stripe_price_id: stripePriceId,
+        status,
+        canceled_at: canceledAt,
+        cancel_at_period_end: cancelAtPeriodEnd
+    };
+
+    await db.insert(userSubscription).values(newSubscription);
+}
+
+/**
+ * Update user's subscription information by marking the old one as deleted and creating a new one with the updated information
+ */
+export async function updateSubscription(
+    user_id: string,
+    stripe_customer_id: string | null,
+    stripe_subscription_id: string | null,
+    stripe_product_id: string | null,
+    stripe_price_id: string | null,
+    status: string,
+    canceled_at: Date | null,
+    cancel_at_period_end: boolean
+) {
+    const activeSubscription = await getUserActiveSubscription(user_id);
+
+    if (activeSubscription) {
+        // Mark old subscription as deleted
+        await db
+            .update(userSubscription)
+            .set({
+                canceled_at: new Date(),
+                status: status
+            })
+            .where(eq(userSubscription.id, activeSubscription.id));
+    }
+
+    if (stripe_customer_id && stripe_subscription_id && stripe_product_id && stripe_price_id) {
+        // Create new subscription
+        await createSubscription(
+            user_id,
+            stripe_customer_id,
+            stripe_subscription_id,
+            stripe_product_id,
+            stripe_price_id,
+            status,
+            canceled_at,
+            cancel_at_period_end
+        );
+    }
 }

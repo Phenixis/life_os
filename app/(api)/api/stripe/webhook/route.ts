@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/services/stripe"
+import { stripe } from "@/lib/services/payments/stripe"
 import { db } from "@/lib/db/drizzle"
 import { eq } from "drizzle-orm"
 import * as Schema from "@/lib/db/schema"
@@ -164,10 +164,6 @@ async function upsertSubscription(userId: string, subscription: any) {
             stripe_product_id: subscription.items.data[0].price.product,
             stripe_price_id: subscription.items.data[0].price.id,
             status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000),
-            current_period_end: new Date(subscription.current_period_end * 1000),
-            trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
-            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
             canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
             cancel_at_period_end: subscription.cancel_at_period_end || false,
             updated_at: new Date()

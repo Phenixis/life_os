@@ -12,11 +12,15 @@ import { User } from "@/lib/db/schema"
 import { sendWelcomeEmail } from "@/components/utils/send_email"
 import { updateDarkModeCookie } from "@/lib/cookies"
 import { DarkModeCookie } from "@/lib/flags"
+import { createCheckoutSession } from '../services/payments/stripe';
+
 
 export async function signUp(prevState: ActionState, formData: FormData) {
     const firstName = formData.get("first_name")
     const lastName = formData.get("last_name")
     const email = formData.get("email")
+    const redirectTo = formData.get("redirect")
+    const priceId = formData.get('priceId') as string;
 
     if (!email || !firstName || !lastName || typeof email !== "string" || typeof firstName !== "string" || typeof lastName !== "string") {
         return { error: "Missing required fields" }
@@ -51,7 +55,24 @@ export async function signUp(prevState: ActionState, formData: FormData) {
         has_jarvis_asked_dark_mode: userData.has_jarvis_asked_dark_mode,
     } as DarkModeCookie)
 
+    if (redirectTo && redirectTo === 'checkout' && priceId) {
+        await createCheckoutSession({ priceId, userId: user.user.id.toString() });
+    }
+
     return { success: true }
+}
+
+export async function login(prevState: ActionState, formData: FormData) {
+    const result = await verifyCredentials(prevState, formData)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    if (formData.get("redirectTo")) {
+        if (formData.get("redirectTo") === 'checkout') {
+            const priceId = formData.get('priceId') as string;
+            console.log("Creating checkout session with priceId:", priceId);
+            return createCheckoutSession({ priceId });
+        }
+    }
+    return result
 }
 
 export async function logout() {

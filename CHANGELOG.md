@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [NOT RELEASED]
+- [V1.4.42 - 2025-08-27 18:37:16] fix: subscription changes en cours
 - [V1.4.41 - 2025-07-17 19:04:38] feat: checkout for pricing card
 - [V1.4.40 - 2025-07-08 19:17:41] feat: add logo and improve landing page
 - [V1.4.39 - 2025-07-08 17:53:19] refactor: improve landing page to match the app better

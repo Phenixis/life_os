@@ -10,7 +10,7 @@ function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
         <>
             <SettingsSidebar />
             <main className="flex-1 flex justify-center p-4">
-                <div className="w-full max-w-2xl">
+                <div className="w-full max-w-4xl">
                     {children}
                 </div>
             </main>

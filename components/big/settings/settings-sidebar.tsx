@@ -1,3 +1,5 @@
+"use client"
+
 import {
     Sidebar,
     SidebarContent,
@@ -11,7 +13,8 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import { User, Palette, Shield } from "lucide-react"
+import { User, Palette, Shield, CircleDollarSign } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 const settingsItems = [
     {
@@ -31,10 +34,18 @@ const settingsItems = [
         href: "/my/settings/security",
         icon: <Shield className="size-4" />,
         description: "Password and security settings"
+    },
+    {
+        name: "Subscription",
+        href: "/my/settings/subscription",
+        icon: <CircleDollarSign className="size-4" />,
+        description: "Manage your subscription plan"
     }
 ]
 
 export function SettingsSidebar() {
+    const pathname = usePathname()
+
     return (
         <Sidebar collapsible="icon" variant="floating" className="rounded-full">
             <SidebarContent>
@@ -45,9 +56,9 @@ export function SettingsSidebar() {
                             {settingsItems.map((item) => (
                                 <SidebarMenuItem key={item.name}>
                                     <SidebarMenuButton
-                                        className="flex items-center space-x-2 text-wrap"
+                                        className={`flex items-center space-x-2 text-wrap ${pathname === item.href ? "bg-gray-200/70" : ""}`}
                                         asChild
-                                        tooltip={item.description}
+                                        tooltip={item.name + ": " + item.description}
                                     >
                                         <Link href={item.href}>
                                             {item.icon}

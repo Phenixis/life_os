@@ -11,7 +11,7 @@ export type ActionState = {
 const protectedRoutes = ["/my"]
 const unaccessibleWhenLoggedIn = ["/login"]
 const apiRoutes = ["/api"]
-const apiRoutesWithoutAPIKey = ["/api/auth/forgot-password"]
+const apiRoutesWithoutAPIKey = ["/api/auth", "/api/stripe/checkout"]
 
 export async function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl

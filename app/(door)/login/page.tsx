@@ -1,7 +1,6 @@
 "use client"
 
 import { Label } from "@/components/ui/label"
-import { verifyCredentials } from "@/lib/auth/actions"
 import { useActionState, useEffect, useState, useRef, startTransition } from "react"
 import type { ActionState } from "@/middleware"
 import { Loader } from "lucide-react"
@@ -24,8 +23,11 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 import { ForgotPasswordForm } from "@/components/big/auth/forgot-password-form"
+import { useSearchParams } from "next/navigation"
+import { login } from "@/lib/auth/actions"
 
 export default function Login() {
+    const searchParams = useSearchParams()
     const [redirectTo, setRedirectTo] = useState("/my")
     const [identifier, setIdentifier] = useState("")
     const [password, setPassword] = useState("")
@@ -34,19 +36,18 @@ export default function Login() {
     const formRef = useRef<HTMLFormElement>(null)
     const identifierRef = useRef<HTMLInputElement>(null)
     const passwordRef = useRef<HTMLInputElement>(null)
-    
+
     const [state, formAction, pending] = useActionState<ActionState, FormData>(async (prevState, formData) => {
-        formData.append("redirectTo", redirectTo)
-        formData.append("identifier", identifier)
-        formData.append("password", password)
-        const result = await verifyCredentials(prevState, formData)
-        if (result.error) {
-            toast.error(result.error)
-        } else if (result.success) {
-            toast.success("Login successful")
+        const result = await login(prevState, formData)
+        if (result) {
+            if (result.error) {
+                toast.error(result.error)
+            } else if (result.success) {
+                toast.success("Login successful")
+            }
+            return result
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        return result
+        return null
     }, { error: "" })
 
     useEffect(() => {
@@ -55,6 +56,7 @@ export default function Login() {
         if (redirectParam) {
             setRedirectTo(redirectParam)
         }
+        toast.dismiss("logout")
     }, [])
 
     useEffect(() => {
@@ -109,6 +111,18 @@ export default function Login() {
                 </CardHeader>
                 <CardContent>
                     <input type="text" name="redirectTo" className="hidden" value={redirectTo} readOnly />
+                    {
+                        Array.from(searchParams.entries()).map(([key, value]) => (
+                            <input
+                                key={key}
+                                type="hidden"
+                                name={key}
+                                value={value}
+                            />
+                        ))
+                    }
+                    <input type="hidden" name="identifier" value={identifier} />
+                    <input type="hidden" name="password" value={password} />
                     <Label required>Enter your identifier</Label>
                     <InputOTP
                         maxLength={8}
@@ -174,7 +188,10 @@ export default function Login() {
                     >Login</Button>
                 </CardFooter>
             </Card>
-            <Link href="/sign-up" className="text-sm text-gray-300 lg:text-gray-500 lg:hover:text-gray-300 underline lg:no-underline lg:hover:underline">Don&apos;t have an account?</Link>
+            <Link href={{
+                pathname: "/sign-up",
+                query: Object.fromEntries(searchParams.entries()),
+            }} className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline">Don&apos;t have an account?</Link>
             <ForgotPasswordForm />
         </form>
     )
