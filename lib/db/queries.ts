@@ -26,7 +26,16 @@ const taskToDoBeforeAlias = alias(Schema.taskToDoAfter, 'taskToDoBefore');
 // # TASK
 
 // ## Create
-export async function createTask(title: string, importance: number, dueDate: Date, duration: number, project?: string, userId?: string) {
+export async function createTask(
+	title: string, 
+	importance: number, 
+	dueDate: Date, 
+	duration: number, 
+	project?: string, 
+	userId?: string,
+	recurrenceType?: string,
+	recurrenceInterval?: number
+) {
 	const urgency = calculateUrgency(dueDate)
 
 	const result = await db
@@ -43,10 +52,24 @@ export async function createTask(title: string, importance: number, dueDate: Dat
 		} as Schema.NewTask)
 		.returning({ id: Schema.task.id })
 
+	const taskId = result[0].id
+
+	// Create recurrence if specified
+	if (recurrenceType && recurrenceType !== 'none' && recurrenceInterval && userId) {
+		await createTaskRecurrence(
+			taskId,
+			userId,
+			recurrenceType,
+			recurrenceInterval,
+			undefined, // no parent for new tasks
+			true // mark as template
+		)
+	}
+
 	// Revalidate all pages that might show todos
 	revalidatePath("/my", 'layout')
 
-	return result[0].id
+	return taskId
 }
 
 // ## Read
@@ -83,6 +106,19 @@ export async function getTaskById(id: number, recursive: boolean = false) {
 				level: Schema.duration.level,
 				name: Schema.duration.name,
 			},
+			recurrence: {
+				id: Schema.taskRecurrence.id,
+				task_id: Schema.taskRecurrence.task_id,
+				user_id: Schema.taskRecurrence.user_id,
+				recurrence_type: Schema.taskRecurrence.recurrence_type,
+				recurrence_interval: Schema.taskRecurrence.recurrence_interval,
+				parent_task_id: Schema.taskRecurrence.parent_task_id,
+				is_template: Schema.taskRecurrence.is_template,
+				next_due_date: Schema.taskRecurrence.next_due_date,
+				created_at: Schema.taskRecurrence.created_at,
+				updated_at: Schema.taskRecurrence.updated_at,
+				deleted_at: Schema.taskRecurrence.deleted_at,
+			},
 			tasksToDoAfter: {
 				id: taskToDoAfterAlias.id,
 				task_id: taskToDoAfterAlias.task_id,
@@ -104,6 +140,7 @@ export async function getTaskById(id: number, recursive: boolean = false) {
 		.leftJoin(Schema.project, eq(Schema.task.project_title, Schema.project.title))
 		.leftJoin(Schema.importance, eq(Schema.task.importance, Schema.importance.level))
 		.leftJoin(Schema.duration, eq(Schema.task.duration, Schema.duration.level))
+		.leftJoin(Schema.taskRecurrence, eq(Schema.task.id, Schema.taskRecurrence.task_id))
 		.leftJoin(taskToDoAfterAlias, eq(Schema.task.id, taskToDoAfterAlias.task_id)) // tasks to do after this task
 		.leftJoin(taskToDoBeforeAlias, eq(Schema.task.id, taskToDoBeforeAlias.after_task_id)) // tasks to do before this task
 		.where(and(
@@ -117,6 +154,7 @@ export async function getTaskById(id: number, recursive: boolean = false) {
 			tasksToDoBefore: [],
 			importanceDetails: dbresult[0].importanceDetails!,
 			durationDetails: dbresult[0].durationDetails!,
+			recurrence: dbresult[0].recurrence?.id ? dbresult[0].recurrence : null,
 			recursive: true,
 		}
 
@@ -142,7 +180,11 @@ export async function getTaskById(id: number, recursive: boolean = false) {
 
 		return result as Schema.TaskWithRelations;
 	} else {
-		return dbresult[0] ? { ...dbresult[0], recursive: false } as Schema.TaskWithNonRecursiveRelations : null;
+		return dbresult[0] ? { 
+			...dbresult[0], 
+			recurrence: dbresult[0].recurrence?.id ? dbresult[0].recurrence : null,
+			recursive: false 
+		} as Schema.TaskWithNonRecursiveRelations : null;
 	}
 
 }
@@ -481,6 +523,9 @@ export async function updateTaskUrgency(userId: string, id: number) {
 }
 
 export async function markTaskAsDone(userId: string, id: number) {
+	// First, get the task with its recurrence info
+	const taskWithRecurrence = await getTaskById(id)
+	
 	const result = await db
 		.update(Schema.task)
 		.set({
@@ -492,6 +537,12 @@ export async function markTaskAsDone(userId: string, id: number) {
 			eq(Schema.task.user_id, userId),
 		))
 		.returning({ id: Schema.task.id })
+
+	// Handle recurrence if this task has it
+	if (taskWithRecurrence?.recurrence && 
+		taskWithRecurrence.recurrence.recurrence_type !== 'none') {
+		await createNextRecurrentTask(taskWithRecurrence, taskWithRecurrence.recurrence)
+	}
 
 	// Revalidate all pages that might show todos
 	revalidatePath("/my", 'layout')
@@ -527,7 +578,17 @@ export async function toggleTask(userId: string, id: number, currentState: boole
 }
 
 // ## Delete
-export async function deleteTaskById(userId: string, id: number) {
+export async function deleteTaskById(userId: string, id: number, deleteAllRecurrent = false) {
+	// Get task with recurrence info first
+	const taskWithRecurrence = await getTaskById(id)
+	
+	if (deleteAllRecurrent && taskWithRecurrence?.recurrence) {
+		// Delete all instances of this recurrent task
+		const parentId = taskWithRecurrence.recurrence.parent_task_id || id
+		await deleteAllRecurrentTaskInstances(parentId, userId)
+		return id
+	}
+	
 	const result = await db.update(Schema.task)
 		.set({ deleted_at: sql`CURRENT_TIMESTAMP`, updated_at: sql`CURRENT_TIMESTAMP` })
 		.where(and(
@@ -535,6 +596,11 @@ export async function deleteTaskById(userId: string, id: number) {
 			eq(Schema.task.user_id, userId),
 		))
 		.returning({ id: Schema.task.id })
+
+	// Also delete the recurrence record for this specific task
+	if (taskWithRecurrence?.recurrence) {
+		await deleteTaskRecurrenceById(taskWithRecurrence.recurrence.id)
+	}
 
 	// Revalidate all pages that might show todos
 	revalidatePath("/my", 'layout')
@@ -1700,4 +1766,241 @@ export async function deleteTaskToDoAfterByAfterId(after_task_id: number) {
 	}
 
 	return null
+}
+
+// # TaskRecurrence
+
+// ## Create
+export async function createTaskRecurrence(
+	taskId: number,
+	userId: string,
+	recurrenceType: string,
+	recurrenceInterval: number,
+	parentTaskId?: number,
+	isTemplate = false
+) {
+	const nextDueDate = calculateNextDueDate(new Date(), recurrenceType, recurrenceInterval)
+	
+	const result = await db
+		.insert(Schema.taskRecurrence)
+		.values({
+			task_id: taskId,
+			user_id: userId,
+			recurrence_type: recurrenceType,
+			recurrence_interval: recurrenceInterval,
+			parent_task_id: parentTaskId,
+			is_template: isTemplate,
+			next_due_date: nextDueDate,
+		} as Schema.NewTaskRecurrence)
+		.returning({ id: Schema.taskRecurrence.id })
+
+	return result[0].id
+}
+
+// ## Read
+export async function getTaskRecurrenceById(id: number) {
+	const result = await db
+		.select()
+		.from(Schema.taskRecurrence)
+		.where(eq(Schema.taskRecurrence.id, id))
+	
+	return result[0] || null
+}
+
+export async function getTaskRecurrenceByTaskId(taskId: number) {
+	const result = await db
+		.select()
+		.from(Schema.taskRecurrence)
+		.where(eq(Schema.taskRecurrence.task_id, taskId))
+	
+	return result[0] || null
+}
+
+export async function getRecurrentTasksByParentId(parentTaskId: number) {
+	return await db
+		.select()
+		.from(Schema.taskRecurrence)
+		.where(and(
+			eq(Schema.taskRecurrence.parent_task_id, parentTaskId),
+			isNull(Schema.taskRecurrence.deleted_at)
+		))
+}
+
+// Get tasks that need to create next recurrence instance
+export async function getTasksNeedingRecurrence(userId: string) {
+	const now = new Date()
+	return await db
+		.select({
+			task: Schema.task,
+			recurrence: Schema.taskRecurrence
+		})
+		.from(Schema.task)
+		.leftJoin(Schema.taskRecurrence, eq(Schema.task.id, Schema.taskRecurrence.task_id))
+		.where(and(
+			eq(Schema.task.user_id, userId),
+			isNull(Schema.task.deleted_at),
+			isNotNull(Schema.taskRecurrence.id),
+			or(
+				isNotNull(Schema.task.completed_at),
+				isNull(Schema.task.completed_at)
+			),
+			lte(Schema.taskRecurrence.next_due_date, now),
+			not(eq(Schema.taskRecurrence.recurrence_type, 'none'))
+		))
+}
+
+// ## Update
+export async function updateTaskRecurrence(
+	id: number,
+	recurrenceType?: string,
+	recurrenceInterval?: number,
+	nextDueDate?: Date
+) {
+	const updatedFields: Partial<Schema.NewTaskRecurrence> = {
+		updated_at: new Date(),
+	}
+	
+	if (recurrenceType !== undefined) updatedFields.recurrence_type = recurrenceType
+	if (recurrenceInterval !== undefined) updatedFields.recurrence_interval = recurrenceInterval
+	if (nextDueDate !== undefined) updatedFields.next_due_date = nextDueDate
+
+	const result = await db
+		.update(Schema.taskRecurrence)
+		.set(updatedFields)
+		.where(eq(Schema.taskRecurrence.id, id))
+		.returning({ id: Schema.taskRecurrence.id })
+
+	revalidatePath("/my", 'layout')
+
+	if (result && result.length > 0) {
+		return result[0].id
+	}
+
+	return null
+}
+
+export async function updateNextDueDate(recurrenceId: number, nextDueDate: Date) {
+	const result = await db
+		.update(Schema.taskRecurrence)
+		.set({ 
+			next_due_date: nextDueDate,
+			updated_at: new Date()
+		})
+		.where(eq(Schema.taskRecurrence.id, recurrenceId))
+		.returning({ id: Schema.taskRecurrence.id })
+
+	if (result && result.length > 0) {
+		return result[0].id
+	}
+
+	return null
+}
+
+// ## Delete
+export async function deleteTaskRecurrenceById(id: number) {
+	const result = await db
+		.update(Schema.taskRecurrence)
+		.set({ deleted_at: sql`CURRENT_TIMESTAMP` })
+		.where(eq(Schema.taskRecurrence.id, id))
+		.returning({ id: Schema.taskRecurrence.id })
+
+	revalidatePath("/my", "layout")
+
+	if (result && result.length > 0) {
+		return result[0].id
+	}
+
+	return null
+}
+
+export async function deleteAllRecurrentTaskInstances(parentTaskId: number, userId: string) {
+	// Delete all recurrence settings for tasks with this parent
+	await db
+		.update(Schema.taskRecurrence)
+		.set({ deleted_at: sql`CURRENT_TIMESTAMP` })
+		.where(and(
+			eq(Schema.taskRecurrence.parent_task_id, parentTaskId),
+			eq(Schema.taskRecurrence.user_id, userId)
+		))
+
+	// Soft delete all tasks with this parent (except the template)
+	await db
+		.update(Schema.task)
+		.set({ deleted_at: sql`CURRENT_TIMESTAMP` })
+		.where(and(
+			eq(Schema.task.user_id, userId),
+			sql`${Schema.task.id} IN (
+				SELECT task_id FROM task_recurrence 
+				WHERE parent_task_id = ${parentTaskId} 
+				AND is_template = false
+			)`
+		))
+
+	revalidatePath("/my", "layout")
+}
+
+// ## Utility functions for recurrence logic
+function calculateNextDueDate(currentDate: Date, recurrenceType: string, interval: number): Date | null {
+	if (recurrenceType === 'none') return null
+	
+	const nextDate = new Date(currentDate)
+	
+	switch (recurrenceType) {
+		case 'daily':
+			nextDate.setDate(nextDate.getDate() + interval)
+			break
+		case 'weekly':
+			nextDate.setDate(nextDate.getDate() + (interval * 7))
+			break
+		case 'monthly':
+			nextDate.setMonth(nextDate.getMonth() + interval)
+			break
+		case 'yearly':
+			nextDate.setFullYear(nextDate.getFullYear() + interval)
+			break
+		default:
+			return null
+	}
+	
+	return nextDate
+}
+
+export async function createNextRecurrentTask(originalTask: Schema.Task, recurrence: Schema.TaskRecurrence) {
+	if (!recurrence.next_due_date) return null
+	
+	// Calculate next due date after this one
+	const nextDueDate = calculateNextDueDate(
+		recurrence.next_due_date, 
+		recurrence.recurrence_type, 
+		recurrence.recurrence_interval
+	)
+	
+	// Create the new task instance
+	const newTaskId = await createTask(
+		originalTask.title,
+		originalTask.importance,
+		recurrence.next_due_date,
+		originalTask.duration,
+		originalTask.project_title || undefined,
+		originalTask.user_id
+	)
+	
+	// Create recurrence record for the new task
+	if (newTaskId) {
+		await createTaskRecurrence(
+			newTaskId,
+			originalTask.user_id,
+			recurrence.recurrence_type,
+			recurrence.recurrence_interval,
+			recurrence.parent_task_id || originalTask.id,
+			false
+		)
+		
+		// Update the original recurrence next due date
+		if (nextDueDate) {
+			await updateNextDueDate(recurrence.id, nextDueDate)
+		}
+	}
+	
+	return newTaskId
 }

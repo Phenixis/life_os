@@ -168,6 +168,32 @@ export const taskToDoAfter = pgTable('task_to_do_after', {
     deleted_at: timestamp('deleted_at')
 });
 
+// Table for task recurrence settings
+export const taskRecurrence = pgTable('task_recurrence', {
+    id: serial('id').primaryKey(),
+    task_id: integer('task_id')
+        .notNull()
+        .references(() => task.id, { onDelete: 'cascade' }),
+    user_id: char('user_id', { length: 8 })
+        .notNull()
+        .references(() => user.id),
+    recurrence_type: varchar('recurrence_type', { length: 20 })
+        .notNull()
+        .default('none'), // 'none', 'daily', 'weekly', 'monthly', 'yearly'
+    recurrence_interval: integer('recurrence_interval')
+        .notNull()
+        .default(1), // every X days/weeks/months/years
+    parent_task_id: integer('parent_task_id')
+        .references(() => task.id), // links to the original template task
+    is_template: boolean('is_template')
+        .notNull()
+        .default(false), // marks the original template task
+    next_due_date: timestamp('next_due_date'), // when the next occurrence should be created
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+    deleted_at: timestamp('deleted_at')
+});
+
 
 // Table Meteo
 export const meteo = pgTable('meteo', {
@@ -567,6 +593,10 @@ export const taskRelations = relations(task, ({ one, many }) => ({
     }),
     taskAfter: many(taskToDoAfter),
     taskBefore: many(taskToDoAfter),
+    recurrence: one(taskRecurrence, {
+        fields: [task.id],
+        references: [taskRecurrence.task_id]
+    }),
     user: one(user, {
         fields: [task.user_id],
         references: [user.id]
@@ -575,6 +605,21 @@ export const taskRelations = relations(task, ({ one, many }) => ({
 
 export const taskToDoAfterRelations = relations(taskToDoAfter, ({ many }) => ({
     tasks: many(task)
+}));
+
+export const taskRecurrenceRelations = relations(taskRecurrence, ({ one }) => ({
+    task: one(task, {
+        fields: [taskRecurrence.task_id],
+        references: [task.id]
+    }),
+    parentTask: one(task, {
+        fields: [taskRecurrence.parent_task_id],
+        references: [task.id]
+    }),
+    user: one(user, {
+        fields: [taskRecurrence.user_id],
+        references: [user.id]
+    })
 }));
 
 export const seanceRelations = relations(seance, ({ one, many }) => ({
@@ -737,8 +782,10 @@ export type UserSubscription = typeof userSubscription.$inferSelect;
 export type NewUserSubscription = typeof userSubscription.$inferInsert;
 export type Task = typeof task.$inferSelect;
 export type NewTask = typeof task.$inferInsert;
-export type TaskWithNonRecursiveRelations = Task & { project: Project | null; importanceDetails: Importance; durationDetails: Duration; tasksToDoAfter: TaskToDoAfter[] | null, tasksToDoBefore: TaskToDoAfter[] | null, recursive: false };
-export type TaskWithRelations = Task & { project: Project | null; importanceDetails: Importance; durationDetails: Duration; tasksToDoAfter: TaskWithNonRecursiveRelations[] | null, tasksToDoBefore: TaskWithNonRecursiveRelations[] | null, recursive: true };
+export type TaskRecurrence = typeof taskRecurrence.$inferSelect;
+export type NewTaskRecurrence = typeof taskRecurrence.$inferInsert;
+export type TaskWithNonRecursiveRelations = Task & { project: Project | null; importanceDetails: Importance; durationDetails: Duration; tasksToDoAfter: TaskToDoAfter[] | null, tasksToDoBefore: TaskToDoAfter[] | null, recurrence: TaskRecurrence | null, recursive: false };
+export type TaskWithRelations = Task & { project: Project | null; importanceDetails: Importance; durationDetails: Duration; tasksToDoAfter: TaskWithNonRecursiveRelations[] | null, tasksToDoBefore: TaskWithNonRecursiveRelations[] | null, recurrence: TaskRecurrence | null, recursive: true };
 export type TaskToDoAfter = typeof taskToDoAfter.$inferSelect;
 export type NewTaskToDoAfter = typeof taskToDoAfter.$inferInsert;
 export type Meteo = typeof meteo.$inferSelect;
