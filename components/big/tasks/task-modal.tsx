@@ -79,6 +79,10 @@ export default function TaskModal({
 	const [toDoAfter, setToDoAfter] = useState<number>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].id : -1)
 	const [toDoAfterInputValue, setToDoAfterInputValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
 	const [toDoAfterDebounceValue, setToDoAfterDebounceValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
+	
+	// Recurrence state
+	const [recurrenceType, setRecurrenceType] = useState<string>(task?.recurrence?.recurrence_type || "none")
+	const [recurrenceInterval, setRecurrenceInterval] = useState<number>(task?.recurrence?.recurrence_interval || 1)
 	const { tasks, isLoading: isLoadingTasks, isError: isErrorTasks } = useSearchTasks({
 		query: toDoAfterDebounceValue, limit: 5, excludeIds: task ? [
 			task.id,
@@ -112,6 +116,8 @@ export default function TaskModal({
 		setToDoAfter(-1)
 		setToDoAfterInputValue("")
 		setToDoAfterDebounceValue("")
+		setRecurrenceType("none")
+		setRecurrenceInterval(1)
 		setFormChanged(false)
 		setShowAdvancedOptions(false)
 	}
@@ -375,6 +381,8 @@ export default function TaskModal({
 					duration,
 					projectTitle: project,
 					toDoAfterId: toDoAfter,
+					recurrenceType: recurrenceType,
+					recurrenceInterval: recurrenceType !== 'none' ? recurrenceInterval : undefined,
 				}),
 			})
 				.then((response) => {
@@ -726,6 +734,71 @@ export default function TaskModal({
 												) : (
 													<div className="p-2 text-sm text-muted-foreground">No tasks found</div>
 												)}
+											</div>
+										)}
+									</div>
+								</div>
+								
+								{/* Recurrence Options */}
+								<div className="space-y-4">
+									<div className="flex space-x-4">
+										<div className="w-1/2">
+											<Label htmlFor="recurrence-type" className="flex items-center space-x-2 pb-1">
+												Recurrence
+												<Tooltip tooltip="Set how often this task should repeat. When completed or deleted, the next occurrence will be created automatically.">
+													<CircleHelp className="ml-1 size-4 text-muted-foreground" />
+												</Tooltip>
+											</Label>
+											<Select
+												value={recurrenceType}
+												onValueChange={(value) => {
+													setRecurrenceType(value)
+													setFormChanged(
+														(mode === "edit" && task?.recurrence?.recurrence_type !== value) || value !== "none"
+													)
+												}}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Select recurrence" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="none">None</SelectItem>
+													<SelectItem value="daily">Daily</SelectItem>
+													<SelectItem value="weekly">Weekly</SelectItem>
+													<SelectItem value="monthly">Monthly</SelectItem>
+													<SelectItem value="yearly">Yearly</SelectItem>
+												</SelectContent>
+											</Select>
+										</div>
+										
+										{recurrenceType !== 'none' && (
+											<div className="w-1/2">
+												<Label htmlFor="recurrence-interval" className="pb-1">
+													Repeat every
+												</Label>
+												<div className="flex items-center space-x-2">
+													<Input
+														type="number"
+														id="recurrence-interval"
+														min="1"
+														max="365"
+														value={recurrenceInterval}
+														onChange={(e) => {
+															const value = parseInt(e.target.value) || 1
+															setRecurrenceInterval(value)
+															setFormChanged(
+																(mode === "edit" && task?.recurrence?.recurrence_interval !== value) || value !== 1
+															)
+														}}
+														className="w-20"
+													/>
+													<span className="text-sm text-muted-foreground">
+														{recurrenceType === 'daily' ? (recurrenceInterval === 1 ? 'day' : 'days') :
+														 recurrenceType === 'weekly' ? (recurrenceInterval === 1 ? 'week' : 'weeks') :
+														 recurrenceType === 'monthly' ? (recurrenceInterval === 1 ? 'month' : 'months') :
+														 recurrenceType === 'yearly' ? (recurrenceInterval === 1 ? 'year' : 'years') : ''}
+													</span>
+												</div>
 											</div>
 										)}
 									</div>

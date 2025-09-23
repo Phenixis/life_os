@@ -55,6 +55,7 @@ export default function TaskDisplay({
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 	const [isDependencyDialogOpen, setIsDependencyDialogOpen] = useState(false)
 	const [dependencyToDelete, setDependencyToDelete] = useState<number | null>(null)
+	const [deleteAllRecurrent, setDeleteAllRecurrent] = useState(false)
 
 	// Add a new state variable for the toggle confirmation dialog
 	const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false)
@@ -270,7 +271,7 @@ export default function TaskDisplay({
 			})
 
 			// Actual deletion
-			await fetch(`/api/task?id=${task.id}`, {
+			await fetch(`/api/task?id=${task.id}&deleteAll=${deleteAllRecurrent}`, {
 				method: "DELETE",
 				headers: { "Content-Type": "application/json", "Authorization": `Bearer ${user?.api_key}` },
 			})
@@ -588,11 +589,42 @@ export default function TaskDisplay({
 					<DialogHeader>
 						<DialogTitle>Delete Task</DialogTitle>
 						<DialogDescription>
-							Are you sure you want to delete this task?<br /><br />You will be able to find it back in your Trash (Settings &gt; Trash &gt; Tasks).
+							{task?.recurrence && task.recurrence.recurrence_type !== 'none' ? (
+								<>
+									This is a recurrent task. What would you like to delete?
+									<div className="mt-4 space-y-2">
+										<label className="flex items-center space-x-2">
+											<input
+												type="radio"
+												name="deleteOption"
+												checked={!deleteAllRecurrent}
+												onChange={() => setDeleteAllRecurrent(false)}
+											/>
+											<span>Delete only this occurrence</span>
+										</label>
+										<label className="flex items-center space-x-2">
+											<input
+												type="radio"
+												name="deleteOption"
+												checked={deleteAllRecurrent}
+												onChange={() => setDeleteAllRecurrent(true)}
+											/>
+											<span>Delete all occurrences of this recurrent task</span>
+										</label>
+									</div>
+								</>
+							) : (
+								<>
+									Are you sure you want to delete this task?<br /><br />You will be able to find it back in your Trash (Settings &gt; Trash &gt; Tasks).
+								</>
+							)}
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter className="flex justify-between sm:justify-between">
-						<Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+						<Button variant="outline" onClick={() => {
+							setIsDeleteDialogOpen(false)
+							setDeleteAllRecurrent(false)
+						}}>
 							Cancel
 						</Button>
 						<Button variant="destructive" onClick={() => deleteTask()}>

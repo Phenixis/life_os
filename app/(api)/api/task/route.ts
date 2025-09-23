@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
 	try {
 		const body = await request.json()
-		const { title, importance, dueDate, duration, projectTitle, toDoAfterId } = body
+		const { title, importance, dueDate, duration, projectTitle, toDoAfterId, recurrenceType, recurrenceInterval } = body
 
 		// Validation
 		if (!title || importance === undefined || dueDate === undefined || duration === undefined) {
@@ -88,7 +88,16 @@ export async function POST(request: NextRequest) {
 
 		const dueDateAtMidnight = new Date(dueDate)
 
-		const taskId = await createTask(title, Number(importance), dueDateAtMidnight, Number(duration), projectTitle != "" ? projectTitle : undefined, verification.userId)
+		const taskId = await createTask(
+			title, 
+			Number(importance), 
+			dueDateAtMidnight, 
+			Number(duration), 
+			projectTitle != "" ? projectTitle : undefined, 
+			verification.userId,
+			recurrenceType,
+			recurrenceInterval ? Number(recurrenceInterval) : undefined
+		)
 
 		if (toDoAfterId && toDoAfterId != "-1") {
 			await createTaskToDoAfter(taskId, Number(toDoAfterId))
@@ -232,12 +241,14 @@ export async function DELETE(request: NextRequest) {
 	try {
 		const url = new URL(request.url)
 		const idParam = url.searchParams.get("id")
+		const deleteAllParam = url.searchParams.get("deleteAll")
 
 		if (!idParam) {
 			return NextResponse.json({ error: "Missing task ID" }, { status: 400 })
 		}
 
 		const id = Number(idParam)
+		const deleteAll = deleteAllParam === "true"
 
 		// Delete any task dependency relationships
 		// 1. Where this task depends on another task
@@ -245,7 +256,7 @@ export async function DELETE(request: NextRequest) {
 		// 2. Where other tasks depend on this task
 		await deleteTaskToDoAfterByAfterId(id)
 
-		const taskId = await deleteTaskById(verification.userId, id)
+		const taskId = await deleteTaskById(verification.userId, id, deleteAll)
 
 		return NextResponse.json({ id: taskId })
 	} catch (error) {
