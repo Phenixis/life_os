@@ -26,7 +26,7 @@ export type TaskCount = {
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
     taskCounts?: TaskCount[]
-    dailyMoods?: DailyMood[]
+    dailyMoods?: DailyMood.Select[]
 }
 
 function Calendar({

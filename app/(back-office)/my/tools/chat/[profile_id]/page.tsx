@@ -9,14 +9,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { useProfiles } from "@/hooks/chat/use-profiles"
 import { useConversations } from "@/hooks/chat/use-conversations"
-import type { Profile } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
 
 export default function ChatProfilePage() {
     const params = useParams()
     const router = useRouter()
     const profileId = params.profile_id as string
 
-    const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
+    const [selectedProfile, setSelectedProfile] = useState<Ai.Profile.Select | null>(null)
     const [input, setInput] = useState("")
     const [isCreatingConversation, setIsCreatingConversation] = useState(false)
     const [isSystemPromptOpen, setIsSystemPromptOpen] = useState(false)

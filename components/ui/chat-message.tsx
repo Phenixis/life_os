@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, Fragment } from 'react'
-import type { Message } from '@/lib/types/chat'
+import { Ai } from '@/lib/db/schema'
 
 interface ChatMessageProps {
-    message: Message
+    message: Ai.Message.Select
     isStreaming?: boolean
     chatLoading?: boolean
     enableStreamingSimulation?: boolean

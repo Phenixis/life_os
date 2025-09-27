@@ -4,7 +4,6 @@ import { ActionState } from '@/middleware';
 import { redirect } from 'next/navigation'
 import { removeSession, setSession } from '@/lib/auth/session';
 import { db } from "@/lib/db/drizzle"
-import { user } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { verifyPassword } from "@/lib/utils/password"
 import { createUser } from "@/lib/db/queries/user"
@@ -26,7 +25,7 @@ export async function signUp(prevState: ActionState, formData: FormData) {
         return { error: "Missing required fields" }
     }
 
-    let user: { user: User, password: string }
+    let user: { user: User.User.Select, password: string }
 
     try {
         user = await createUser(email, firstName, lastName)
@@ -97,7 +96,7 @@ export async function verifyCredentials(prevState: ActionState, formData: FormDa
         return { error: "Missing required fields" }
     }
 
-    const userInfos = await db.select().from(user).where(eq(user.id, id))
+    const userInfos = await db.select().from(User.User.table).where(eq(User.User.table.id, id))
 
     if (!userInfos || userInfos.length === 0) {
         return { error: "User not found" }

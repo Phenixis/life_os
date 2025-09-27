@@ -1,6 +1,7 @@
-import { NextResponse, NextRequest } from "next/server"
-import * as HabitQueries from "@/lib/db/queries/habits"
 import { verifyRequest } from "@/lib/auth/api"
+import * as HabitEntryQueries from "@/lib/db/queries/habit/entry"
+import * as HabitQueries from "@/lib/db/queries/habit/habit"
+import { NextRequest, NextResponse } from "next/server"
 
 // List all entries for a specific habit
 export async function GET(
@@ -68,7 +69,7 @@ export async function GET(
             }
         }
 
-        const entries = await HabitQueries.getHabitEntries(
+        const entries = await HabitEntryQueries.getHabitEntries(
             habitId,
             startDate,
             endDate,
@@ -147,7 +148,7 @@ export async function POST(
             )
         }
 
-        const entryId = await HabitQueries.createHabitEntry(
+        const entryId = await HabitEntryQueries.createHabitEntry(
             userId,
             habitId,
             entryDate,
@@ -155,7 +156,7 @@ export async function POST(
             notes
         )
 
-        const newEntry = await HabitQueries.getHabitEntryById(userId, entryId)
+        const newEntry = await HabitEntryQueries.getHabitEntryById(userId, entryId)
 
         return NextResponse.json({ entry: newEntry }, { status: 201 })
     } catch (error) {

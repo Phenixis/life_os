@@ -1,7 +1,7 @@
-import { NextResponse, NextRequest } from "next/server"
-import * as HabitQueries from "@/lib/db/queries/habits"
 import { verifyRequest } from "@/lib/auth/api"
-import { HABIT_FREQUENCIES, HabitFrequency } from "@/lib/types/habits"
+import * as HabitEntryQueries from "@/lib/db/queries/habit/entry"
+import { HABIT_FREQUENCIES, HabitFrequency } from "@/lib/types/habit"
+import { NextRequest, NextResponse } from "next/server"
 
 // Get the progress of a cycle
 // Params: { "frequency": "daily" | "weekly" | "monthly" | "quarterly" | "yearly", "date"?: string }
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        const progress = await HabitQueries.getCycleProgress(userId, frequency as HabitFrequency, date)
+        const progress = await HabitEntryQueries.getCycleProgress(userId, frequency as HabitFrequency, date)
 
         return NextResponse.json({ progress })
     } catch (error) {

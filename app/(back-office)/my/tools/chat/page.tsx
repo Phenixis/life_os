@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ProfileSkeleton } from "@/components/ui/chat-skeletons"
 import { useProfiles } from "@/hooks/chat/use-profiles"
-import type { Profile } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
 
 export default function MultiProfileChatbot() {
     const router = useRouter()
@@ -57,7 +57,7 @@ export default function MultiProfileChatbot() {
         }
     }
 
-    const handleProfileSelect = (profile: Profile) => {
+    const handleProfileSelect = (profile: Ai.Profile.Select) => {
         router.push(`/my/tools/chat/${profile.id}`)
     }
 

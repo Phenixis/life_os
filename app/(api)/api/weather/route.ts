@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMeteoByDay, createMeteo, updateMeteo } from "@/lib/db/queries";
+import { MeteoQueries } from "@/lib/db/queries";
 import {
     type Meteo
 } from "@/lib/db/schema";
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         throw new Error("Missing day parameter");
     }
 
-    const savedMeteo = await getMeteoByDay(verification.userId, day);
+    const savedMeteo = await MeteoQueries.getMeteoByDay(verification.userId, day);
 
     console.log("Saved meteo:", savedMeteo);
 
@@ -44,9 +44,9 @@ export async function GET(request: NextRequest) {
         const data = await result.json();
 
         if (savedMeteo.length === 0) {
-            await createMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
+            await MeteoQueries.createMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
         } else {
-            await updateMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
+            await MeteoQueries.updateMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
         }
 
         return NextResponse.json({
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
             updated_at: new Date(),
             latitude: lat,
             longitude: lon,
-        } as Meteo);
+        } as Meteo.Select);
     } else {
         return NextResponse.json(savedMeteo[0]);
     }

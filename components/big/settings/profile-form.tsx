@@ -18,7 +18,7 @@ import { useSWRConfig } from "swr"
 import { Loader2 } from "lucide-react"
 
 interface ProfileFormProps {
-    user: User
+    user: User.User.Select
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {

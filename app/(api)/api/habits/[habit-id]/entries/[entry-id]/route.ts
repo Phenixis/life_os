@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server"
-import * as HabitQueries from "@/lib/db/queries/habits"
+import * as HabitQueries from "@/lib/db/queries/habit/habit"
+import * as HabitEntryQueries from "@/lib/db/queries/habit/entry"
 import { verifyRequest } from "@/lib/auth/api"
 
 // Get a specific entry 
@@ -31,8 +32,8 @@ export async function GET(
             )
         }
 
-        const entry = await HabitQueries.getHabitEntryById(userId, entryId)
-        
+        const entry = await HabitEntryQueries.getHabitEntryById(userId, entryId)
+
         if (!entry) {
             return NextResponse.json(
                 { error: "Entry not found" },
@@ -88,7 +89,7 @@ export async function PUT(
         }
 
         // Verify entry exists and belongs to the habit
-        const existingEntry = await HabitQueries.getHabitEntryById(userId, entryId)
+        const existingEntry = await HabitEntryQueries.getHabitEntryById(userId, entryId)
         if (!existingEntry || existingEntry.habit_id !== habitId) {
             return NextResponse.json(
                 { error: "Entry not found or does not belong to this habit" },
@@ -114,7 +115,7 @@ export async function PUT(
             )
         }
 
-        const updatedEntryId = await HabitQueries.updateHabitEntry(
+        const updatedEntryId = await HabitEntryQueries.updateHabitEntry(
             userId,
             entryId,
             count,
@@ -128,7 +129,7 @@ export async function PUT(
             )
         }
 
-        const updatedEntry = await HabitQueries.getHabitEntryById(userId, updatedEntryId)
+        const updatedEntry = await HabitEntryQueries.getHabitEntryById(userId, updatedEntryId)
 
         return NextResponse.json({ entry: updatedEntry })
     } catch (error) {
@@ -170,7 +171,7 @@ export async function DELETE(
         }
 
         // Verify entry exists and belongs to the habit
-        const existingEntry = await HabitQueries.getHabitEntryById(userId, entryId)
+        const existingEntry = await HabitEntryQueries.getHabitEntryById(userId, entryId)
         if (!existingEntry || existingEntry.habit_id !== habitId) {
             return NextResponse.json(
                 { error: "Entry not found or does not belong to this habit" },
@@ -178,7 +179,7 @@ export async function DELETE(
             )
         }
 
-        const deletedEntryId = await HabitQueries.deleteHabitEntry(userId, entryId)
+        const deletedEntryId = await HabitEntryQueries.deleteHabitEntry(userId, entryId)
 
         if (!deletedEntryId) {
             return NextResponse.json(
@@ -187,9 +188,9 @@ export async function DELETE(
             )
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             message: "Entry deleted successfully",
-            entryId: deletedEntryId 
+            entryId: deletedEntryId
         })
     } catch (error) {
         console.error('Error deleting habit entry:', error)

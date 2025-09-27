@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label"
 import { NotesAndData } from "@/lib/db/queries/note"
 import { cn } from "@/lib/utils"
 
-export default function NoteDisplay({ note, className }: { note?: Note, className?: string }) {
+export default function NoteDisplay({ note, className }: { note?: Note.Note.Select, className?: string }) {
     const user = useUser().user
     const { mutate } = useSWRConfig()
 
@@ -83,7 +83,7 @@ export default function NoteDisplay({ note, className }: { note?: Note, classNam
 
                         return {
                             ...data,
-                            notes: currentNotes.filter((n: Note) => n.id !== note.id),
+                            notes: currentNotes.filter((n: Note.Note.Select) => n.id !== note.id),
                             totalCount: data.totalCount - 1,
                             totalPages: Math.ceil((data.totalCount - 1) / data.limit),
                         }

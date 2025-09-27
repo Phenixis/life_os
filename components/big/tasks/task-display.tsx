@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useOptimistic, startTransition, useRef } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Task, TaskWithRelations, TaskWithNonRecursiveRelations } from "@/lib/db/schema"
+import type { Task } from "@/lib/db/schema"
 import dynamic from "next/dynamic"
 const TaskModal = dynamic(() => import("@/components/big/tasks/task-modal"), { ssr: false })
 import { ChevronsDownUp, ChevronsUpDown, TrashIcon, Unlink } from "lucide-react"
@@ -33,8 +33,8 @@ export default function TaskDisplay({
 	currentProjects,
 	otherId,
 }: {
-	task?: TaskWithRelations | TaskWithNonRecursiveRelations
-	orderedBy?: keyof Task
+	task?: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations
+	orderedBy?: keyof Task.Task.Select
 	className?: string
 	currentLimit?: number
 	currentDueBefore?: Date
@@ -119,7 +119,7 @@ export default function TaskDisplay({
 				async (currentData: unknown): Promise<unknown> => {
 					if (!Array.isArray(currentData)) return currentData
 
-					return currentData.filter((item: Task) => item.id !== task.id)
+					return currentData.filter((item: Task.Task.Select) => item.id !== task.id)
 				},
 				{ revalidate: false },
 				)
@@ -231,11 +231,11 @@ export default function TaskDisplay({
 					// Filter out the task being deleted from all cached lists
 					if (Array.isArray(currentData)) {
 						return currentData
-							.filter((item: TaskWithRelations | TaskWithNonRecursiveRelations) => item.id !== task.id)
+							.filter((item: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations) => item.id !== task.id)
 							.sort(
 								(
-									a: TaskWithRelations | TaskWithNonRecursiveRelations,
-									b: TaskWithRelations | TaskWithNonRecursiveRelations,
+									a: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations,
+									b: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations,
 								) => b.score - a.score || (a.title || "").localeCompare(b.title),
 							)
 							.slice(0, currentLimit || Number.MAX_SAFE_INTEGER)
@@ -314,7 +314,7 @@ export default function TaskDisplay({
 				async (currentData: unknown): Promise<unknown> => {
 					// Find the task and update its dependencies
 					if (Array.isArray(currentData)) {
-						const filteredData = currentData.map((item: TaskWithRelations | TaskWithNonRecursiveRelations) => {
+						const filteredData = currentData.map((item: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations) => {
 							if (item.id === task.id || item.id === idToDelete) {
 								if (item.recursive) {
 									return {

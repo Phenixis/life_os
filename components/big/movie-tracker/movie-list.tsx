@@ -96,7 +96,7 @@ export function MovieList() {
     const { movies: searchMovies, isLoading: isLoadingSearch } = useMovies(undefined, debouncedQuery);
 
     // Determine which movies to show
-    let movies: Movie[] = [];
+    let movies: Movie.Movie.Select[] = [];
     let actualIsLoading = false;
 
     if (debouncedQuery) {

@@ -1,12 +1,4 @@
-import type { aiProfile, conversation, message } from "@/lib/db/schema"
-
-// Infer types from Drizzle schema
-export type Profile = typeof aiProfile.$inferSelect
-export type NewProfile = typeof aiProfile.$inferInsert
-export type Conversation = typeof conversation.$inferSelect
-export type NewConversation = typeof conversation.$inferInsert
-export type Message = typeof message.$inferSelect
-export type NewMessage = typeof message.$inferInsert
+import { Ai } from "@/lib/db/schema"
 
 // API request types
 export interface CreateProfileRequest {
@@ -27,26 +19,26 @@ export interface SendMessageRequest {
 
 // API response types
 export interface ProfileResponse {
-  profile: Profile
+  profile: Ai.Profile.Select
 }
 
 export interface ProfilesResponse {
-  profiles: Profile[]
+  profiles: Ai.Profile.Select[]
 }
 
 export interface ConversationResponse {
-  conversation: Conversation
+  conversation: Ai.Conversation.Select
 }
 
 export interface ConversationsResponse {
-  conversations: Conversation[]
+  conversations: Ai.Conversation.Select[]
 }
 
 export interface MessagesResponse {
-  messages: Message[]
+  messages: Ai.Message.Select[]
 }
 
 export interface ConversationWithMessagesResponse {
-  conversation: Conversation
-  messages: Message[]
+  conversation: Ai.Conversation.Select
+  messages: Ai.Message.Select[]
 }

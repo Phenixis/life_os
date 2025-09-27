@@ -1,13 +1,8 @@
 "use server"
 
-import {
-    eq,
-} from "drizzle-orm"
-import { db } from "../drizzle"
-import * as Schema from "../schema"
+import * as lib from "./lib"
 import { hashPassword } from "@/lib/utils/password"
 import { getClientSession } from "@/lib/auth/session"
-import { revalidateTag } from "next/cache"
 import { DarkModeCookie } from "@/lib/flags"
 
 /**
@@ -24,11 +19,11 @@ export async function generateUniqueUserId(): Promise<string> {
         }
 
         // Check if the ID already exists
-        const existingUser = await db.select({
-            id: Schema.user.id
+        const existingUser = await lib.db.select({
+            id: lib.Schema.User.User.table.id
         })
-            .from(Schema.user)
-            .where(eq(Schema.user.id, id));
+            .from(lib.Schema.User.User.table)
+            .where(lib.eq(lib.Schema.User.User.table.id, id));
 
         if (!existingUser || existingUser.length === 0) {
             return id
@@ -63,9 +58,9 @@ export async function generateUniqueApiKey(): Promise<string> {
 
         const apiKey = `md_${randomPart}`
 
-        const existingUser = await db.select({
-            api_key: Schema.user.api_key
-        }).from(Schema.user).where(eq(Schema.user.api_key, apiKey))
+        const existingUser = await lib.db.select({
+            api_key: lib.Schema.User.User.table.api_key
+        }).from(lib.Schema.User.User.table).where(lib.eq(lib.Schema.User.User.table.api_key, apiKey))
 
         if (!existingUser || existingUser.length === 0) {
             return apiKey
@@ -83,7 +78,7 @@ export async function createUser(
     first_name: string,
     last_name: string,
 ) {
-    const existingUser = await db.select().from(Schema.user).where(eq(Schema.user.email, email))
+    const existingUser = await lib.db.select().from(lib.Schema.User.User.table).where(lib.eq(lib.Schema.User.User.table.email, email))
 
     if (existingUser && existingUser.length > 0) {
         throw new Error("User already exists")
@@ -94,7 +89,7 @@ export async function createUser(
     const apiKey = await generateUniqueApiKey()
     const id = await generateUniqueUserId()
 
-    const insertedUser = await db.insert(Schema.user).values({
+    const insertedUser = await lib.db.insert(lib.Schema.User.User.table).values({
         email: email,
         first_name: first_name,
         last_name: last_name,
@@ -132,9 +127,9 @@ export async function getUser(id?: string) {
         return null
     }
 
-    const user = await db.select()
-        .from(Schema.user)
-        .where(eq(Schema.user.id, userId))
+    const user = await lib.db.select()
+        .from(lib.Schema.User.User.table)
+        .where(lib.eq(lib.Schema.User.User.table.id, userId))
         .limit(1)
 
     if (!user || user.length === 0) {
@@ -145,18 +140,18 @@ export async function getUser(id?: string) {
 }
 
 export async function getUserByEmail(email: string) {
-    const user = await db.select()
-        .from(Schema.user)
-        .where(eq(Schema.user.email, email))
+    const user = await lib.db.select()
+        .from(lib.Schema.User.User.table)
+        .where(lib.eq(lib.Schema.User.User.table.email, email))
         .limit(1)
 
     return user.length > 0 ? user[0] : null
 }
 
 export async function getUserByApiKey(apiKey: string) {
-    const user = await db.select()
-        .from(Schema.user)
-        .where(eq(Schema.user.api_key, apiKey))
+    const user = await lib.db.select()
+        .from(lib.Schema.User.User.table)
+        .where(lib.eq(lib.Schema.User.User.table.api_key, apiKey))
         .limit(1)
 
     return user.length > 0 ? user[0] : null
@@ -169,17 +164,17 @@ export async function getUserPreferences(id?: string) {
         return null
     }
 
-    const user = await db.select({
-        has_jarvis_asked_dark_mode: Schema.user.has_jarvis_asked_dark_mode,
-        dark_mode: Schema.user.dark_mode_activated,
-        auto_dark_mode: Schema.user.auto_dark_mode_enabled,
-        startHour: Schema.user.dark_mode_start_hour,
-        endHour: Schema.user.dark_mode_end_hour,
-        startMinute: Schema.user.dark_mode_start_minute,
-        endMinute: Schema.user.dark_mode_end_minute,
-        override: Schema.user.dark_mode_override
-    }).from(Schema.user)
-        .where(eq(Schema.user.id, userId))
+    const user = await lib.db.select({
+        has_jarvis_asked_dark_mode: lib.Schema.User.User.table.has_jarvis_asked_dark_mode,
+        dark_mode: lib.Schema.User.User.table.dark_mode_activated,
+        auto_dark_mode: lib.Schema.User.User.table.auto_dark_mode_enabled,
+        startHour: lib.Schema.User.User.table.dark_mode_start_hour,
+        endHour: lib.Schema.User.User.table.dark_mode_end_hour,
+        startMinute: lib.Schema.User.User.table.dark_mode_start_minute,
+        endMinute: lib.Schema.User.User.table.dark_mode_end_minute,
+        override: lib.Schema.User.User.table.dark_mode_override
+    }).from(lib.Schema.User.User.table)
+        .where(lib.eq(lib.Schema.User.User.table.id, userId))
         .limit(1)
 
     if (!user || user.length === 0) {
@@ -199,13 +194,13 @@ export async function getUserDraftNote(id?: string) {
         return null
     }
 
-    const draftNote = await db.select({
-        note_title: Schema.user.note_draft_title,
-        note_content: Schema.user.note_draft_content,
-        note_project_title: Schema.user.note_draft_project_title,
+    const draftNote = await lib.db.select({
+        note_title: lib.Schema.User.User.table.note_draft_title,
+        note_content: lib.Schema.User.User.table.note_draft_content,
+        note_project_title: lib.Schema.User.User.table.note_draft_project_title,
     })
-        .from(Schema.user)
-        .where(eq(Schema.user.id, userId))
+        .from(lib.Schema.User.User.table)
+        .where(lib.eq(lib.Schema.User.User.table.id, userId))
         .limit(1)
 
     if (!draftNote || draftNote.length === 0) {
@@ -216,7 +211,7 @@ export async function getUserDraftNote(id?: string) {
 }
 
 export async function getAllUsers() {
-    const users = await db.select().from(Schema.user)
+    const users = await lib.db.select().from(lib.Schema.User.User.table)
 
     return users
 }
@@ -229,8 +224,8 @@ export async function updateDarkModePreferences({
     darkModeCookie: DarkModeCookie
 }) {
     try {
-        await db
-            .update(Schema.user)
+        await lib.db
+            .update(lib.Schema.User.User.table)
             .set({
                 has_jarvis_asked_dark_mode: darkModeCookie.has_jarvis_asked_dark_mode,
                 dark_mode_activated: darkModeCookie.dark_mode,
@@ -241,10 +236,10 @@ export async function updateDarkModePreferences({
                 dark_mode_end_minute: darkModeCookie.endMinute,
                 dark_mode_override: darkModeCookie.override
             })
-            .where(eq(Schema.user.id, userId))
+            .where(lib.eq(lib.Schema.User.User.table.id, userId))
 
         // Revalidate the flags to update the theme
-        revalidateTag("flags")
+        lib.revalidateTag("flags")
 
         return { success: true }
     } catch (error) {
@@ -265,14 +260,14 @@ export async function updateUserDraftNote({
     note_project_title: string
 }) {
     try {
-        await db
-            .update(Schema.user)
+        await lib.db
+            .update(lib.Schema.User.User.table)
             .set({
                 note_draft_title: note_title,
                 note_draft_content: note_content,
                 note_draft_project_title: note_project_title
             })
-            .where(eq(Schema.user.id, userId))
+            .where(lib.eq(lib.Schema.User.User.table.id, userId))
 
         return { success: true }
     } catch (error) {
@@ -293,15 +288,15 @@ export async function updateUserProfile({
     email: string
 }) {
     try {
-        await db
-            .update(Schema.user)
+        await lib.db
+            .update(lib.Schema.User.User.table)
             .set({
                 first_name: first_name,
                 last_name: last_name,
                 email: email,
                 updated_at: new Date(),
             })
-            .where(eq(Schema.user.id, userId))
+            .where(lib.eq(lib.Schema.User.User.table.id, userId))
 
         return { success: true }
     } catch (error) {
@@ -320,13 +315,13 @@ export async function updateUserPassword({
     try {
         const hashedPassword = await hashPassword(newPassword)
 
-        await db
-            .update(Schema.user)
+        await lib.db
+            .update(lib.Schema.User.User.table)
             .set({
                 password: hashedPassword,
                 updated_at: new Date(),
             })
-            .where(eq(Schema.user.id, userId))
+            .where(lib.eq(lib.Schema.User.User.table.id, userId))
 
         return { success: true }
     } catch (error) {
@@ -343,15 +338,15 @@ export async function updateUserPassword({
  */
 export async function updateUserStripeCustomerId(userId: string, stripeCustomerId: string) {
     try {
-        await db
-            .update(Schema.user)
+        await lib.db
+            .update(lib.Schema.User.User.table)
             .set({
                 stripe_customer_id: stripeCustomerId,
                 updated_at: new Date()
             })
-            .where(eq(Schema.user.id, userId))
+            .where(lib.eq(lib.Schema.User.User.table.id, userId))
 
-        revalidateTag(`user-${userId}`)
+        lib.revalidateTag(`user-${userId}`)
 
         return { success: true }
     } catch (error) {

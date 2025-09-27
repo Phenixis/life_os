@@ -35,13 +35,13 @@ import {
 } from '@/components/ui/dialog';
 import { useMovieActions } from '@/hooks/use-movies';
 import TMDbService from '@/lib/services/tmdb';
-import type { Movie } from '@/lib/db/schema';
+import { Movie } from '@/lib/db/schema';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import Tooltip from '../tooltip';
 
 interface MovieCardProps {
-    movie: Movie;
+    movie: Movie.Movie.Select;
 }
 
 export function MovieCard({ movie }: MovieCardProps) {

@@ -1,6 +1,7 @@
-import { NextResponse, NextRequest } from "next/server"
-import * as HabitQueries from "@/lib/db/queries/habits"
-import { verifyRequest } from "@/lib/auth/api"
+import { verifyRequest } from "@/lib/auth/api";
+import * as HabitEntryQueries from "@/lib/db/queries/habit/entry";
+import * as HabitQueries from "@/lib/db/queries/habit/habit";
+import { NextRequest, NextResponse } from "next/server";
 
 // Get or update habit entry by date
 export async function GET(
@@ -38,8 +39,8 @@ export async function GET(
             )
         }
 
-        const entry = await HabitQueries.getHabitEntryByDate(userId, habitId, entryDate)
-        
+        const entry = await HabitEntryQueries.getHabitEntryByDate(userId, habitId, entryDate)
+
         if (!entry) {
             return NextResponse.json(
                 { error: "Entry not found for this date" },
@@ -111,7 +112,7 @@ export async function PUT(
             )
         }
 
-        const updatedEntryId = await HabitQueries.updateHabitEntryByDate(
+        const updatedEntryId = await HabitEntryQueries.updateHabitEntryByDate(
             userId,
             habitId,
             entryDate,
@@ -126,7 +127,7 @@ export async function PUT(
             )
         }
 
-        const updatedEntry = await HabitQueries.getHabitEntryById(userId, updatedEntryId)
+        const updatedEntry = await HabitEntryQueries.getHabitEntryById(userId, updatedEntryId)
 
         return NextResponse.json({ entry: updatedEntry })
     } catch (error) {
@@ -174,7 +175,7 @@ export async function DELETE(
             )
         }
 
-        const deletedEntryId = await HabitQueries.deleteHabitEntryByDate(
+        const deletedEntryId = await HabitEntryQueries.deleteHabitEntryByDate(
             userId,
             habitId,
             entryDate
@@ -187,9 +188,9 @@ export async function DELETE(
             )
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             message: "Entry deleted successfully",
-            entryId: deletedEntryId 
+            entryId: deletedEntryId
         })
     } catch (error) {
         console.error('Error deleting habit entry by date:', error)

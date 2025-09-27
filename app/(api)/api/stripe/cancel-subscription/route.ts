@@ -13,11 +13,11 @@ export async function POST(request: NextRequest) {
         // Get user's active subscription
         const activeSubscription = await db
             .select()
-            .from(Schema.userSubscription)
+            .from(Schema.User.Subscription.table)
             .where(
                 and(
-                    eq(Schema.userSubscription.user_id, userId),
-                    eq(Schema.userSubscription.status, 'active')
+                    eq(Schema.User.Subscription.table.user_id, userId),
+                    eq(Schema.User.Subscription.table.status, 'active')
                 )
             )
             .limit(1)
@@ -38,12 +38,12 @@ export async function POST(request: NextRequest) {
 
         // Update database
         await db
-            .update(Schema.userSubscription)
+            .update(Schema.User.Subscription.table)
             .set({
                 cancel_at_period_end: true,
                 updated_at: new Date()
             })
-            .where(eq(Schema.userSubscription.stripe_subscription_id, subscription.stripe_subscription_id))
+            .where(eq(Schema.User.Subscription.table.stripe_subscription_id, subscription.stripe_subscription_id))
 
         return NextResponse.json({
             message: "Subscription will be cancelled at the end of the current period"
@@ -66,11 +66,11 @@ export async function DELETE(request: NextRequest) {
         // Get user's active subscription
         const activeSubscription = await db
             .select()
-            .from(Schema.userSubscription)
+            .from(Schema.User.Subscription.table)
             .where(
                 and(
-                    eq(Schema.userSubscription.user_id, userId),
-                    eq(Schema.userSubscription.status, 'active')
+                    eq(Schema.User.Subscription.table.user_id, userId),
+                    eq(Schema.User.Subscription.table.status, 'active')
                 )
             )
             .limit(1)
@@ -89,13 +89,13 @@ export async function DELETE(request: NextRequest) {
 
         // Update database
         await db
-            .update(Schema.userSubscription)
+            .update(Schema.User.Subscription.table)
             .set({
                 status: 'canceled',
                 canceled_at: new Date(),
                 updated_at: new Date()
             })
-            .where(eq(Schema.userSubscription.stripe_subscription_id, subscription.stripe_subscription_id))
+            .where(eq(Schema.User.Subscription.table.stripe_subscription_id, subscription.stripe_subscription_id))
 
         return NextResponse.json({
             message: "Subscription cancelled immediately"

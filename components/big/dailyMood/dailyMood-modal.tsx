@@ -115,9 +115,9 @@ export default function DailyMoodModal({
         const monthlyQueryKey = `/api/mood?${monthlyParams.toString()}`
 
         // Optimistic update for current query (specific date range)
-        mutateDailyMoods((prevData: DailyMood[] | undefined) => {
+        mutateDailyMoods((prevData: DailyMood.Select[] | undefined) => {
             if (prevData !== undefined && Array.isArray(prevData)) {
-                return prevData.filter((item: DailyMood) => {
+                return prevData.filter((item: DailyMood.Select) => {
                     const itemDate = new Date(item.date)
                     const targetDate = new Date(normalizedDate)
                     return itemDate.toDateString() !== targetDate.toDateString()
@@ -127,9 +127,9 @@ export default function DailyMoodModal({
         }, { revalidate: false })
 
         // Optimistic update for calendar monthly query
-        mutate(monthlyQueryKey, (prevData: DailyMood[] | undefined) => {
+        mutate(monthlyQueryKey, (prevData: DailyMood.Select[] | undefined) => {
             if (prevData !== undefined && Array.isArray(prevData)) {
-                return prevData.filter((item: DailyMood) => {
+                return prevData.filter((item: DailyMood.Select) => {
                     const itemDate = new Date(item.date)
                     const targetDate = new Date(normalizedDate)
                     return itemDate.toDateString() !== targetDate.toDateString()
@@ -139,9 +139,9 @@ export default function DailyMoodModal({
         }, { revalidate: false })
 
         // Optimistic update for global cache
-        mutate("/api/mood", (prevData: DailyMood[] | undefined) => {
+        mutate("/api/mood", (prevData: DailyMood.Select[] | undefined) => {
             if (prevData !== undefined && Array.isArray(prevData)) {
-                return prevData.filter((item: DailyMood) => {
+                return prevData.filter((item: DailyMood.Select) => {
                     const itemDate = new Date(item.date)
                     const targetDate = new Date(normalizedDate)
                     return itemDate.toDateString() !== targetDate.toDateString()
@@ -215,9 +215,9 @@ export default function DailyMoodModal({
         const monthlyQueryKey = `/api/mood?${monthlyParams.toString()}`
 
         // Optimistic update for current query (specific date range)
-        mutateDailyMoods((prevData: DailyMood[] | undefined) => {
+        mutateDailyMoods((prevData: DailyMood.Select[] | undefined) => {
             if (method === "POST") {
-                const newMood: DailyMood = { 
+                const newMood: DailyMood.Select = { 
                     mood: selectedMood, 
                     date: normalizedDate, 
                     created_at: new Date(), 
@@ -230,7 +230,7 @@ export default function DailyMoodModal({
                 return [newMood, ...(prevData || [])]
             }
             if (prevData !== undefined && Array.isArray(prevData) && method === "PUT") {
-                return prevData.map((item: DailyMood) => {
+                return prevData.map((item: DailyMood.Select) => {
                     // Compare dates properly for optimistic update
                     const itemDate = new Date(item.date)
                     const targetDate = new Date(normalizedDate)
@@ -244,9 +244,9 @@ export default function DailyMoodModal({
         }, { revalidate: false })
 
         // Optimistic update for calendar monthly query (for calendar component)
-        mutate(monthlyQueryKey, (prevData: DailyMood[] | undefined) => {
+        mutate(monthlyQueryKey, (prevData: DailyMood.Select[] | undefined) => {
             if (method === "POST") {
-                const newMood: DailyMood = { 
+                const newMood: DailyMood.Select = { 
                     mood: selectedMood, 
                     date: normalizedDate, 
                     created_at: new Date(), 
@@ -259,7 +259,7 @@ export default function DailyMoodModal({
                 return [newMood, ...(prevData || [])]
             }
             if (prevData !== undefined && Array.isArray(prevData) && method === "PUT") {
-                return prevData.map((item: DailyMood) => {
+                return prevData.map((item: DailyMood.Select) => {
                     const itemDate = new Date(item.date)
                     const targetDate = new Date(normalizedDate)
                     if (itemDate.toDateString() === targetDate.toDateString()) {
@@ -272,9 +272,9 @@ export default function DailyMoodModal({
         }, { revalidate: false })
 
         // Optimistic update for global cache (for calendar component)
-        mutate("/api/mood", (prevData: DailyMood[] | undefined) => {
+        mutate("/api/mood", (prevData: DailyMood.Select[] | undefined) => {
             if (method === "POST") {
-                const newMood: DailyMood = { 
+                const newMood: DailyMood.Select = { 
                     mood: selectedMood, 
                     date: normalizedDate, 
                     created_at: new Date(), 
@@ -287,7 +287,7 @@ export default function DailyMoodModal({
                 return [newMood, ...(prevData || [])]
             }
             if (prevData !== undefined && Array.isArray(prevData) && method === "PUT") {
-                return prevData.map((item: DailyMood) => {
+                return prevData.map((item: DailyMood.Select) => {
                     const itemDate = new Date(item.date)
                     const targetDate = new Date(normalizedDate)
                     if (itemDate.toDateString() === targetDate.toDateString()) {

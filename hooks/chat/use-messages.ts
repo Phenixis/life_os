@@ -2,12 +2,12 @@
 
 import { useFilteredData } from "../use-filtered-data"
 import { useUser } from "../use-user"
-import type { Message } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
 import { useState, useEffect } from "react"
 
 // Type for the API response structure
 interface MessagesApiResponse {
-  messages: Message[]
+  messages: Ai.Message.Select[]
 }
 
 interface UseMessagesParams {
@@ -29,10 +29,10 @@ export function useMessages(params: UseMessagesParams = {}) {
     skipFetch: !user?.api_key || !conversationId || skipFetch,
   })
 
-  const serverMessages = (messagesData?.messages || []) as Message[]
+  const serverMessages = (messagesData?.messages || []) as Ai.Message.Select[]
   
   // Local state for optimistic messages
-  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([])
+  const [optimisticMessages, setOptimisticMessages] = useState<Ai.Message.Select[]>([])
 
   // Combine server messages with optimistic messages, removing duplicates
   const allMessages = [...serverMessages]
@@ -79,7 +79,7 @@ export function useMessages(params: UseMessagesParams = {}) {
     }
   }, [serverMessages])
 
-  const updateOptimisticMessages = (messageOrMessages: Message | Message[]) => {
+  const updateOptimisticMessages = (messageOrMessages: Ai.Message.Select | Ai.Message.Select[]) => {
     if (Array.isArray(messageOrMessages)) {
       setOptimisticMessages(prev => {
         const newMessages = [...prev]

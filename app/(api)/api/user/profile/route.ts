@@ -91,8 +91,8 @@ export async function PUT(request: NextRequest) {
         // Check if email is already taken by another user
         if (email !== (await getUser(verification.userId))?.email) {
             const existingUser = await db.select()
-                .from(Schema.user)
-                .where(eq(Schema.user.email, email))
+                .from(Schema.User.User.table)
+                .where(eq(Schema.User.User.table.email, email))
                 .limit(1)
 
             if (existingUser.length > 0) {

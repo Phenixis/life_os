@@ -1,10 +1,5 @@
 import {
-    getProject,
-    getProjects,
-    getCompletedProjects,
-    getUncompletedProjects,
-    createProject,
-    getProjectsWithNotes
+    ProjectQueries
 } from '@/lib/db/queries';
 import type { Note } from '@/lib/db/schema';
 import { type NextRequest, NextResponse } from 'next/server';
@@ -25,23 +20,23 @@ export async function GET(request: NextRequest) {
     const taskDeleted = searchParams.get('taskDeleted') == "true";
     const withNotes = searchParams.get('withNotes') == "true";
     const noteLimit = searchParams.get('noteLimit') ? Number.parseInt(searchParams.get('noteLimit') as string) : undefined;
-    const noteOrderBy = searchParams.get('noteOrderBy') as keyof Note | undefined;
+    const noteOrderBy = searchParams.get('noteOrderBy') as keyof Note.Note.Select | undefined;
     const noteOrderingDirection = searchParams.get('noteOrderingDirection') as "asc" | "desc" | undefined;
     const noteProjectTitle = searchParams.get('noteProjectTitle') || undefined;
 
     const projects = projectTitle ?
-        await getProject(verification.userId, projectTitle) :
-        withNotes ? await getProjectsWithNotes(
-            verification.userId, 
+        await ProjectQueries.getProject(verification.userId, projectTitle) :
+        withNotes ? await ProjectQueries.getProjectsWithNotes(
+            verification.userId,
             limit,
             noteLimit,
             noteOrderBy,
             noteOrderingDirection,
             noteProjectTitle
         ) :
-        completed == "true" ? await getCompletedProjects(verification.userId, limit, taskCompleted, taskDueDate, taskDeleted) :
-            completed == "false" ? await getUncompletedProjects(verification.userId, limit, taskCompleted, taskDueDate, taskDeleted) :
-                await getProjects(verification.userId, limit);
+        completed == "true" ? await ProjectQueries.getCompletedProjects(verification.userId, limit, taskCompleted, taskDueDate, taskDeleted) :
+            completed == "false" ? await ProjectQueries.getUncompletedProjects(verification.userId, limit, taskCompleted, taskDueDate, taskDeleted) :
+                await ProjectQueries.getProjects(verification.userId, limit);
 
     return NextResponse.json(projects);
 }
@@ -60,7 +55,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const projectId = await createProject(verification.userId, title, description);
+        const projectId = await ProjectQueries.createProject(verification.userId, title, description);
 
         return NextResponse.json({ id: projectId }, { status: 201 });
     } catch (error) {

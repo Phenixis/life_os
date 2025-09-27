@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { Project, TaskWithNonRecursiveRelations, TaskWithRelations } from "@/lib/db/schema"
+import type { Project, Task } from "@/lib/db/schema"
 import { PlusIcon, PenIcon, Minus, Plus, ChevronDown, CircleHelp } from "lucide-react"
 import { useRef, useState, useEffect } from "react"
 import { useSWRConfig } from "swr"
@@ -49,7 +49,7 @@ export default function TaskModal({
 	children,
 }: {
 	className?: string
-	task?: TaskWithRelations
+	task?: Task.Task.TaskWithRelations
 	isOpen?: boolean
 	onOpenChange?: (open: boolean) => void
 	children?: React.ReactNode
@@ -193,7 +193,7 @@ export default function TaskModal({
 					completed: false,
 					created_at: new Date(),
 					updated_at: new Date(),
-				} as Project,
+				} as Project.Select,
 				importanceDetails: {
 					level: importance,
 					name: importanceData?.find((item) => item.level === importance)?.name || "",
@@ -207,7 +207,7 @@ export default function TaskModal({
 				})) || [],
 				tasksToDoBefore: task?.tasksToDoBefore || [],
 				recursive: true,
-			} as TaskWithRelations
+			} as Task.Task.TaskWithRelations
 
 			setOpen(false)
 
@@ -295,12 +295,12 @@ export default function TaskModal({
 
 			mutate(
 				(key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
-				async (currentData: unknown): Promise<TaskWithRelations[] | unknown> => {
+				async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
 					if (!Array.isArray(currentData)) return currentData
 
-					let updatedData: TaskWithRelations[]
+					let updatedData: Task.Task.TaskWithRelations[]
 					if (mode === "edit") {
-						updatedData = currentData.map((item: TaskWithRelations) => (item.id === id ? todoData : item.id === toDoAfter ? {
+						updatedData = currentData.map((item: Task.Task.TaskWithRelations) => (item.id === id ? todoData : item.id === toDoAfter ? {
 							...item,
 							tasksToDoBefore: [
 								...(item.tasksToDoBefore ?? []),
@@ -315,7 +315,7 @@ export default function TaskModal({
 										deleted_at: null,
 									})),
 									recursive: false,
-								} as TaskWithNonRecursiveRelations,
+								} as Task.Task.TaskWithNonRecursiveRelations,
 							],
 						} : item
 						))
@@ -323,7 +323,7 @@ export default function TaskModal({
 						updatedData = [todoData, ...currentData]
 					}
 
-					const filteredData: TaskWithRelations[] = updatedData.filter((item: TaskWithRelations) => {
+					const filteredData: Task.Task.TaskWithRelations[] = updatedData.filter((item: Task.Task.TaskWithRelations) => {
 						const dueBeforeFromSearchParams = searchParams.get(TASK_PARAMS.DUE_BEFORE)
 						const projectsFromSearchParams = searchParams.get(TASK_PARAMS.PROJECTS) ? searchParams.get(TASK_PARAMS.PROJECTS)?.split(",") : []
 						const completedFromSearchParams = searchParams.get(TASK_PARAMS.COMPLETED)
@@ -337,10 +337,10 @@ export default function TaskModal({
 						return true
 					})
 
-					const orderByFromSearchParams = searchParams.get(TASK_PARAMS.ORDER_BY) as keyof TaskWithRelations
+					const orderByFromSearchParams = searchParams.get(TASK_PARAMS.ORDER_BY) as keyof Task.Task.TaskWithRelations
 					const orderingDirectionFromSearchParams = searchParams.get(TASK_PARAMS.ORDERING_DIRECTION) === "asc" ? 1 : -1
-					const sortedData: TaskWithRelations[] = filteredData.sort(
-						(a: TaskWithRelations, b: TaskWithRelations) => {
+					const sortedData: Task.Task.TaskWithRelations[] = filteredData.sort(
+						(a: Task.Task.TaskWithRelations, b: Task.Task.TaskWithRelations) => {
 							if (orderByFromSearchParams) {
 								const aValue = a[orderByFromSearchParams]
 								const bValue = b[orderByFromSearchParams]

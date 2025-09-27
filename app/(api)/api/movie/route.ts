@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/auth/api';
-import MovieQueries from '@/lib/db/queries/movies';
+import * as MovieQueries from '@/lib/db/queries/movie/movie';
+import { Movie } from '@/lib/db/schema';
 import TMDbService from '@/lib/services/tmdb';
-import type { NewMovie } from '@/lib/db/schema';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * POST /api/movie
@@ -21,16 +21,16 @@ export async function POST(request: NextRequest) {
         const { tmdb_id, media_type, watch_status = 'will_watch', user_rating } = body;
 
         if (!tmdb_id || !media_type || !['movie', 'tv'].includes(media_type)) {
-            return NextResponse.json({ 
-                error: 'tmdb_id and media_type (movie or tv) are required' 
+            return NextResponse.json({
+                error: 'tmdb_id and media_type (movie or tv) are required'
             }, { status: 400 });
         }
 
         // Validate rating if provided
         if (user_rating !== null && user_rating !== undefined) {
             if (user_rating < 0.5 || user_rating > 5 || (user_rating * 2) % 1 !== 0) {
-                return NextResponse.json({ 
-                    error: 'Rating must be between 0.5 and 5.0 in 0.5 increments' 
+                return NextResponse.json({
+                    error: 'Rating must be between 0.5 and 5.0 in 0.5 increments'
                 }, { status: 400 });
             }
         }
@@ -38,9 +38,9 @@ export async function POST(request: NextRequest) {
         // Check if movie already exists
         const existingMovie = await MovieQueries.getMovieByTmdbId(userId, tmdb_id, media_type);
         if (existingMovie) {
-            return NextResponse.json({ 
+            return NextResponse.json({
                 error: 'Movie already in your list',
-                movie: existingMovie 
+                movie: existingMovie
             }, { status: 409 });
         }
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create movie record
-        const movieData: Omit<NewMovie, 'created_at' | 'updated_at'> = {
+        const movieData: Omit<Movie.Movie.Insert, 'created_at' | 'updated_at'> = {
             user_id: userId,
             tmdb_id,
             media_type,
@@ -126,8 +126,8 @@ export async function PUT(request: NextRequest) {
         // Validate rating if provided
         if (user_rating !== null && user_rating !== undefined) {
             if (user_rating < 0.5 || user_rating > 5 || (user_rating * 2) % 1 !== 0) {
-                return NextResponse.json({ 
-                    error: 'Rating must be between 0.5 and 5.0 in 0.5 increments' 
+                return NextResponse.json({
+                    error: 'Rating must be between 0.5 and 5.0 in 0.5 increments'
                 }, { status: 400 });
             }
         }
@@ -147,13 +147,13 @@ export async function PUT(request: NextRequest) {
         // Update watch status if provided
         if (watch_status) {
             if (!['will_watch', 'watched', 'watch_again'].includes(watch_status)) {
-                return NextResponse.json({ 
-                    error: 'watch_status must be either "will_watch", "watched", or "watch_again"' 
+                return NextResponse.json({
+                    error: 'watch_status must be either "will_watch", "watched", or "watch_again"'
                 }, { status: 400 });
             }
 
             const watchDate = (watch_status === 'watched' || watch_status === 'watch_again') ? (watched_date ? new Date(watched_date) : new Date()) : undefined;
-            
+
             updatedMovie = await MovieQueries.updateWatchStatus(
                 movie_id,
                 userId,

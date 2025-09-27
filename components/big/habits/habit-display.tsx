@@ -6,7 +6,7 @@ import { Habit } from "@/lib/db/schema"
 export function HabitDisplay({
     habit
 }: {
-    habit?: Habit
+    habit?: Habit.Habit.Select
 }) {
     return (
         habit === undefined ? (

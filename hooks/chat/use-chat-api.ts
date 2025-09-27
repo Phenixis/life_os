@@ -2,11 +2,11 @@
 
 import { useState, useCallback } from "react"
 import { useUser } from "../use-user"
-import type { Message } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
 
 interface UseChatApiParams {
     conversationId: string
-    onOptimisticUpdate?: (messages: Message[]) => void
+    onOptimisticUpdate?: (messages: Ai.Message.Select[]) => void
     onComplete?: () => void
     onError?: (error: string) => void
     onStreamStart?: () => void
@@ -32,7 +32,7 @@ export function useChatApi(params: UseChatApiParams) {
             const tempAiId = `temp_ai_${Date.now()}_${Math.random()}`
 
             // Create optimistic user message
-            const optimisticUserMessage: Message = {
+            const optimisticUserMessage: Ai.Message.Select = {
                 id: tempUserId,
                 conversation_id: conversationId,
                 role: "user",
@@ -42,7 +42,7 @@ export function useChatApi(params: UseChatApiParams) {
             }
 
             // Create optimistic AI message (initially empty for streaming)
-            const optimisticAiMessage: Message = {
+            const optimisticAiMessage: Ai.Message.Select = {
                 id: tempAiId,
                 conversation_id: conversationId,
                 role: "assistant",
@@ -94,7 +94,7 @@ export function useChatApi(params: UseChatApiParams) {
                                     assistantMessage += data.textDelta
 
                                     // Create/update the AI message with streaming content
-                                    const updatedAiMessage: Message = {
+                                    const updatedAiMessage: Ai.Message.Select = {
                                         ...optimisticAiMessage,
                                         content: assistantMessage,
                                     }

@@ -12,9 +12,9 @@ interface ModalCommandsContextType {
     }
     noteModal: {
         isOpen: boolean
-        openModal: (note?: Note, password?: string) => void
+        openModal: (note?: Note.Note.Select, password?: string) => void
         closeModal: () => void
-        note?: Note
+        note?: Note.Note.Select
         password?: string
     }
     dailyMoodModal: {
@@ -35,7 +35,7 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
     
     // Note modal state
     const [noteModalOpen, setNoteModalOpen] = useState(false)
-    const [noteModalData, setNoteModalData] = useState<{ note?: Note; password?: string }>({})
+    const [noteModalData, setNoteModalData] = useState<{ note?: Note.Note.Select; password?: string }>({})
     
     // Daily mood modal state
     const [dailyMoodModalOpen, setDailyMoodModalOpen] = useState(false)
@@ -49,7 +49,7 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
         },
         noteModal: {
             isOpen: noteModalOpen,
-            openModal: (note?: Note, password?: string) => {
+            openModal: (note?: Note.Note.Select, password?: string) => {
                 setNoteModalData({ note, password })
                 setNoteModalOpen(true)
             },

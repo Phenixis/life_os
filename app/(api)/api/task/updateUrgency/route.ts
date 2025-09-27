@@ -1,8 +1,7 @@
 import {
-    getUncompletedTasks,
-    updateTaskUrgency,
-  } from "@/lib/db/queries"
-  import { type NextRequest, NextResponse } from "next/server"
+    TaskQueries
+} from "@/lib/db/queries"
+import { type NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
 
 export async function GET(request: NextRequest) {
@@ -10,10 +9,10 @@ export async function GET(request: NextRequest) {
     if ('error' in verification) return verification.error
 
     try {
-        const tasks = await getUncompletedTasks(verification.userId);
-        
+        const tasks = await TaskQueries.getUncompletedTasks(verification.userId);
+
         for (const task of tasks) {
-            const result = await updateTaskUrgency(verification.userId, task.id);
+            const result = await TaskQueries.updateTaskUrgency(verification.userId, task.id);
 
             if (!result) {
                 throw new Error(`Task ${task.id} urgency update failed`);

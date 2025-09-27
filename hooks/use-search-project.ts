@@ -1,6 +1,6 @@
 "use client"
 
-import type { Project } from "@/lib/db/schema"
+import { Project } from "@/lib/db/schema"
 import { useFilteredData } from "./use-filtered-data"
 
 interface UseSearchProjectParams {
@@ -15,7 +15,7 @@ export function useSearchProject(params: UseSearchProjectParams = {}) {
   // Only create a SWR key if query has a value
   const shouldFetch = (query !== undefined && query !== "") && enabled
 
-  const { data, isLoading, isError, mutate } = useFilteredData<Project[]>({
+  const { data, isLoading, isError, mutate } = useFilteredData<Project.Select[]>({
     endpoint: "/api/project/search",
     params: {
       query,
@@ -26,10 +26,10 @@ export function useSearchProject(params: UseSearchProjectParams = {}) {
   })
 
   return {
-    data: (data as Project[]) || [],
+    data: (data as Project.Select[]) || [],
     isLoading,
     isError,
     mutate,
-    projects: (data as Project[]) || [], // Keep backward compatibility
+    projects: (data as Project.Select[]) || [], // Keep backward compatibility
   }
 }

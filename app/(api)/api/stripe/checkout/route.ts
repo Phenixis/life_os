@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
-import { user as userTable } from '@/lib/db/schema';
+import { User } from '@/lib/db/schema';
 import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, handleSubscriptionChange } from '@/lib/services/payments/stripe';
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
 
     const user = await db
       .select()
-      .from(userTable)
-      .where(eq(userTable.id, userId))
+      .from(User.User.table)
+      .where(eq(User.User.table.id, userId))
       .limit(1);
 
     if (user.length === 0) {
@@ -67,9 +67,9 @@ export async function GET(request: NextRequest) {
     // Update user's Stripe customer ID if not set
     if (!user[0].stripe_customer_id) {
       await db
-        .update(userTable)
+        .update(User.User.table)
         .set({ stripe_customer_id: customerId })
-        .where(eq(userTable.id, userId));
+        .where(eq(User.User.table.id, userId));
     }
 
     // Update subscription details

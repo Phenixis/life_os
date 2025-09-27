@@ -37,7 +37,7 @@ export const NOTE_PARAMS = {
 // Type for URL parameters
 export type NoteUrlParams = {
     [NOTE_PARAMS.LIMIT]?: string;
-    [NOTE_PARAMS.ORDER_BY]?: keyof Note;
+    [NOTE_PARAMS.ORDER_BY]?: keyof Note.Note.Select;
     [NOTE_PARAMS.ORDERING_DIRECTION]?: 'asc' | 'desc';
     [NOTE_PARAMS.PROJECTS]?: string;
     [NOTE_PARAMS.REMOVED_PROJECTS]?: string;
@@ -45,7 +45,7 @@ export type NoteUrlParams = {
 };
 
 // Add this type definition after the NoteUrlParams type
-type GroupedNotes = Record<string, { name: string; notes: Note[] }>;
+type GroupedNotes = Record<string, { name: string; notes: Note.Note.Select[] }>;
 
 export function NotesCard({
     className,
@@ -55,7 +55,7 @@ export function NotesCard({
 }: {
     className?: string
     limit?: number
-    orderBy?: keyof Note
+    orderBy?: keyof Note.Note.Select
     orderingDirection?: "asc" | "desc"
 }) {
     // -------------------- Imports & Hooks --------------------
@@ -72,7 +72,7 @@ export function NotesCard({
             : initialLimit
     )
 
-    const [orderBy] = useState<keyof Note | undefined>((searchParams.get(NOTE_PARAMS.ORDER_BY) as keyof Note) || initialOrderBy)
+    const [orderBy] = useState<keyof Note.Note.Select | undefined>((searchParams.get(NOTE_PARAMS.ORDER_BY) as keyof Note.Note.Select) || initialOrderBy)
 
     const [orderingDirection] = useState<"asc" | "desc" | undefined>((searchParams.get(NOTE_PARAMS.ORDERING_DIRECTION) as "asc" | "desc") || initialOrderingDirection)
 
@@ -174,7 +174,7 @@ export function NotesCard({
         if (!notesData?.notes) return {} as GroupedNotes
 
         return notesData.notes.slice(0, limit).reduce(
-            (acc: GroupedNotes, note: Note) => {
+            (acc: GroupedNotes, note: Note.Note.Select) => {
                 const projectId = note.project_title || "no-project"
                 const projectName = projects?.find((p) => p.title === note.project_title)?.title || "No Project"
 
@@ -370,17 +370,17 @@ export function NotesCard({
                         // Grouped by project
                         Object.entries(groupedNotes)
                             .sort(([, a], [, b]) => {
-                                const aGroup = a as { name: string; notes: Note[] };
-                                const bGroup = b as { name: string; notes: Note[] };
+                                const aGroup = a as { name: string; notes: Note.Note.Select[] };
+                                const bGroup = b as { name: string; notes: Note.Note.Select[] };
                                 return aGroup.name.localeCompare(bGroup.name);
                             })
                             .map(([projectId, group]) => {
-                                const { name, notes } = group as { name: string; notes: Note[] };
+                                const { name, notes } = group as { name: string; notes: Note.Note.Select[] };
                                 return (
                                     <div key={projectId} className="mb-4">
                                         <h3 className="font-medium text-sm p-2 rounded-md">{name}</h3>
                                         <div className="pl-2">
-                                            {notes.map((note: Note) => (
+                                            {notes.map((note: Note.Note.Select) => (
                                                 <NoteDisplay note={note} className="mt-2" key={note.id} />
                                             ))}
                                         </div>
@@ -391,7 +391,7 @@ export function NotesCard({
                         // Not grouped
                         notesData.notes
                             .slice(0, limit)
-                            .map((note: Note) => (
+                            .map((note: Note.Note.Select) => (
                                 <div key={note.id} className="mt-1">
                                     <NoteDisplay note={note} />
                                 </div>

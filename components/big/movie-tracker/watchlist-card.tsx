@@ -33,13 +33,13 @@ import {
 import { useMovieActions } from '@/hooks/use-movies';
 import { StarRating } from '@/components/ui/star-rating';
 import TMDbService from '@/lib/services/tmdb';
-import type { Movie } from '@/lib/db/schema';
+import { Movie } from '@/lib/db/schema';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import Tooltip from '@/components/big/tooltip';
 
 interface WatchlistCardProps {
-    movie: Movie;
+    movie: Movie.Movie.Select;
 }
 
 export function WatchlistCard({ movie }: WatchlistCardProps) {

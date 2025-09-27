@@ -20,7 +20,7 @@ import { User } from "@/lib/db/schema"
 import { logout } from "@/lib/auth/actions"
 
 interface PasswordResetFormProps {
-    user: User
+    user: User.User.Select
 }
 
 export function PasswordResetForm({ user }: PasswordResetFormProps) {

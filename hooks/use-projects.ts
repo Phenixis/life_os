@@ -1,8 +1,7 @@
 "use client"
 
 import { useFilteredData } from "./use-filtered-data"
-import type { Project } from "@/lib/db/schema"
-import type { Note } from "@/lib/db/schema"
+import { Project, Note } from "@/lib/db/schema"
 
 interface UseProjectsParams {
   completed?: boolean
@@ -13,7 +12,7 @@ interface UseProjectsParams {
   limit?: number
   withNotes?: boolean
   noteLimit?: number
-  noteOrderBy?: keyof Note
+  noteOrderBy?: keyof Note.Note.Select
   noteOrderingDirection?: "asc" | "desc"
   noteProjectTitle?: string
 }
@@ -33,7 +32,7 @@ export function useProjects(params: UseProjectsParams = {}) {
     noteProjectTitle,
   } = params
 
-  const { data, isLoading, isError, mutate } = useFilteredData<Project[]>({
+  const { data, isLoading, isError, mutate } = useFilteredData<Project.Select[]>({
     endpoint: "/api/project",
     params: {
       completed,
@@ -51,10 +50,10 @@ export function useProjects(params: UseProjectsParams = {}) {
   })
 
   return {
-    data: (data as Project[]) || [],
+    data: (data as Project.Select[]) || [],
     isLoading,
     isError,
-    projects: (data as Project[]) || [], // Keep backward compatibility
+    projects: (data as Project.Select[]) || [], // Keep backward compatibility
     mutate,
   }
 }

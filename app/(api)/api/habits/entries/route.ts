@@ -1,6 +1,6 @@
-import { NextResponse, NextRequest } from "next/server"
-import * as HabitQueries from "@/lib/db/queries/habits"
 import { verifyRequest } from "@/lib/auth/api"
+import * as HabitEntryQueries from "@/lib/db/queries/habit/entry"
+import { NextRequest, NextResponse } from "next/server"
 
 // Get all user habit entries for a date range
 export async function GET(request: NextRequest) {
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const entries = await HabitQueries.getUserHabitEntries(
+        const entries = await HabitEntryQueries.getUserHabitEntries(
             userId,
             startDate,
             endDate

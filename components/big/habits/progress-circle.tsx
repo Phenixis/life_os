@@ -1,6 +1,6 @@
 "use client"
 
-import type { HabitFrequency, HabitWithCompletion } from "@/lib/types/habits"
+import type { HabitFrequency, HabitWithCompletion } from "@/lib/types/habit"
 import { useProgressCycle } from "@/hooks/use-progress-cycle"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createWorkout, updateWorkout, getAllWorkouts } from "@/lib/db/queries"
+import { WorkoutQueries } from "@/lib/db/queries"
 import { verifyRequest } from "@/lib/auth/api"
 
 export async function GET(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // This is a placeholder - you'll need to implement a function to get workouts with their seances
-    const workouts = await getAllWorkouts(verification.userId)
+    const workouts = await WorkoutQueries.getAllWorkouts(verification.userId)
 
     return NextResponse.json(workouts)
   } catch (error) {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   try {
     const { date, seance_id } = await request.json()
 
-    const workoutId = await createWorkout(verification.userId, new Date(date), seance_id)
+    const workoutId = await WorkoutQueries.createWorkout(verification.userId, new Date(date), seance_id)
 
     return NextResponse.json({ id: workoutId })
   } catch (error) {
@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { id, note, seance_id } = await request.json()
 
-    const workoutId = await updateWorkout(verification.userId, id, note, seance_id)
+    const workoutId = await WorkoutQueries.updateWorkout(verification.userId, id, note, seance_id)
 
     return NextResponse.json({ id: workoutId })
   } catch (error) {

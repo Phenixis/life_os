@@ -1,5 +1,5 @@
 import { verifyRequest } from "@/lib/auth/api"
-import { getDailyMoods, createDailyMood, updateDailyMood, deleteDailyMood } from "@/lib/db/queries/dailyMood"
+import { getDailyMoods, createDailyMood, updateDailyMood, deleteDailyMood } from "@/lib/db/queries/daily-mood"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {

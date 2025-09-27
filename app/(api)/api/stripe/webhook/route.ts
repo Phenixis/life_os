@@ -3,7 +3,7 @@ import { stripe } from "@/lib/services/payments/stripe"
 import { db } from "@/lib/db/drizzle"
 import { eq } from "drizzle-orm"
 import * as Schema from "@/lib/db/schema"
-import type { NewUserSubscription } from "@/lib/db/schema"
+import type { User } from "@/lib/db/schema"
 
 export async function POST(request: NextRequest) {
     console.log('=== Stripe Webhook Received ===')
@@ -95,10 +95,10 @@ async function handleCheckoutSessionCompleted(session: any) {
         
         // Update user's stripe_customer_id if not set
         await db
-            .update(Schema.user)
+            .update(Schema.User.User.table)
             .set({ stripe_customer_id: session.customer })
-            .where(eq(Schema.user.id, userId))
-            .returning({ id: Schema.user.id })
+            .where(eq(Schema.User.User.table.id, userId))
+            .returning({ id: Schema.User.User.table.id })
 
         // Create or update subscription record
         await upsertSubscription(userId, subscription)
@@ -143,13 +143,13 @@ async function handleSubscriptionDeleted(subscription: any) {
     try {
         // Mark subscription as cancelled in database
         await db
-            .update(Schema.userSubscription)
+            .update(Schema.User.Subscription.table)
             .set({ 
                 status: 'canceled',
                 canceled_at: new Date(),
                 updated_at: new Date()
             })
-            .where(eq(Schema.userSubscription.stripe_subscription_id, subscription.id))
+            .where(eq(Schema.User.Subscription.table.stripe_subscription_id, subscription.id))
     } catch (error) {
         console.error('Error handling subscription deleted:', error)
     }
@@ -157,7 +157,7 @@ async function handleSubscriptionDeleted(subscription: any) {
 
 async function upsertSubscription(userId: string, subscription: any) {
     try {
-        const subscriptionData: NewUserSubscription = {
+        const subscriptionData: User.Subscription.Insert = {
             user_id: userId,
             stripe_customer_id: subscription.customer,
             stripe_subscription_id: subscription.id,
@@ -172,23 +172,23 @@ async function upsertSubscription(userId: string, subscription: any) {
         // Check if subscription already exists
         const existingSubscription = await db
             .select()
-            .from(Schema.userSubscription)
-            .where(eq(Schema.userSubscription.stripe_subscription_id, subscription.id))
+            .from(Schema.User.Subscription.table)
+            .where(eq(Schema.User.Subscription.table.stripe_subscription_id, subscription.id))
             .limit(1)
 
         if (existingSubscription.length > 0) {
             // Update existing subscription
             await db
-                .update(Schema.userSubscription)
+                .update(Schema.User.Subscription.table)
                 .set(subscriptionData)
-                .where(eq(Schema.userSubscription.stripe_subscription_id, subscription.id))
-                .returning({ id: Schema.userSubscription.id })
+                .where(eq(Schema.User.Subscription.table.stripe_subscription_id, subscription.id))
+                .returning({ id: Schema.User.Subscription.table.id })
         } else {
             // Create new subscription
             await db
-                .insert(Schema.userSubscription)
+                .insert(Schema.User.Subscription.table)
                 .values(subscriptionData)
-                .returning({ id: Schema.userSubscription.id })
+                .returning({ id: Schema.User.Subscription.table.id })
         }
     } catch (error) {
         console.error('Error in upsertSubscription:', error)

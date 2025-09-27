@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
-    type Meteo
+    Meteo as MeteoSchema
 } from '@/lib/db/schema';
 import { Loader2, CircleAlert } from 'lucide-react';
 import {
@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/tooltip";
 import Image from 'next/image'
 import { useUser } from '@/hooks/use-user';
+
 export default function Meteo({
     className,
 }: {
     className?: string
 }) {
     const user = useUser().user;
-    
+
     // Memoize the date calculation to prevent infinite re-renders
     const date = useMemo(() => {
         const now = new Date();
@@ -27,10 +28,10 @@ export default function Meteo({
             ? new Date(now.setDate(now.getDate() + 1)).toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' })
             : now.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
     }, []); // Empty dependency array - date should only be calculated once per component mount
-    
-    const [meteo, setMeteo] = useState<Meteo | null>(null);
+
+    const [meteo, setMeteo] = useState<MeteoSchema.Select | null>(null);
     const [error, setError] = useState<string | null>(null);
-    
+
     useEffect(() => {
         if (!user?.api_key) return;
 
@@ -42,7 +43,7 @@ export default function Meteo({
                     }
                 });
 
-                const data = await response.json() as Meteo;
+                const data = await response.json() as MeteoSchema.Select;
 
                 setMeteo(data);
             } catch (err) {

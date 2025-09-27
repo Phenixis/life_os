@@ -3,7 +3,7 @@
 import useSWR, { mutate } from 'swr';
 import { useUser } from '@/hooks/use-user';
 import { fetcher } from '@/lib/fetcher';
-import type { Movie } from '@/lib/db/schema';
+import { Movie } from '@/lib/db/schema';
 
 interface MovieStats {
     total: number;
@@ -66,7 +66,7 @@ export function useMovies(status?: 'will_watch' | 'watched' | 'watch_again', sea
     );
 
     return {
-        movies: data?.movies as Movie[] || [],
+        movies: data?.movies as Movie.Movie.Select[] || [],
         isLoading,
         error
     };
@@ -235,7 +235,7 @@ export function useMovieActions() {
     const { user } = useUser();
 
     // Helper function to create optimistic movie data
-    const createOptimisticMovie = (movie: Movie, updates: Partial<Movie>): Movie => ({
+    const createOptimisticMovie = (movie: Movie.Movie.Select, updates: Partial<Movie.Movie.Select>): Movie.Movie.Select => ({
         ...movie,
         ...updates,
         updated_at: new Date()
@@ -245,11 +245,11 @@ export function useMovieActions() {
     const updateMoviesInCache = (
         cacheKey: string,
         movieId: number,
-        optimisticUpdate: (movies: Movie[]) => Movie[]
+        optimisticUpdate: (movies: Movie.Movie.Select[]) => Movie.Movie.Select[]
     ) => {
         mutate(
             cacheKey,
-            (currentData: { movies?: Movie[] } | undefined) => {
+            (currentData: { movies?: Movie.Movie.Select[] } | undefined) => {
                 if (!currentData?.movies) return currentData;
                 return {
                     ...currentData,
@@ -263,7 +263,7 @@ export function useMovieActions() {
     // Helper function to update all relevant movie list caches
     const updateAllMovieListCaches = (
         movieId: number,
-        optimisticUpdate: (movies: Movie[]) => Movie[]
+        optimisticUpdate: (movies: Movie.Movie.Select[]) => Movie.Movie.Select[]
     ) => {
         // Update main list caches
         updateMoviesInCache('/api/movie/list', movieId, optimisticUpdate);
@@ -274,7 +274,7 @@ export function useMovieActions() {
         // Update search caches (we update all possible search caches)
         mutate(
             (key) => typeof key === 'string' && key.includes('/api/movie/list?search='),
-            (currentData: { movies?: Movie[] } | undefined) => {
+            (currentData: { movies?: Movie.Movie.Select[] } | undefined) => {
                 if (!currentData?.movies) return currentData;
                 return {
                     ...currentData,
@@ -365,14 +365,14 @@ export function useMovieActions() {
         },
         options?: {
             optimistic?: boolean;
-            originalMovie?: Movie;
+            originalMovie?: Movie.Movie.Select;
         }
     ) => {
         if (!user) throw new Error('User not authenticated');
 
         // Optimistic updates
         if (options?.optimistic && options.originalMovie) {
-            const optimisticUpdates: Partial<Movie> = {
+            const optimisticUpdates: Partial<Movie.Movie.Select> = {
                 ...updates,
                 watched_date: updates.watched_date ? new Date(updates.watched_date) : undefined
             };
@@ -380,7 +380,7 @@ export function useMovieActions() {
             const optimisticMovie = createOptimisticMovie(options.originalMovie, optimisticUpdates);
             
             // Update movie lists cache
-            const updateFn = (movies: Movie[]) =>
+            const updateFn = (movies: Movie.Movie.Select[]) =>
                 movies.map(movie => movie.id === movieId ? optimisticMovie : movie);
 
             // Update all relevant caches
@@ -441,7 +441,7 @@ export function useMovieActions() {
         movieId: number,
         options?: {
             optimistic?: boolean;
-            originalMovie?: Movie;
+            originalMovie?: Movie.Movie.Select;
         }
     ) => {
         if (!user) throw new Error('User not authenticated');
@@ -449,7 +449,7 @@ export function useMovieActions() {
         // Optimistic updates
         if (options?.optimistic && options.originalMovie) {
             // Update movie lists cache
-            const updateFn = (movies: Movie[]) => 
+            const updateFn = (movies: Movie.Movie.Select[]) => 
                 movies.filter(movie => movie.id !== movieId);
 
             // Update all relevant caches

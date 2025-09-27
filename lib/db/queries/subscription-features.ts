@@ -1,19 +1,16 @@
-import { db } from '@/lib/db/drizzle';
-import { feature, planFeature, userSubscription } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { getStripeProduct } from '@/lib/services/payments/stripe';
+import * as lib from "./lib"
 
 /**
  * Get user's active subscription (there should only be one)
  */
 export async function getUserActiveSubscription(userId: string) {
-    const activeSubscriptions = await db
+    const activeSubscriptions = await lib.db
         .select()
-        .from(userSubscription)
+        .from(lib.Schema.User.Subscription.table)
         .where(
-            and(
-                eq(userSubscription.user_id, userId),
-                eq(userSubscription.status, 'active')
+            lib.and(
+                lib.eq(lib.Schema.User.Subscription.table.user_id, userId),
+                lib.eq(lib.Schema.User.Subscription.table.status, 'active')
             )
         )
         .limit(1);
@@ -25,10 +22,10 @@ export async function getUserActiveSubscription(userId: string) {
  * Get all free features
  */
 export async function getAllFreeFeatures(activeOnly = true) {
-    let freeFeatures = await db
+    let freeFeatures = await lib.db
         .select()
-        .from(feature)
-        .where(eq(feature.is_paid, false));
+        .from(lib.Schema.Feature.table)
+        .where(lib.eq(lib.Schema.Feature.table.is_paid, false));
 
     if (activeOnly) {
         freeFeatures = freeFeatures.filter(f => f.is_active);
@@ -49,12 +46,12 @@ export async function getUserAvailableFeatures(userId: string, activeOnly = true
     if (activeSubscription) {
         stripeProductId = activeSubscription.stripe_product_id;
 
-        let planFeatures = (await db
+        let planFeatures = (await lib.db
             .select()
-            .from(feature)
-            .innerJoin(planFeature, eq(feature.id, planFeature.feature_id))
+            .from(lib.Schema.Feature.table)
+            .innerJoin(lib.Schema.PlanFeature.table, lib.eq(lib.Schema.Feature.table.id, lib.Schema.PlanFeature.table.feature_id))
             .where(
-                eq(planFeature.stripe_product_id, stripeProductId)
+                lib.eq(lib.Schema.PlanFeature.table.stripe_product_id, stripeProductId)
             )).map(f => f.feature);
 
         if (activeOnly) {
@@ -93,7 +90,7 @@ export async function getUserCurrentPlan(userId: string) {
     }
 
     return {
-        plan_name: (await getStripeProduct(activeSubscription.stripe_product_id)).name,
+        plan_name: (await lib.StripeService.getStripeProduct(activeSubscription.stripe_product_id)).name,
         stripe_product_id: activeSubscription.stripe_product_id,
         subscription: activeSubscription
     };
@@ -120,7 +117,7 @@ export async function createSubscription(
         cancel_at_period_end: cancelAtPeriodEnd
     };
 
-    await db.insert(userSubscription).values(newSubscription);
+    await lib.db.insert(lib.Schema.User.Subscription.table).values(newSubscription);
 }
 
 /**
@@ -140,13 +137,13 @@ export async function updateSubscription(
 
     if (activeSubscription) {
         // Mark old subscription as deleted
-        await db
-            .update(userSubscription)
+        await lib.db
+            .update(lib.Schema.User.Subscription.table)
             .set({
                 canceled_at: new Date(),
                 status: status
             })
-            .where(eq(userSubscription.id, activeSubscription.id));
+            .where(lib.eq(lib.Schema.User.Subscription.table.id, activeSubscription.id));
     }
 
     if (stripe_customer_id && stripe_subscription_id && stripe_product_id && stripe_price_id) {

@@ -1,6 +1,5 @@
 import {
-    getUncompletedAndDueInTheNextThreeDaysOrLessTasks,
-    getTasksCompletedTheDayBefore
+    TaskQueries
 } from "@/lib/db/queries"
 import {
     type NextRequest,
@@ -29,8 +28,8 @@ export async function GET(request: NextRequest) {
             continue
         }
         try {
-            const tasksToDo = await getUncompletedAndDueInTheNextThreeDaysOrLessTasks(user.id);
-            const tasksDone = await getTasksCompletedTheDayBefore(user.id);
+            const tasksToDo = await TaskQueries.getUncompletedAndDueInTheNextThreeDaysOrLessTasks(user.id);
+            const tasksDone = await TaskQueries.getTasksCompletedTheDayBefore(user.id);
 
             // Sort tasksToDo by due date in ascending order
             const sortedTasksToDo = tasksToDo.sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());

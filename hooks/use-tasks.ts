@@ -1,11 +1,11 @@
 "use client"
 
-import type { Task, TaskWithRelations } from "@/lib/db/schema"
+import { Task } from "@/lib/db/schema"
 import { useFilteredData } from "./use-filtered-data"
 
 interface UseTasksParams {
   completed?: boolean
-  orderBy?: keyof Task
+  orderBy?: keyof Task.Task.Select
   limit?: number
   orderingDirection?: "asc" | "desc"
   withProject?: boolean
@@ -29,7 +29,7 @@ export function useTasks(params: UseTasksParams = {}) {
     dueAfter,
   } = params
 
-  const { data, isLoading, isError, mutate } = useFilteredData<Task[]>({
+  const { data, isLoading, isError, mutate } = useFilteredData<Task.Task.Select[]>({
     endpoint: "/api/task",
     params: {
       completed,
@@ -45,10 +45,10 @@ export function useTasks(params: UseTasksParams = {}) {
   })
 
   return {
-    data: (data as TaskWithRelations[]) || [],
+    data: (data as Task.Task.TaskWithRelations[]) || [],
     isLoading,
     isError,
-    tasks: (data as TaskWithRelations[]) || [], // Keep backward compatibility
+    tasks: (data as Task.Task.TaskWithRelations[]) || [], // Keep backward compatibility
     mutate,
   }
 }

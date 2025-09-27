@@ -1,6 +1,6 @@
 "use client"
 
-import type { Task } from "@/lib/db/schema"
+import { Task } from "@/lib/db/schema"
 import { useFilteredData } from "./use-filtered-data"
 
 interface UseSearchTasksParams {
@@ -15,7 +15,7 @@ export function useSearchTasks(params: UseSearchTasksParams = {}) {
   // Only create a SWR key if query has a value
   const shouldFetch = query !== undefined && query !== ""
 
-  const { data, isLoading, isError, mutate } = useFilteredData<Task[]>({
+  const { data, isLoading, isError, mutate } = useFilteredData<Task.Task.Select[]>({
     endpoint: "/api/task/search",
     params: {
       query,
@@ -28,7 +28,7 @@ export function useSearchTasks(params: UseSearchTasksParams = {}) {
 
   // Filter out tasks with excluded IDs (in case server filtering fails)
   const filteredTasks = data ?
-    (data as Task[]).filter(task => !excludeIds.includes(task.id)) :
+    (data as Task.Task.Select[]).filter(task => !excludeIds.includes(task.id)) :
     []
 
   return {

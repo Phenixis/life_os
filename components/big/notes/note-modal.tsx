@@ -32,7 +32,7 @@ export default function NoteModal({
     onOpenChange,
 }: {
     className?: string
-    note?: Note
+    note?: Note.Note.Select
     password?: string
     children?: React.ReactNode
     isOpen?: boolean
@@ -131,7 +131,7 @@ export default function NoteModal({
                 return
             }
 
-            let noteData: Note
+            let noteData: Note.Note.Select
 
             // 🔐 Encrypt the note content
             if (passwordValue) {
@@ -147,7 +147,7 @@ export default function NoteModal({
                     iv: encrypted.iv,
                     created_at: mode === "create" ? new Date() : note?.created_at,
                     updated_at: new Date(),
-                } as Note
+                } as Note.Note.Select
             } else {
                 noteData = {
                     id: mode === "edit" ? note?.id : -1,
@@ -157,7 +157,7 @@ export default function NoteModal({
                     project_title: project,
                     created_at: mode === "create" ? new Date() : note?.created_at,
                     updated_at: new Date(),
-                } as Note
+                } as Note.Note.Select
             }
 
             resetForm()
@@ -171,9 +171,9 @@ export default function NoteModal({
                         if (!data) return currentData
                         const currentNotes = data.notes || []
 
-                        let updatedData: Note[]
+                        let updatedData: Note.Note.Select[]
                         if (mode === "edit") {
-                            updatedData = currentNotes.map((item: Note) => (item.id === note?.id ? noteData : item))
+                            updatedData = currentNotes.map((item: Note.Note.Select) => (item.id === note?.id ? noteData : item))
                         } else {
                             updatedData = [...currentNotes, noteData]
                         }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useFilteredData } from "./use-filtered-data"
-import type { Importance, Duration } from "@/lib/db/schema"
+import { Task } from "@/lib/db/schema"
 
 interface UseImportanceAndDurationParams {
     skipFetch?: boolean
@@ -14,7 +14,7 @@ export function useImportanceAndDuration(params: UseImportanceAndDurationParams 
         data: importanceData,
         isLoading: isLoadingImportance,
         isError: isErrorImportance,
-    } = useFilteredData<Importance[]>({
+    } = useFilteredData<Task.Importance.Select[]>({
         endpoint: "/api/importance",
         params: {},
         skipFetch,
@@ -24,7 +24,7 @@ export function useImportanceAndDuration(params: UseImportanceAndDurationParams 
         data: durationData,
         isLoading: isLoadingDuration,
         isError: isErrorDuration,
-    } = useFilteredData<Duration[]>({
+    } = useFilteredData<Task.Duration.Select[]>({
         endpoint: "/api/duration",
         params: {},
         skipFetch,
@@ -32,13 +32,13 @@ export function useImportanceAndDuration(params: UseImportanceAndDurationParams 
 
     return {
         data: {
-            importance: (importanceData as Importance[]) || [],
-            duration: (durationData as Duration[]) || [],
+            importance: (importanceData as Task.Importance.Select[]) || [],
+            duration: (durationData as Task.Duration.Select[]) || [],
         },
         isLoading: isLoadingImportance || isLoadingDuration,
         isError: isErrorImportance || isErrorDuration,
-        importanceData: (importanceData as Importance[]) || [], // Keep backward compatibility
-        durationData: (durationData as Duration[]) || [], // Keep backward compatibility
+        importanceData: (importanceData as Task.Importance.Select[]) || [], // Keep backward compatibility
+        durationData: (durationData as Task.Duration.Select[]) || [], // Keep backward compatibility
         isLoadingImportance,
         isLoadingDuration,
         isErrorImportance,

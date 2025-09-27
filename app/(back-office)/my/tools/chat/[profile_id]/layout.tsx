@@ -12,7 +12,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { ConversationSkeleton, ProfileSkeleton } from "@/components/ui/chat-skeletons"
 import { useProfiles } from "@/hooks/chat/use-profiles"
 import { useConversations } from "@/hooks/chat/use-conversations"
-import type { Profile, Conversation } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
 
 interface ChatLayoutProps {
     children: React.ReactNode
@@ -23,7 +23,7 @@ export default function ChatProfileLayout({ children }: ChatLayoutProps) {
     const router = useRouter()
     const profileId = params.profile_id as string
 
-    const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
+    const [selectedProfile, setSelectedProfile] = useState<Ai.Profile.Select | null>(null)
     const [isCreatingProfile, setIsCreatingProfile] = useState(false)
     const [editingConversationId, setEditingConversationId] = useState<string | null>(null)
     const [editingTitle, setEditingTitle] = useState("")
@@ -108,11 +108,11 @@ export default function ChatProfileLayout({ children }: ChatLayoutProps) {
         }
     }
 
-    const handleProfileSelect = (profile: Profile) => {
+    const handleProfileSelect = (profile: Ai.Profile.Select) => {
         router.push(`/my/tools/chat/${profile.id}`)
     }
 
-    const handleConversationSelect = (conversation: Conversation) => {
+    const handleConversationSelect = (conversation: Ai.Conversation.Select) => {
         router.push(`/my/tools/chat/${profileId}/${conversation.id}`)
     }
 
@@ -149,7 +149,7 @@ export default function ChatProfileLayout({ children }: ChatLayoutProps) {
         }
     }
 
-    const handleStartEditConversation = (conversation: Conversation, e: React.MouseEvent) => {
+    const handleStartEditConversation = (conversation: Ai.Conversation.Select, e: React.MouseEvent) => {
         e.stopPropagation() // Prevent conversation selection
         setEditingConversationId(conversation.id)
         setEditingTitle(conversation.title)
@@ -187,7 +187,7 @@ export default function ChatProfileLayout({ children }: ChatLayoutProps) {
     }
 
     // Profile management functions
-    const handleStartEditProfile = (profile: Profile, e: React.MouseEvent) => {
+    const handleStartEditProfile = (profile: Ai.Profile.Select, e: React.MouseEvent) => {
         e.stopPropagation()
         setEditingProfileId(profile.id)
         setEditingProfileData({
@@ -221,7 +221,7 @@ export default function ChatProfileLayout({ children }: ChatLayoutProps) {
         setEditingProfileData({ name: "", description: "", system_prompt: "" })
     }
 
-    const handleDeleteProfile = (profile: Profile, e: React.MouseEvent) => {
+    const handleDeleteProfile = (profile: Ai.Profile.Select, e: React.MouseEvent) => {
         e.stopPropagation()
         setDeleteProfileDialog({
             open: true,

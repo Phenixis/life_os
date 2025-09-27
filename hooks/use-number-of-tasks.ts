@@ -1,8 +1,8 @@
 "use client"
 
-import type { Task, TaskWithRelations } from "@/lib/db/schema"
-import { useFilteredData } from "./use-filtered-data"
 import { TaskCount } from "@/components/ui/calendar"
+import type { Task } from "@/lib/db/schema"
+import { useFilteredData } from "./use-filtered-data"
 
 interface UseNumberOfTasksParams {
     projectTitles?: string[]
@@ -22,7 +22,7 @@ export function useNumberOfTasks(params: UseNumberOfTasksParams = {}) {
         enabled = true
     } = params
 
-    const { data, isLoading, isError, mutate } = useFilteredData<Task[]>({
+    const { data, isLoading, isError, mutate } = useFilteredData<Task.Task.Select[]>({
         endpoint: "/api/task/count",
         params: {
             projectTitles: projectTitles?.join(","),

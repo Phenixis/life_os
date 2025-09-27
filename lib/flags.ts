@@ -1,6 +1,6 @@
 import { flag } from "flags/next"
 import { shouldDarkModeBeEnabled } from "@/lib/utils/dark-mode"
-import type { Task } from "@/lib/db/schema"
+import { Task } from "@/lib/db/schema"
 
 export interface DarkModeCookie {
     has_jarvis_asked_dark_mode: boolean
@@ -16,7 +16,7 @@ export interface DarkModeCookie {
 export interface TaskFilterCookie {
     completed?: boolean
     limit?: number
-    orderBy?: keyof Task
+    orderBy?: keyof Task.Task.Select
     orderingDirection?: "asc" | "desc"
     projects?: string[]
     removedProjects?: string[]

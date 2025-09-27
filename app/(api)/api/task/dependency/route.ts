@@ -1,6 +1,5 @@
 import {
-    getTaskToDoAfterById1AndId2,
-    deleteTaskToDoAfterById,
+    TaskQueries
 } from "@/lib/db/queries"
 import { type NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
@@ -22,10 +21,10 @@ export async function DELETE(request: NextRequest) {
     const id2 = parseInt(id2Param)
     
     try {
-        let taskToDoAfter = await getTaskToDoAfterById1AndId2(id1, id2)
+        let taskToDoAfter = await TaskQueries.getTaskToDoAfterById1AndId2(id1, id2)
 
         if (!taskToDoAfter || taskToDoAfter.length === 0) {
-            taskToDoAfter = await getTaskToDoAfterById1AndId2(id2, id1)
+            taskToDoAfter = await TaskQueries.getTaskToDoAfterById1AndId2(id2, id1)
         }
 
         if (!taskToDoAfter || taskToDoAfter.length === 0) {
@@ -43,13 +42,13 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Because there can be only one active dependency between two tasks at a time, we can safely use the first element
-        const depedencyId = await deleteTaskToDoAfterById(filteredDependencies[0].id)
+        const dependencyId = await TaskQueries.deleteTaskToDoAfterById(filteredDependencies[0].id)
 
-        if (!depedencyId) {
+        if (!dependencyId) {
             return NextResponse.json({ error: "Failed to delete dependency" }, { status: 500 })
         }
-        
-        return NextResponse.json({ id: depedencyId })
+
+        return NextResponse.json({ id: dependencyId })
     } catch (error) {
         console.error("Error deleting taskToDoAfter:", error)
         return NextResponse.json({ error: "Failed to delete taskToDoAfter" }, { status: 500 })

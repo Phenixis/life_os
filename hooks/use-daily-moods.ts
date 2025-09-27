@@ -13,7 +13,7 @@ interface UseDailyMoodsParams {
 export function useDailyMoods(params: UseDailyMoodsParams) {
     const { startDate, endDate, enabled = true } = params
 
-    const { data, isLoading, isError, mutate } = useFilteredData<DailyMood[]>({
+    const { data, isLoading, isError, mutate } = useFilteredData<DailyMood.Select[]>({
         endpoint: "/api/mood",
         params: {
             startDate: startDate.toISOString(),
@@ -23,10 +23,10 @@ export function useDailyMoods(params: UseDailyMoodsParams) {
     })
 
     return {
-        data: data as DailyMood[] || [],
+        data: data as DailyMood.Select[] || [],
         isLoading,
         isError,
         mutate,
-        dailyMoods: data as DailyMood[] || [], // Keep backward compatibility
+        dailyMoods: data as DailyMood.Select[] || [], // Keep backward compatibility
     }
 }

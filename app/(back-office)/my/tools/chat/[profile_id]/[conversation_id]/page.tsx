@@ -11,7 +11,7 @@ import { useConversations } from "@/hooks/chat/use-conversations"
 import { useMessages } from "@/hooks/chat/use-messages"
 import { useChatApi } from "@/hooks/chat/use-chat-api"
 import { ChatMessageSkeleton } from "@/components/ui/chat-skeletons"
-import type { Profile, Conversation } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
 
 export default function ChatConversationPage() {
     const params = useParams()
@@ -20,8 +20,8 @@ export default function ChatConversationPage() {
     const conversationId = params.conversation_id as string
     const initialMessage = searchParams.get('initialMessage')
 
-    const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
-    const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+    const [selectedProfile, setSelectedProfile] = useState<Ai.Profile.Select | null>(null)
+    const [selectedConversation, setSelectedConversation] = useState<Ai.Conversation.Select | null>(null)
     const [input, setInput] = useState("")
     const [hasProcessedInitialMessage, setHasProcessedInitialMessage] = useState(false)
     

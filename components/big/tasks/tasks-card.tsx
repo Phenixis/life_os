@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 const TaskModal = dynamic(() => import("@/components/big/tasks/task-modal"), { ssr: false })
 import { cn } from "@/lib/utils"
-import type { Task, TaskWithRelations } from "@/lib/db/schema"
+import type { Task } from "@/lib/db/schema"
 import { useState, useCallback, useTransition, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Filter, Square, SquareMinus, FolderTree, Calendar, CircleHelp } from "lucide-react"
@@ -41,7 +41,7 @@ export const TASK_PARAMS = {
 export type TaskUrlParams = {
 	[TASK_PARAMS.COMPLETED]?: string;
 	[TASK_PARAMS.LIMIT]?: string;
-	[TASK_PARAMS.ORDER_BY]?: keyof Task;
+	[TASK_PARAMS.ORDER_BY]?: keyof Task.Task.Select;
 	[TASK_PARAMS.ORDERING_DIRECTION]?: 'asc' | 'desc';
 	[TASK_PARAMS.PROJECTS]?: string;
 	[TASK_PARAMS.REMOVED_PROJECTS]?: string;
@@ -61,7 +61,7 @@ export function TasksCard({
 	className?: string
 	initialCompleted?: boolean
 	limit?: number
-	orderBy?: keyof Task
+	orderBy?: keyof Task.Task.Select
 	orderingDirection?: "asc" | "desc"
 	withProject?: boolean
 	initialTaskFilterCookie?: TaskFilterCookie
@@ -100,8 +100,8 @@ export function TasksCard({
 				: initialLimit
 	)
 
-	const [orderBy] = useState<keyof Task | undefined>(
-		(searchParams.get(TASK_PARAMS.ORDER_BY) as keyof Task) ||
+	const [orderBy] = useState<keyof Task.Task.Select | undefined>(
+		(searchParams.get(TASK_PARAMS.ORDER_BY) as keyof Task.Task.Select) ||
 		initialTaskFilterCookie?.orderBy ||
 		initialOrderBy
 	)
@@ -317,9 +317,9 @@ export function TasksCard({
 				acc[projectId].tasks.push(task)
 				return acc
 			},
-			{} as Record<string, { name: string; tasks: TaskWithRelations[] }>
+			{} as Record<string, { name: string; tasks: Task.Task.TaskWithRelations[] }>
 		)
-	}, [tasks, projects, limit])
+	}, [tasks, projects, limit]) as Record<string, { name: string; tasks: Task.Task.TaskWithRelations[] }>
 
 	return (
 		<Card
@@ -567,7 +567,7 @@ export function TasksCard({
 								<div className="">
 									{tasks.map(
 										(
-											task: TaskWithRelations,
+											task: Task.Task.TaskWithRelations,
 										) => (
 											<TaskDisplay
 												key={task.id}
@@ -588,7 +588,7 @@ export function TasksCard({
 							.slice(0, limit)
 							.map(
 								(
-									task: TaskWithRelations
+									task: Task.Task.TaskWithRelations
 								) => (
 									<TaskDisplay key={task.id} task={task} orderedBy={orderBy} currentLimit={limit} currentDueBefore={dueBeforeDate} currentProjects={selectedProjects} />
 								),

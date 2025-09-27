@@ -1,8 +1,7 @@
 "use client"
 
-import { Note } from "@/lib/db/schema"
-import { useFilteredData } from "./use-filtered-data"
 import { NotesAndData } from "@/lib/db/queries/note"
+import { useFilteredData } from "./use-filtered-data"
 
 interface UseNotesParams {
     title?: string

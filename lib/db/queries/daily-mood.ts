@@ -1,14 +1,11 @@
-import * as Drizzle from "drizzle-orm";
-import * as Schema from "../schema";
-import { db } from "../drizzle";
-import { revalidatePath } from "next/cache";
+import * as lib from "./lib"
 
 export async function createDailyMood(
     userId: string,
     mood: number,
     date: Date,
     comment: string
-): Promise<Schema.DailyMood> {
+): Promise<lib.Schema.DailyMood.Select> {
 
     const alreadyExists = await getDailyMood(userId, date);
 
@@ -17,8 +14,8 @@ export async function createDailyMood(
     }
 
 
-    const dailyMood = await db
-        .insert(Schema.dailyMood)
+    const dailyMood = await lib.db
+        .insert(lib.Schema.DailyMood.table)
         .values({
             user_id: userId,
             mood: mood,
@@ -27,7 +24,7 @@ export async function createDailyMood(
         })
         .returning()
 
-    revalidatePath("/mood");
+    lib.revalidatePath("/mood");
 
     return dailyMood[0];
 }
@@ -36,21 +33,21 @@ export async function getDailyMoods(
     userId: string,
     startDate: Date,
     endDate: Date
-): Promise<Schema.DailyMood[]> {
-    const dailyMood = await db
+): Promise<lib.Schema.DailyMood.Select[]> {
+    const dailyMood = await lib.db
         .select()
-        .from(Schema.dailyMood)
+        .from(lib.Schema.DailyMood.table)
         .where(
-            Drizzle.and(
-                Drizzle.eq(Schema.dailyMood.user_id, userId),
-                Drizzle.isNull(Schema.dailyMood.deleted_at),
-                Drizzle.gte(Schema.dailyMood.date, new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())),
-                Drizzle.lte(Schema.dailyMood.date, new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())),
+            lib.and(
+                lib.eq(lib.Schema.DailyMood.table.user_id, userId),
+                lib.isNull(lib.Schema.DailyMood.table.deleted_at),
+                lib.gte(lib.Schema.DailyMood.table.date, new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())),
+                lib.lte(lib.Schema.DailyMood.table.date, new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())),
             )
         )
-        .orderBy(Drizzle.desc(Schema.dailyMood.date))
+        .orderBy(lib.desc(lib.Schema.DailyMood.table.date))
 
-    revalidatePath("/my");
+    lib.revalidatePath("/my");
 
     if (!dailyMood || dailyMood.length === 0) {
         throw new Error("No mood found for this period");
@@ -62,8 +59,8 @@ export async function getDailyMoods(
 export async function getDailyMood(
     userId: string,
     date: Date
-): Promise<Schema.DailyMood | null> {
-    let dailyMood: Schema.DailyMood[]
+): Promise<lib.Schema.DailyMood.Select | null> {
+    let dailyMood: lib.Schema.DailyMood.Select[]
 
     try {
         dailyMood = await getDailyMoods(
@@ -88,24 +85,24 @@ export async function updateDailyMood(
     mood: number,
     date: Date,
     comment: string
-): Promise<Schema.DailyMood> {
-    const dailyMood = await db
-        .update(Schema.dailyMood)
+): Promise<lib.Schema.DailyMood.Select> {
+    const dailyMood = await lib.db
+        .update(lib.Schema.DailyMood.table)
         .set({
             mood: mood,
             updated_at: new Date(),
             comment: comment,
         })
         .where(
-            Drizzle.and(
-                Drizzle.eq(Schema.dailyMood.user_id, userId),
-                Drizzle.isNull(Schema.dailyMood.deleted_at),
-                Drizzle.eq(Schema.dailyMood.date, new Date(date.getFullYear(), date.getMonth(), date.getDate()))
+            lib.and(
+                lib.eq(lib.Schema.DailyMood.table.user_id, userId),
+                lib.isNull(lib.Schema.DailyMood.table.deleted_at),
+                lib.eq(lib.Schema.DailyMood.table.date, new Date(date.getFullYear(), date.getMonth(), date.getDate()))
             )
         )
         .returning()
 
-    revalidatePath("/my");
+    lib.revalidatePath("/my");
 
     return dailyMood[0];
 }
@@ -113,22 +110,22 @@ export async function updateDailyMood(
 export async function deleteDailyMood(
     userId: string,
     date: Date
-): Promise<Schema.DailyMood> {
-    const dailyMood = await db
-        .update(Schema.dailyMood)
+): Promise<lib.Schema.DailyMood.Select> {
+    const dailyMood = await lib.db
+        .update(lib.Schema.DailyMood.table)
         .set({
             deleted_at: new Date(),
         })
         .where(
-            Drizzle.and(
-                Drizzle.eq(Schema.dailyMood.user_id, userId),
-                Drizzle.isNull(Schema.dailyMood.deleted_at),
-                Drizzle.eq(Schema.dailyMood.date, new Date(date.getFullYear(), date.getMonth(), date.getDate()))
+            lib.and(
+                lib.eq(lib.Schema.DailyMood.table.user_id, userId),
+                lib.isNull(lib.Schema.DailyMood.table.deleted_at),
+                lib.eq(lib.Schema.DailyMood.table.date, new Date(date.getFullYear(), date.getMonth(), date.getDate()))
             )
         )
         .returning()
 
-    revalidatePath("/my");
+    lib.revalidatePath("/my");
 
     return dailyMood[0];
 }

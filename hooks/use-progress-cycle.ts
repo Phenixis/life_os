@@ -1,7 +1,7 @@
 "use client"
 
 import { useFilteredData } from "./use-filtered-data"
-import type { HabitFrequency } from "@/lib/types/habits"
+import type { HabitFrequency } from "@/lib/types/habit"
 import { useState } from "react"
 
 interface UseProgressCycleParams {

@@ -1,22 +1,6 @@
 import {
-	getCompletedTasks,
-	getUncompletedTasks,
-	getTaskById,
-	getTasks,
-	createTask,
-	updateTask,
-	markTaskAsDone,
-	markTaskAsUndone,
-	toggleTask,
-	deleteTaskById,
-	createProject,
-	getProject,
-	createTaskToDoAfter,
-	getTasksToDoAfter,
-	getTasksToDoBefore,
-	deleteTaskToDoAfterById,
-	deleteTaskToDoAfterByTodoId,
-	deleteTaskToDoAfterByAfterId,
+	TaskQueries,
+	ProjectQueries
 } from "@/lib/db/queries"
 import type { Task } from "@/lib/db/schema"
 import { type NextRequest, NextResponse } from "next/server"
@@ -29,7 +13,7 @@ export async function GET(request: NextRequest) {
 
 	const searchParams = request.nextUrl.searchParams
 	const completedParam = searchParams.get("completed")
-	const orderBy = searchParams.get("orderBy") as keyof Task | null
+	const orderBy = searchParams.get("orderBy") as keyof Task.Task.Select | null
 	const limitParam = searchParams.get("limit")
 	const orderingDirection = searchParams.get("orderingDirection") as "asc" | "desc" | undefined
 	const projectTitles = searchParams.get("projectTitles")
@@ -50,10 +34,10 @@ export async function GET(request: NextRequest) {
 	try {
 		const tasks =
 			completed === true
-				? await getCompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter)
+				? await TaskQueries.getCompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter)
 				: completed === false
-					? await getUncompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter)
-					: await getTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, completed)
+					? await TaskQueries.getUncompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter)
+					: await TaskQueries.getTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, completed)
 
 		return NextResponse.json(tasks)
 	} catch (error) {
@@ -76,22 +60,22 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
 		}
 
-		const project = projectTitle && await getProject(verification.userId, projectTitle)
+		const project = projectTitle && await ProjectQueries.getProject(verification.userId, projectTitle)
 		if (!project && projectTitle != "") {
-			await createProject(verification.userId, projectTitle)
+			await ProjectQueries.createProject(verification.userId, projectTitle)
 		}
 
-		const toDoAfter = toDoAfterId && await getTaskById(Number(toDoAfterId))
+		const toDoAfter = toDoAfterId && await TaskQueries.getTaskById(Number(toDoAfterId))
 		if (!toDoAfter && toDoAfterId != "-1") {
 			return NextResponse.json({ error: "Invalid toDoAfterId" }, { status: 400 })
 		}
 
 		const dueDateAtMidnight = new Date(dueDate)
 
-		const taskId = await createTask(title, Number(importance), dueDateAtMidnight, Number(duration), projectTitle != "" ? projectTitle : undefined, verification.userId)
+		const taskId = await TaskQueries.createTask(title, Number(importance), dueDateAtMidnight, Number(duration), projectTitle != "" ? projectTitle : undefined, verification.userId)
 
 		if (toDoAfterId && toDoAfterId != "-1") {
-			await createTaskToDoAfter(taskId, Number(toDoAfterId))
+			await TaskQueries.createTaskToDoAfter(taskId, Number(toDoAfterId))
 		}
 
 		return NextResponse.json({ id: taskId }, { status: 201 })
@@ -117,16 +101,16 @@ export async function PUT(request: NextRequest) {
 
 		let dueDate = initialDueDate
 
-		const project = projectTitle && await getProject(verification.userId, projectTitle)
+		const project = projectTitle && await ProjectQueries.getProject(verification.userId, projectTitle)
 		if (!project && projectTitle) {
-			await createProject(verification.userId, projectTitle)
+			await ProjectQueries.createProject(verification.userId, projectTitle)
 		}
 
 		// Validate toDoAfterId if provided
 		if (toDoAfterId !== undefined) {
 			// Check if the referenced task exists
 			if (toDoAfterId !== -1) {
-				const toDoAfter = await getTaskById(Number(toDoAfterId))
+				const toDoAfter = await TaskQueries.getTaskById(Number(toDoAfterId))
 				if (!toDoAfter) {
 					return NextResponse.json({ error: "Invalid toDoAfterId" }, { status: 400 })
 				}
@@ -135,7 +119,7 @@ export async function PUT(request: NextRequest) {
 				}
 				
 				// Get existing toDoAfter relations for this task
-				const existingRelations = await getTasksToDoAfter(Number(id))
+				const existingRelations = await TaskQueries.getTasksToDoAfter(Number(id))
 				
 				const filteredRelations = existingRelations.filter(
 					(relation) => relation.deleted_at === null
@@ -143,19 +127,19 @@ export async function PUT(request: NextRequest) {
 				
 				// Create new relation if there isn't already one, toDoAfterId is provided and not -1
 				if (filteredRelations.length === 0 && toDoAfterId) {
-					await createTaskToDoAfter(Number(id), Number(toDoAfterId))
+					await TaskQueries.createTaskToDoAfter(Number(id), Number(toDoAfterId))
 				} else {
 					filteredRelations.map(async (relation) => {
-						const task = await getTaskById(relation.after_task_id)
+						const task = await TaskQueries.getTaskById(relation.after_task_id)
 						if (task) {
-							await updateTask(verification.userId, task.id, task.title, task.importance, (new Date(task.due) < new Date(dueDate) ? new Date(dueDate) : new Date(task.due)), task.duration, task.project_title || undefined)
+							await TaskQueries.updateTask(verification.userId, task.id, task.title, task.importance, (new Date(task.due) < new Date(dueDate) ? new Date(dueDate) : new Date(task.due)), task.duration, task.project_title || undefined)
 						}
 					})
 				}
 			}
 		}
 
-		const taskId = await updateTask(verification.userId, Number(id), title, Number(importance), new Date(dueDate), Number(duration), projectTitle !== "" ? projectTitle : undefined)
+		const taskId = await TaskQueries.updateTask(verification.userId, Number(id), title, Number(importance), new Date(dueDate), Number(duration), projectTitle !== "" ? projectTitle : undefined)
 
 		return NextResponse.json({ id: taskId })
 	} catch (error) {
@@ -180,19 +164,19 @@ export async function PATCH(request: NextRequest) {
 
 		let taskId
 		if (completed === true) {
-			taskId = await markTaskAsDone(verification.userId, Number(id))
+			taskId = await TaskQueries.markTaskAsDone(verification.userId, Number(id))
 		} else if (completed === false) {
-			taskId = await markTaskAsUndone(verification.userId, Number(id))
+			taskId = await TaskQueries.markTaskAsUndone(verification.userId, Number(id))
 		} else {
 			// Si completed est un booléen indiquant l'état actuel, on utilise toggleTask
-			taskId = await toggleTask(verification.userId, Number(id), completed)
+			taskId = await TaskQueries.toggleTask(verification.userId, Number(id), completed)
 		}
 
-		const task = await getTaskById(Number(taskId))
+		const task = await TaskQueries.getTaskById(Number(taskId))
 
 		if (task) {
 			// Si le task a une relation toDoAfter, on la supprime
-			const existingToDoAfterRelations = await getTasksToDoAfter(Number(taskId))
+			const existingToDoAfterRelations = await TaskQueries.getTasksToDoAfter(Number(taskId))
 
 			const filteredToDoAfterRelations = existingToDoAfterRelations.filter(
 				(relation) => relation.deleted_at === null
@@ -200,19 +184,19 @@ export async function PATCH(request: NextRequest) {
 
 			if (filteredToDoAfterRelations.length > 0) {
 				filteredToDoAfterRelations.forEach(async (relation) => {
-					deleteTaskToDoAfterById(relation.id)
+					await TaskQueries.deleteTaskToDoAfterById(relation.id)
 				})
 			}
 
-			const existiingToDoBeforeRelations = await getTasksToDoBefore(Number(taskId))
+			const existingToDoBeforeRelations = await TaskQueries.getTasksToDoBefore(Number(taskId))
 
-			const filteredToDoBeforeRelations = existiingToDoBeforeRelations.filter(
+			const filteredToDoBeforeRelations = existingToDoBeforeRelations.filter(
 				(relation) => relation.deleted_at === null
 			)
 
 			if (filteredToDoBeforeRelations.length > 0) {
 				filteredToDoBeforeRelations.forEach(async (relation) => {
-					deleteTaskToDoAfterById(relation.id)
+					await TaskQueries.deleteTaskToDoAfterById(relation.id)
 				})
 			}
 		}
@@ -241,11 +225,11 @@ export async function DELETE(request: NextRequest) {
 
 		// Delete any task dependency relationships
 		// 1. Where this task depends on another task
-		await deleteTaskToDoAfterByTodoId(id)
+		await TaskQueries.deleteTaskToDoAfterByTodoId(id)
 		// 2. Where other tasks depend on this task
-		await deleteTaskToDoAfterByAfterId(id)
+		await TaskQueries.deleteTaskToDoAfterByAfterId(id)
 
-		const taskId = await deleteTaskById(verification.userId, id)
+		const taskId = await TaskQueries.deleteTaskById(verification.userId, id)
 
 		return NextResponse.json({ id: taskId })
 	} catch (error) {

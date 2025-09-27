@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [NOT RELEASED]
+- [V1.4.44 - 2025-09-27 10:48:09] refactor: migration queries & schema from one file to multiple files
 - [V1.4.43 - 2025-08-27 18:41:30] fix: fix searchparams problem
 - [V1.4.42 - 2025-08-27 18:37:16] fix: subscription changes en cours
 - [V1.4.41 - 2025-07-17 19:04:38] feat: checkout for pricing card

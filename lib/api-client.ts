@@ -1,12 +1,13 @@
 import { fetcher } from "@/lib/fetcher"
-import type { Profile, CreateProfileRequest, CreateConversationRequest, Conversation } from "./types/chat"
+import type { CreateProfileRequest, CreateConversationRequest } from "./types/chat"
+import { Ai } from "@/lib/db/schema"
 
 export class ApiClient {
   constructor(private apiKey: string) {}
 
   // Profile methods
   async getProfiles() {
-    return fetcher("/api/profiles", this.apiKey) as Promise<{ profiles: Profile[] }>
+    return fetcher("/api/profiles", this.apiKey) as Promise<{ profiles: Ai.Profile.Select[] }>
   }
 
   async createProfile(data: CreateProfileRequest) {
@@ -28,10 +29,10 @@ export class ApiClient {
       throw error
     }
 
-    return response.json() as Promise<{ profile: Profile }>
+    return response.json() as Promise<{ profile: Ai.Profile.Select }>
   }
 
-  async updateProfile(profileId: string, data: Partial<Profile>) {
+  async updateProfile(profileId: string, data: Partial<Ai.Profile.Select>) {
     const response = await fetch(`/api/profiles/${profileId}`, {
       method: "PUT",
       headers: {
@@ -49,7 +50,7 @@ export class ApiClient {
       throw error
     }
 
-    return response.json() as Promise<{ profile: Profile }>
+    return response.json() as Promise<{ profile: Ai.Profile.Select }>
   }
 
   async deleteProfile(profileId: string) {
@@ -90,7 +91,7 @@ export class ApiClient {
       throw error
     }
 
-    return response.json() as Promise<{ conversation: Conversation }>
+    return response.json() as Promise<{ conversation: Ai.Conversation.Select }>
   }
 
   async deleteConversation(conversationId: string) {
@@ -130,6 +131,6 @@ export class ApiClient {
       throw error
     }
 
-    return response.json() as Promise<{ conversation: Conversation }>
+    return response.json() as Promise<{ conversation: Ai.Conversation.Select }>
   }
 }

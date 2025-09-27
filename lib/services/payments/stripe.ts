@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import {
     getUser
 } from '@/lib/db/queries/user';
-import { getUserActiveSubscription, updateSubscription } from '@/lib/db/queries/subscription&features';
+import { getUserActiveSubscription, updateSubscription } from '@/lib/db/queries/subscription-features';
 import { User } from '@/lib/db/schema';
 
 const stripeApiKey = process.env.STRIPE_API_KEY;
@@ -62,7 +62,7 @@ export async function createCheckoutSession({
     redirect(session.url!);
 }
 
-export async function createCustomerPortalSession(user: User) {
+export async function createCustomerPortalSession(user: User.User.Select) {
     const subscription = await getUserActiveSubscription(user.id);
 
     if (!subscription || !user.stripe_customer_id) {

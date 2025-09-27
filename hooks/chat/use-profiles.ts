@@ -3,11 +3,12 @@
 import { useFilteredData } from "../use-filtered-data"
 import { ApiClient } from "@/lib/api-client"
 import { useUser } from "../use-user"
-import type { Profile, CreateProfileRequest } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
+import type { CreateProfileRequest } from "@/lib/types/chat"
 
 // Type for the API response structure
 interface ProfilesApiResponse {
-  profiles: Profile[]
+  profiles: Ai.Profile.Select[]
 }
 
 interface UseProfilesParams {
@@ -28,7 +29,7 @@ export function useProfiles(params: UseProfilesParams = {}) {
     skipFetch: !user?.api_key || skipFetch,
   })
 
-  const profiles = (profilesData?.profiles || []) as Profile[]
+  const profiles = (profilesData?.profiles || []) as Ai.Profile.Select[]
 
   const createProfile = async (data: CreateProfileRequest) => {
     if (!user?.api_key) throw new Error("No API key available")
@@ -53,7 +54,7 @@ export function useProfiles(params: UseProfilesParams = {}) {
     }
   }
 
-  const updateProfile = async (profileId: string, data: Partial<Profile>) => {
+  const updateProfile = async (profileId: string, data: Partial<Ai.Profile.Select>) => {
     if (!user?.api_key) throw new Error("No API key available")
 
     // Optimistically update local state

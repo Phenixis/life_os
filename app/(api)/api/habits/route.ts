@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server"
-import * as HabitQueries from "@/lib/db/queries/habits"
+import * as HabitQueries from "@/lib/db/queries/habit/habit"
 import { verifyRequest } from "@/lib/auth/api"
-import type { HabitColor, HabitFrequency } from "@/lib/types/habits"
+import type { HabitColor, HabitFrequency } from "@/lib/types/habit"
 
 // List all habits
 export async function GET(request: NextRequest) {

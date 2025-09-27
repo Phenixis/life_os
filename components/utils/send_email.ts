@@ -37,7 +37,7 @@ export async function sendEmail(to: string, subject: string, htmlContent: string
     }
 }
 
-export async function sendWelcomeEmail(user: User, password: string) {
+export async function sendWelcomeEmail(user: User.User.Select, password: string) {
     const emailContent = `
             <html>
             <head>
@@ -208,7 +208,7 @@ export async function sendWelcomeEmail(user: User, password: string) {
     sendEmail("max@maximeduhamel.com", "Someone created an account on your portfolio !", emailContent2);
 }
 
-export async function sendPasswordResetEmail(user: User, newPassword: string) {
+export async function sendPasswordResetEmail(user: User.User.Select, newPassword: string) {
     const emailContent = `
             <html>
             <head>

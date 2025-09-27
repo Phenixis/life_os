@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/auth/api';
-import MovieQueries from '@/lib/db/queries/movies';
+import * as MovieQueries from '@/lib/db/queries/movie/movie';
 
 /**
  * GET /api/movie/list

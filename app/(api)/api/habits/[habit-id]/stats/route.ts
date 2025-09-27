@@ -1,6 +1,7 @@
-import { NextResponse, NextRequest } from "next/server"
-import * as HabitQueries from "@/lib/db/queries/habits"
 import { verifyRequest } from "@/lib/auth/api"
+import * as HabitEntryQueries from "@/lib/db/queries/habit/entry"
+import * as HabitQueries from "@/lib/db/queries/habit/habit"
+import { NextRequest, NextResponse } from "next/server"
 
 // Get the stats for a specific habit
 export async function GET(
@@ -29,7 +30,7 @@ export async function GET(
             )
         }
 
-        const stats = await HabitQueries.getHabitStats(userId, habitId)
+        const stats = await HabitEntryQueries.getHabitStats(userId, habitId)
 
         return NextResponse.json({ stats })
     } catch (error) {

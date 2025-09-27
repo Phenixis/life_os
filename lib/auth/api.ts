@@ -12,7 +12,7 @@ export async function verifyApiKey(apiKey: string | null) {
         return { isValid: true, userId: "cron" }
     }
 
-    const user = await db.select().from(Schema.user).where(eq(Schema.user.api_key, apiKey))
+    const user = await db.select().from(Schema.User.User.table).where(eq(Schema.User.User.table.api_key, apiKey))
     
     if (!user || user.length === 0) {
         return { isValid: false, error: 'Invalid API key' }

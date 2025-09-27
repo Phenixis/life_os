@@ -3,11 +3,12 @@
 import { useFilteredData } from "../use-filtered-data"
 import { ApiClient } from "@/lib/api-client"
 import { useUser } from "../use-user"
-import type { Conversation, CreateConversationRequest } from "@/lib/types/chat"
+import { Ai } from "@/lib/db/schema"
+import type { CreateConversationRequest } from "@/lib/types/chat"
 
 // Type for the API response structure
 interface ConversationsApiResponse {
-  conversations: Conversation[]
+  conversations: Ai.Conversation.Select[]
 }
 
 interface UseConversationsParams {
@@ -30,7 +31,7 @@ export function useConversations(params: UseConversationsParams = {}) {
     skipFetch: !user?.api_key || !profileId || !enabled || skipFetch,
   })
 
-  const conversations = (conversationsData?.conversations || []) as Conversation[]
+  const conversations = (conversationsData?.conversations || []) as Ai.Conversation.Select[]
 
   const createConversation = async (data: CreateConversationRequest) => {
     if (!user?.api_key) throw new Error("No API key available")

@@ -12,11 +12,11 @@ export async function GET(request: NextRequest) {
         // Get user's active subscription
         const subscription = await db
             .select()
-            .from(Schema.userSubscription)
+            .from(Schema.User.Subscription.table)
             .where(
                 and(
-                    eq(Schema.userSubscription.user_id, userId),
-                    eq(Schema.userSubscription.status, 'active')
+                    eq(Schema.User.Subscription.table.user_id, userId),
+                    eq(Schema.User.Subscription.table.status, 'active')
                 )
             )
             .limit(1)

@@ -1,26 +1,14 @@
 "use server"
 
-import {
-    desc,
-    eq,
-    isNull,
-    and,
-    gte,
-    lte,
-    sql,
-    between
-} from "drizzle-orm"
-import { db } from "../drizzle"
-import * as Schema from "../schema"
-import { revalidatePath } from "next/cache"
-import type { HabitFrequency, HabitColor, HabitStats } from "@/lib/types/habits"
+import * as lib from "../lib"
+import { getUserHabits, getHabitById, getHabitsByFrequency } from "./habit"
 
 //=============================================================================
 // # HELPER FUNCTIONS
 //=============================================================================
 
 // Helper function to get cycle boundaries for a given date and frequency
-function getCycleBoundaries(date: Date, freq: HabitFrequency): { start: Date, end: Date } {
+function getCycleBoundaries(date: Date, freq: lib.Types.HabitTypes.HabitFrequency): { start: Date, end: Date } {
     const d = new Date(date)
     d.setHours(0, 0, 0, 0)
 
@@ -64,193 +52,6 @@ function getCycleBoundaries(date: Date, freq: HabitFrequency): { start: Date, en
 }
 
 //=============================================================================
-// # HABIT
-//=============================================================================
-
-// ## Create
-
-export async function createHabit(
-    userId: string,
-    title: string,
-    color: HabitColor,
-    icon: string,
-    frequency: HabitFrequency,
-    targetCount: number,
-    description?: string,
-): Promise<number> {
-    const result = await db
-        .insert(Schema.habit)
-        .values({
-            user_id: userId,
-            title: title,
-            description: description,
-            color: color,
-            icon: icon,
-            frequency: frequency,
-            target_count: targetCount,
-            is_active: true
-        } as Schema.NewHabit)
-        .returning({ id: Schema.habit.id })
-
-    // Revalidate all pages that might show habits
-    revalidatePath("/my", "layout")
-
-    return result[0].id
-}
-
-// ## Read
-
-export async function getHabitById(id: number): Promise<Schema.Habit | null> {
-    const result = await db
-        .select()
-        .from(Schema.habit)
-        .where(and(
-            eq(Schema.habit.id, id),
-            isNull(Schema.habit.deleted_at)
-        ))
-
-    return result[0] || null
-}
-
-export async function getUserHabits(userId: string, activeOnly: boolean = true): Promise<Schema.Habit[]> {
-    return await db
-        .select()
-        .from(Schema.habit)
-        .where(and(
-            eq(Schema.habit.user_id, userId),
-            isNull(Schema.habit.deleted_at),
-            activeOnly ? eq(Schema.habit.is_active, true) : sql`1 = 1`
-        ))
-        .orderBy(desc(Schema.habit.created_at))
-}
-
-export async function getHabitsByFrequency(
-    userId: string,
-    frequency: HabitFrequency,
-    activeOnly: boolean = true
-): Promise<Schema.Habit[]> {
-    return await db
-        .select()
-        .from(Schema.habit)
-        .where(and(
-            eq(Schema.habit.user_id, userId),
-            eq(Schema.habit.frequency, frequency),
-            isNull(Schema.habit.deleted_at),
-            activeOnly ? eq(Schema.habit.is_active, true) : sql`1 = 1`
-        ))
-        .orderBy(desc(Schema.habit.created_at))
-}
-
-export async function searchHabits(userId: string, searchTerm: string): Promise<Schema.Habit[]> {
-    // Normalize comparison by converting both title and searchTerm to lowercase
-    return await db
-        .select()
-        .from(Schema.habit)
-        .where(and(
-            eq(Schema.habit.user_id, userId),
-            sql`LOWER(${Schema.habit.title}) LIKE LOWER(${`%${searchTerm}%`})`,
-            isNull(Schema.habit.deleted_at)
-        ))
-        .orderBy(desc(Schema.habit.updated_at))
-}
-
-// ## Update
-
-export async function updateHabit(
-    userId: string,
-    id: number,
-    title?: string,
-    description?: string,
-    color?: HabitColor,
-    icon?: string,
-    frequency?: HabitFrequency,
-    targetCount?: number,
-    isActive?: boolean
-): Promise<number | null> {
-    const updateData: Partial<Schema.NewHabit> = {
-        updated_at: new Date()
-    }
-
-    if (title !== undefined) updateData.title = title
-    if (description !== undefined) updateData.description = description
-    if (color !== undefined) updateData.color = color
-    if (icon !== undefined) updateData.icon = icon
-    if (frequency !== undefined) updateData.frequency = frequency
-    if (targetCount !== undefined) updateData.target_count = targetCount
-    if (isActive !== undefined) updateData.is_active = isActive
-
-    const result = await db
-        .update(Schema.habit)
-        .set(updateData)
-        .where(and(
-            eq(Schema.habit.id, id),
-            eq(Schema.habit.user_id, userId),
-            isNull(Schema.habit.deleted_at)
-        ))
-        .returning({ id: Schema.habit.id })
-
-    // Revalidate all pages that might show habits
-    revalidatePath("/my", "layout")
-
-    if (!result || result.length === 0) {
-        return null
-    }
-
-    return result[0].id
-}
-
-export async function toggleHabitActive(id: number): Promise<boolean | null> {
-    const habit = await getHabitById(id)
-    if (!habit) return null
-
-    const result = await db
-        .update(Schema.habit)
-        .set({
-            is_active: !habit.is_active,
-            updated_at: new Date()
-        })
-        .where(and(
-            eq(Schema.habit.id, id),
-            isNull(Schema.habit.deleted_at)
-        ))
-        .returning({ is_active: Schema.habit.is_active })
-
-    // Revalidate all pages that might show habits
-    revalidatePath("/my", "layout")
-
-    if (!result || result.length === 0) {
-        return null
-    }
-
-    return result[0].is_active
-}
-
-// ## Delete
-
-export async function deleteHabit(userId: string, id: number): Promise<number | null> {
-    const result = await db
-        .update(Schema.habit)
-        .set({
-            deleted_at: new Date(),
-            updated_at: new Date()
-        })
-        .where(and(
-            eq(Schema.habit.id, id),
-            eq(Schema.habit.user_id, userId)
-        ))
-        .returning({ id: Schema.habit.id })
-
-    // Revalidate all pages that might show habits
-    revalidatePath("/my", "layout")
-
-    if (!result || result.length === 0) {
-        return null
-    }
-
-    return result[0].id
-}
-
-//=============================================================================
 // # HABIT ENTRY
 //=============================================================================
 
@@ -263,32 +64,32 @@ export async function createHabitEntry(
     count: number,
     notes?: string
 ): Promise<number> {
-    const result = await db
-        .insert(Schema.habitEntry)
+    const result = await lib.db
+        .insert(lib.Schema.Habit.Entry.table)
         .values({
             habit_id: habitId,
             user_id: userId,
             date: date,
             count: count,
             notes: notes
-        } as Schema.NewHabitEntry)
-        .returning({ id: Schema.habitEntry.id })
+        } as lib.Schema.Habit.Entry.Insert)
+        .returning({ id: lib.Schema.Habit.Entry.table.id })
 
     // Revalidate all pages that might show habit entries
-    revalidatePath("/my", "layout")
+    lib.revalidatePath("/my", "layout")
 
     return result[0].id
 }
 
 // ## Read
 
-export async function getHabitEntryById(userId: string, id: number): Promise<Schema.HabitEntry | null> {
-    const result = await db
+export async function getHabitEntryById(userId: string, id: number): Promise<lib.Schema.Habit.Entry.Select | null> {
+    const result = await lib.db
         .select()
-        .from(Schema.habitEntry)
-        .where(and(
-            eq(Schema.habitEntry.id, id),
-            eq(Schema.habitEntry.user_id, userId)
+        .from(lib.Schema.Habit.Entry.table)
+        .where(lib.and(
+            lib.eq(lib.Schema.Habit.Entry.table.id, id),
+            lib.eq(lib.Schema.Habit.Entry.table.user_id, userId)
         ))
 
     return result[0] || null
@@ -298,17 +99,17 @@ export async function getHabitEntryByDate(
     userId: string,
     habitId: number,
     date: Date
-): Promise<Schema.HabitEntry | null> {
+): Promise<lib.Schema.Habit.Entry.Select | null> {
     // Create date without time for comparison
     const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
-    const result = await db
+    const result = await lib.db
         .select()
-        .from(Schema.habitEntry)
-        .where(and(
-            eq(Schema.habitEntry.habit_id, habitId),
-            eq(Schema.habitEntry.user_id, userId),
-            sql`${Schema.habitEntry.date}::date = ${dateOnly}::date`
+        .from(lib.Schema.Habit.Entry.table)
+        .where(lib.and(
+            lib.eq(lib.Schema.Habit.Entry.table.habit_id, habitId),
+            lib.eq(lib.Schema.Habit.Entry.table.user_id, userId),
+            lib.sql`${lib.Schema.Habit.Entry.table.date}::date = ${dateOnly}::date`
         ))
 
     return result[0] || null
@@ -319,35 +120,35 @@ export async function getHabitEntries(
     startDate?: Date,
     endDate?: Date,
     limit?: number
-): Promise<Schema.HabitEntry[]> {
-    let whereConditions = and(
-        eq(Schema.habitEntry.habit_id, habitId)
+): Promise<lib.Schema.Habit.Entry.Select[]> {
+    let whereConditions = lib.and(
+        lib.eq(lib.Schema.Habit.Entry.table.habit_id, habitId)
     )
 
     if (startDate || endDate) {
         if (startDate && endDate) {
-            whereConditions = and(
+            whereConditions = lib.and(
                 whereConditions,
-                between(Schema.habitEntry.date, startDate, endDate)
+                lib.between(lib.Schema.Habit.Entry.table.date, startDate, endDate)
             )
         } else if (startDate) {
-            whereConditions = and(
+            whereConditions = lib.and(
                 whereConditions,
-                gte(Schema.habitEntry.date, startDate)
+                lib.gte(lib.Schema.Habit.Entry.table.date, startDate)
             )
         } else if (endDate) {
-            whereConditions = and(
+            whereConditions = lib.and(
                 whereConditions,
-                lte(Schema.habitEntry.date, endDate)
+                lib.lte(lib.Schema.Habit.Entry.table.date, endDate)
             )
         }
     }
 
-    const query = db
+    const query = lib.db
         .select()
-        .from(Schema.habitEntry)
+        .from(lib.Schema.Habit.Entry.table)
         .where(whereConditions)
-        .orderBy(desc(Schema.habitEntry.date))
+        .orderBy(lib.desc(lib.Schema.Habit.Entry.table.date))
 
     if (limit) {
         query.limit(limit)
@@ -360,58 +161,58 @@ export async function getUserHabitEntries(
     userId: string,
     startDate?: Date,
     endDate?: Date
-): Promise<(Schema.HabitEntry & { habit: Schema.Habit })[]> {
-    let whereConditions = and(
-        eq(Schema.habitEntry.user_id, userId),
-        isNull(Schema.habit.deleted_at)
+): Promise<(lib.Schema.Habit.Entry.Select & { habit: lib.Schema.Habit.Habit.Select})[]> {
+    let whereConditions = lib.and(
+        lib.eq(lib.Schema.Habit.Entry.table.user_id, userId),
+        lib.isNull(lib.Schema.Habit.Habit.table.deleted_at)
     )
 
     if (startDate || endDate) {
         if (startDate && endDate) {
-            whereConditions = and(
+            whereConditions = lib.and(
                 whereConditions,
-                between(Schema.habitEntry.date, startDate, endDate)
+                lib.between(lib.Schema.Habit.Entry.table.date, startDate, endDate)
             )
         } else if (startDate) {
-            whereConditions = and(
+            whereConditions = lib.and(
                 whereConditions,
-                gte(Schema.habitEntry.date, startDate)
+                lib.gte(lib.Schema.Habit.Entry.table.date, startDate)
             )
         } else if (endDate) {
-            whereConditions = and(
+            whereConditions = lib.and(
                 whereConditions,
-                lte(Schema.habitEntry.date, endDate)
+                lib.lte(lib.Schema.Habit.Entry.table.date, endDate)
             )
         }
     }
 
-    return await db
+    return await lib.db
         .select({
-            id: Schema.habitEntry.id,
-            habit_id: Schema.habitEntry.habit_id,
-            user_id: Schema.habitEntry.user_id,
-            date: Schema.habitEntry.date,
-            count: Schema.habitEntry.count,
-            notes: Schema.habitEntry.notes,
-            created_at: Schema.habitEntry.created_at,
-            updated_at: Schema.habitEntry.updated_at,
-            habit: Schema.habit
+            id: lib.Schema.Habit.Entry.table.id,
+            habit_id: lib.Schema.Habit.Entry.table.habit_id,
+            user_id: lib.Schema.Habit.Entry.table.user_id,
+            date: lib.Schema.Habit.Entry.table.date,
+            count: lib.Schema.Habit.Entry.table.count,
+            notes: lib.Schema.Habit.Entry.table.notes,
+            created_at: lib.Schema.Habit.Entry.table.created_at,
+            updated_at: lib.Schema.Habit.Entry.table.updated_at,
+            habit: lib.Schema.Habit.Habit.table
         })
-        .from(Schema.habitEntry)
-        .innerJoin(Schema.habit, eq(Schema.habitEntry.habit_id, Schema.habit.id))
+        .from(lib.Schema.Habit.Entry.table)
+        .innerJoin(lib.Schema.Habit.Habit.table, lib.eq(lib.Schema.Habit.Entry.table.habit_id, lib.Schema.Habit.Habit.table.id))
         .where(whereConditions)
-        .orderBy(desc(Schema.habitEntry.date))
+        .orderBy(lib.desc(lib.Schema.Habit.Entry.table.date))
 }
 
 export async function getCycleProgress(
     userId: string,
-    frequency: HabitFrequency,
+    frequency: lib.Types.HabitTypes.HabitFrequency,
     date: Date
 ): Promise<{
     cycleStart: Date;
     cycleEnd: Date;
     habits: Array<{
-        habit: Schema.Habit;
+        habit: lib.Schema.Habit.Habit.Select
         isCompleted: boolean;
         currentCount: number;
         targetCount: number;
@@ -461,24 +262,24 @@ export async function updateHabitEntry(
     count?: number,
     notes?: string
 ): Promise<number | null> {
-    const updateData: Partial<Schema.NewHabitEntry> = {
+    const updateData: Partial<lib.Schema.Habit.Entry.Insert> = {
         updated_at: new Date()
     }
 
     if (count !== undefined) updateData.count = count
     if (notes !== undefined) updateData.notes = notes
 
-    const result = await db
-        .update(Schema.habitEntry)
+    const result = await lib.db
+        .update(lib.Schema.Habit.Entry.table)
         .set(updateData)
-        .where(and(
-            eq(Schema.habitEntry.id, id),
-            eq(Schema.habitEntry.user_id, userId)
+        .where(lib.and(
+            lib.eq(lib.Schema.Habit.Entry.table.id, id),
+            lib.eq(lib.Schema.Habit.Entry.table.user_id, userId)
         ))
-        .returning({ id: Schema.habitEntry.id })
+        .returning({ id: lib.Schema.Habit.Entry.table.id })
 
     // Revalidate all pages that might show habit entries
-    revalidatePath("/my", "layout")
+    lib.revalidatePath("/my", "layout")
 
     if (!result || result.length === 0) {
         return null
@@ -508,16 +309,16 @@ export async function updateHabitEntryByDate(
 // ## Delete
 
 export async function deleteHabitEntry(userId: string, id: number): Promise<number | null> {
-    const result = await db
-        .delete(Schema.habitEntry)
-        .where(and(
-            eq(Schema.habitEntry.id, id),
-            eq(Schema.habitEntry.user_id, userId)
+    const result = await lib.db
+        .delete(lib.Schema.Habit.Entry.table)
+        .where(lib.and(
+            lib.eq(lib.Schema.Habit.Entry.table.id, id),
+            lib.eq(lib.Schema.Habit.Entry.table.user_id, userId)
         ))
-        .returning({ id: Schema.habitEntry.id })
+        .returning({ id: lib.Schema.Habit.Entry.table.id })
 
     // Revalidate all pages that might show habit entries
-    revalidatePath("/my", "layout")
+    lib.revalidatePath("/my", "layout")
 
     if (!result || result.length === 0) {
         return null
@@ -544,7 +345,7 @@ export async function deleteHabitEntryByDate(
 // # HABIT STATISTICS
 //=============================================================================
 
-export async function getHabitStats(userId: string, habitId: number): Promise<HabitStats> {
+export async function getHabitStats(userId: string, habitId: number): Promise<lib.Types.HabitTypes.HabitStats> {
     // Fetch habit and entries
     const habit = await getHabitById(habitId)
     if (!habit) {
@@ -679,7 +480,7 @@ export async function getUserHabitStats(userId: string): Promise<{
     let habitCount = 0
 
     for (const habit of activeHabits) {
-        const stats: HabitStats = await getHabitStats(userId, habit.id)
+        const stats: lib.Types.HabitTypes.HabitStats = await getHabitStats(userId, habit.id)
         totalCompletionRate += stats.completion_rate
         habitCount++
     }

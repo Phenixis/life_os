@@ -5,7 +5,7 @@ import type { Habit } from "@/lib/db/schema"
 
 // Type for the API response structure
 interface HabitsApiResponse {
-    habits: Habit[]
+    habits: Habit.Habit.Select[]
 }
 
 interface UseHabitsParams {
@@ -27,9 +27,9 @@ export function useHabits(params: UseHabitsParams = {}) {
     })
 
     return {
-        data: data?.habits as Habit[] || [],
+        data: data?.habits as Habit.Habit.Select[] || [],
         isLoading,
         isError,
-        habits: data?.habits as Habit[] || [], // Keep backward compatibility
+        habits: data?.habits as Habit.Habit.Select[] || [], // Keep backward compatibility
     }
 }
