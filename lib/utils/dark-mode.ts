@@ -13,6 +13,7 @@ export function shouldDarkModeBeEnabled(cookie: DarkModeCookie) : {
 
     const now = new Date()
     let shouldItBeEnabled: boolean
+
     const isAfterStartTime =
         now.getHours() > cookie.startHour ||
         (now.getHours() === cookie.startHour && now.getMinutes() >= cookie.startMinute)
@@ -31,11 +32,11 @@ export function shouldDarkModeBeEnabled(cookie: DarkModeCookie) : {
     }
 
     // Check if the current state matches what the schedule says it should be
-    if (shouldItBeEnabled === cookie.dark_mode) {
+    if (shouldItBeEnabled === cookie.dark_mode || cookie.override) {
         // Current state matches schedule - no override needed
         return {
-            dark_mode: shouldItBeEnabled,
-            override: false,
+            dark_mode: cookie.override ? cookie.dark_mode : shouldItBeEnabled,
+            override: cookie.override,
         }
     } else {
         // Current state doesn't match schedule - apply the schedule and clear override

@@ -1,13 +1,11 @@
 import './globals.css'
-import type { Metadata } from 'next'
-import { Space_Grotesk, Inter } from 'next/font/google';
-import {
-    TooltipProvider
-} from "@/components/ui/tooltip"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Analytics } from '@vercel/analytics/next';
-import { Toaster } from "@/components/ui/sonner"
-import { darkMode } from "@/lib/flags"
+import type {Metadata} from 'next'
+import {Inter, Space_Grotesk} from 'next/font/google';
+import {TooltipProvider} from "@/components/ui/tooltip"
+import {SpeedInsights} from "@vercel/speed-insights/next"
+import {Analytics} from '@vercel/analytics/next';
+import {Toaster} from "@/components/ui/sonner"
+import {darkMode} from "@/lib/flags"
 
 const spaceGrotesk = Space_Grotesk({
     subsets: ['latin'],
@@ -52,8 +50,8 @@ export const metadata: Metadata = {
 const cx = (...classes: string[]) => classes.filter(Boolean).join(' ')
 
 export default async function RootLayout({
-    children,
-}: {
+                                             children,
+                                         }: {
     children: React.ReactNode
 }) {
     const isDarkMode = await darkMode()
@@ -61,25 +59,26 @@ export default async function RootLayout({
         <html
             lang="en"
             className={"overflow-x-hidden " + (isDarkMode ? 'dark' : '')}
+            suppressHydrationWarning
         >
-            <head>
-                <link rel="icon" href="/favicon.png" sizes='any' />
-                <link rel="manifest" href="/manifest.json" />
-                <link rel="apple-touch-icon" href="/favicon.png" />
-            </head>
-            <body className={cx(
-                'antialiased text-black bg-white dark:text-white dark:bg-black h-full min-h-screen w-full min-w-screen max-w-screen',
-                spaceGrotesk.variable,
-                inter.variable,
-                inter.className,
-            )}>
-                <TooltipProvider>
-                    {children}
-                </TooltipProvider>
-                <SpeedInsights />
-                <Analytics />
-                <Toaster />
-            </body>
+        <head>
+            <link rel="icon" href="/favicon.png" sizes='any'/>
+            <link rel="manifest" href="/manifest.json"/>
+            <link rel="apple-touch-icon" href="/favicon.png"/>
+        </head>
+        <body className={cx(
+            'antialiased text-black bg-white dark:text-white dark:bg-black h-full min-h-screen w-full min-w-screen max-w-screen',
+            spaceGrotesk.variable,
+            inter.variable,
+            inter.className,
+        )}>
+        <TooltipProvider>
+            {children}
+        </TooltipProvider>
+        <SpeedInsights/>
+        <Analytics/>
+        <Toaster/>
+        </body>
         </html>
     )
 }

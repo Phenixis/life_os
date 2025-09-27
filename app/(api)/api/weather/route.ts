@@ -1,10 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { MeteoQueries } from "@/lib/db/queries";
-import {
-    type Meteo
-} from "@/lib/db/schema";
+import {NextRequest, NextResponse} from "next/server";
+import {MeteoQueries} from "@/lib/db/queries";
+import {type Meteo} from "@/lib/db/schema";
 import dotenv from 'dotenv';
-import { verifyRequest } from "@/lib/auth/api";
+import {verifyRequest} from "@/lib/auth/api";
 
 export async function GET(request: NextRequest) {
     const verification = await verifyRequest(request)
@@ -19,8 +17,6 @@ export async function GET(request: NextRequest) {
     }
 
     const savedMeteo = await MeteoQueries.getMeteoByDay(verification.userId, day);
-
-    console.log("Saved meteo:", savedMeteo);
 
     const oneHourAgo = new Date(Date.now() - 3600 * 1000);
 
