@@ -1,24 +1,22 @@
 "use client"
 
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { ToolsSidebar } from '@/components/big/tools-sidebar'
-import { MobileSidebarSwipeGesture } from "@/components/ui/mobile-sidebar-swipe-gesture"
-import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle"
+import {SidebarProvider} from "@/components/ui/sidebar"
+import {ToolsSidebar} from '@/components/big/tools-sidebar'
+import {MobileSidebarToggle} from "@/components/ui/mobile-sidebar-toggle"
 
-function ToolsLayoutContent({ children }: { children: React.ReactNode }) {
+function ToolsLayoutContent({children}: { children: React.ReactNode }) {
     return (
         <>
-            <ToolsSidebar />
+            <ToolsSidebar/>
             <main className="w-full">
                 {children}
             </main>
-            <MobileSidebarSwipeGesture />
-            <MobileSidebarToggle />
+            <MobileSidebarToggle/>
         </>
     )
 }
 
-export default function ToolsLayout({ children }: { children: React.ReactNode }) {
+export default function ToolsLayout({children}: { children: React.ReactNode }) {
     return (
         <SidebarProvider defaultOpen={false}>
             <ToolsLayoutContent>{children}</ToolsLayoutContent>

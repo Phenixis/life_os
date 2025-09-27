@@ -1,9 +1,8 @@
 "use client"
 
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { SettingsSidebar } from '@/components/big/settings/settings-sidebar'
-import { MobileSidebarSwipeGesture } from "@/components/ui/mobile-sidebar-swipe-gesture"
-import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle"
+import {SidebarProvider} from "@/components/ui/sidebar"
+import {SettingsSidebar} from '@/components/big/settings/settings-sidebar'
+import {MobileSidebarToggle} from "@/components/ui/mobile-sidebar-toggle"
 
 function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
     return (
@@ -14,7 +13,6 @@ function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
                     {children}
                 </div>
             </main>
-            <MobileSidebarSwipeGesture />
             <MobileSidebarToggle />
         </>
     )

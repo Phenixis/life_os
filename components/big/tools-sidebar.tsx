@@ -3,14 +3,12 @@
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarTrigger
+    SidebarMenuItem
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import {tools} from "@/lib/tools-data"
@@ -44,12 +42,6 @@ export function ToolsSidebar() {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter className="flex-row md:hidden items-center justify-center">
-                <SidebarTrigger/>
-                <div className="font-semibold">
-                    Close Sidebar
-                </div>
-            </SidebarFooter>
         </Sidebar>
     )
 }
