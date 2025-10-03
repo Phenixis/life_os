@@ -1,13 +1,11 @@
 import * as lib from "../lib"
+import * as Set_SavedWorkout from "./set_saved-workout";
 import * as User from "../user/user";
-import * as Set_Workout from "./set_workout";
 
-export const table = lib.pgTable("workout", {
+export const table = lib.pgTable("saved_workout", {
     id: lib.serial("id").primaryKey(),
 
     name: lib.varchar("name", {length: 255}).notNull(),
-    date: lib.timestamp("date").notNull(),
-    difficulty: lib.integer("difficulty").notNull().default(0),
 
     user_id: lib.varchar("user_id", {length: 8}).notNull().references(
         () => User.table.id
@@ -19,11 +17,11 @@ export const table = lib.pgTable("workout", {
 })
 
 export const relations = lib.relations(table, ({one, many}) => ({
+    set_saved_workouts: many(Set_SavedWorkout.table),
     user: one(User.table, {
         fields: [table.user_id],
         references: [User.table.id]
-    }),
-    set_workouts: many(Set_Workout.table)
+    })
 }));
 
 export type Select = typeof table.$inferSelect;

@@ -87,7 +87,7 @@ export function NewWorkout(
                                                   className={"flex flex-col items-center justify-start"}>
                                         <Table className={"mx-auto"} captionPosition={"top"}>
                                             <TableCaption
-                                                className={"mt-0 p-1 flex items-center justify-between text-white"}>
+                                                className={"mt-0 p-1 flex items-center justify-between text-black dark:text-white"}>
                                                 <InvisibleInput
                                                     id={"exercice-name-" + index}
                                                     defaultValue={exercice.name}

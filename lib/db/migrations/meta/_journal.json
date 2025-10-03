@@ -260,6 +260,20 @@
       "when": 1758889843993,
       "tag": "0036_complex_lionheart",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1759083671868,
+      "tag": "0037_chunky_maddog",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1759085662570,
+      "tag": "0038_easy_domino",
+      "breakpoints": true
     }
   ]
 }

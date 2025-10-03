@@ -1,11 +1,8 @@
-export * as Exercice from "./exercice";
 
-export * as Seance from "./seance";
+export * as Exercice from "./exercice"
+export * as WorkoutSet from "./set"
+export * as Workout from "./workout"
+export * as SavedWorkout from "./saved-workout"
 
-export * as Serie from "./serie";
-
-export * as Workout from "./workout";
-
-export * as SerieGroup from "./serie-group"
-
-export * as SeanceExercice from "./seance-exercice";
+export * as Set_SavedWorkout from "./set_saved-workout"
+export * as Set_Workout from "./set_workout"
