@@ -1,18 +1,18 @@
-import { useSearchProject } from "@/hooks/use-search-project"
-import { useDebouncedCallback } from "use-debounce"
-import { useState, useEffect } from "react"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+import {useSearchProject} from "@/hooks/use-search-project"
+import {useDebouncedCallback} from "use-debounce"
+import {useState} from "react"
+import {Label} from "@/components/ui/label"
+import {Input} from "@/components/ui/input"
+import {cn} from "@/lib/utils"
 
 export default function SearchProjectsInput({
-    project,
-    setProject,
-    defaultValue,
-    className,
-    label,
-    enabled = true,
-}: {
+                                                project,
+                                                setProject,
+                                                defaultValue,
+                                                className,
+                                                label,
+                                                enabled = true,
+                                            }: {
     project: string
     setProject: (project: string) => void
     defaultValue: string
@@ -21,21 +21,17 @@ export default function SearchProjectsInput({
     enabled?: boolean
 }) {
     const [projectInputValue, setProjectInputValue] = useState<string>(defaultValue)
-    const { projects, isLoading, isError } = useSearchProject({
-        query: project,
-        limit: 5,
-        enabled: enabled
-    }
+    const {projects, isLoading, isError} = useSearchProject({
+            query: project,
+            limit: 5,
+            enabled: enabled
+        }
     )
     const [showProjectSuggestions, setShowProjectSuggestions] = useState(false)
 
     const handleProjectChange = useDebouncedCallback((value: string) => {
         setProject(value)
     }, 200)
-
-    useEffect(() => {
-        setProjectInputValue(project)
-    }, [project])
 
     return (
         <div className={cn("w-full", className)}>
