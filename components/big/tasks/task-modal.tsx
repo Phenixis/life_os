@@ -506,6 +506,7 @@ export default function TaskModal({
 				<DialogContent
 					className=""
 					aria-describedby={undefined}
+					maxHeight="max-h-105"
 				>
 					<form id="task-form" onSubmit={handleSubmit} className="space-y-4 h-full flex flex-col justify-between">
 						<main className="space-y-4">

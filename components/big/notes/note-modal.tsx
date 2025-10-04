@@ -93,6 +93,15 @@ export default function NoteModal({
         updateUserDraftNoteDebounced()
     }, [noteContent, noteTitle, project])
 
+    useEffect(() => {
+        console.log("[", inputNoteTitle.trim(), "] [", note?.title.trim(), "]", "[", inputNoteContent.trim(), "] [", note?.content.trim(), "]", "[", project.trim(), "] [", note?.project_title?.trim(), "]", "[", passwordValue.trim(), "] [", password?.trim(), "]")
+        setFormChanged(
+            mode === "edit" ?
+                inputNoteTitle.trim() !== note?.title.trim() || inputNoteContent.trim() !== note?.content.trim() || project.trim() !== (note?.project_title ? note.project_title.trim() : "") || passwordValue.trim() !== password?.trim() :
+                inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
+        )
+    }, [inputNoteTitle, inputNoteContent, project, passwordValue])
+
     // Refs
     const isSubmittingRef = useRef(false)
 
@@ -211,20 +220,6 @@ export default function NoteModal({
         }
     }
 
-    const verifyFormChanged = () => {
-        setFormChanged(
-            (mode === "edit" ?
-                inputNoteTitle.trim() !== note?.title.trim() :
-                inputNoteTitle.trim() !== ""
-            )
-            &&
-            (mode === "edit" ?
-                inputNoteContent.trim() !== note?.content.trim() :
-                inputNoteContent.trim() !== ""
-            )
-        )
-    }
-
     const debouncedDecrypt = useDebouncedCallback((pwd: string) => {
         if (mode === "edit" && note?.salt && note?.iv && pwd) {
             // Decrypt content when password is available and note exists
@@ -263,8 +258,8 @@ export default function NoteModal({
             </DialogTrigger>
             <DialogContent
                 aria-describedby={undefined}
-                maxHeight="max-h-130"
-                >
+                maxHeight="max-h-115"
+            >
                 <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
                     <main className="space-y-4">
                         <DialogHeader>
@@ -283,7 +278,6 @@ export default function NoteModal({
                                 autoFocus
                                 onChange={(e) => {
                                     setInputNoteTitle(e.target.value)
-                                    verifyFormChanged()
                                 }}
                                 className="text-sm lg:text-base"
                             />
@@ -297,7 +291,6 @@ export default function NoteModal({
                                 defaultValue={decryptedContent || noteContent}
                                 onChange={(e) => {
                                     setInputNoteContent(e.target.value)
-                                    verifyFormChanged()
                                 }}
                             />
                         </div>

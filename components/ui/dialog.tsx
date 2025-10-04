@@ -56,7 +56,7 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  maxHeight = "max-h-124",
+  maxHeight = "max-h-124 lg:max-h-124",
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean,
@@ -68,16 +68,19 @@ function DialogContent({
     setIsExpanded((previous) => !previous)
   }, [])
 
+
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
+        forceMount
         data-slot="dialog-content"
         data-expanded={isExpanded ? "true" : undefined}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 flex w-full h-full translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg duration-500",
           isExpanded
-            ? "max-h-[93vh] max-w-[93vw]"
+            ? "max-h-[90vh] lg:max-h-[93vh] lg:max-w-[93vw]"
             : cn(DEFAULT_CONTENT_MAX_WIDTH, maxHeight),
           className
         )}
@@ -85,15 +88,16 @@ function DialogContent({
       >
         <div className="relative flex w-full h-full flex-col">
           {showCloseButton && (
-            <div className="pointer-events-auto absolute -left-[25px] -top-14 flex items-center gap-2 bg-background py-3 px-4 rounded-t-lg">
+            <div className={cn("pointer-events-auto absolute flex items-center gap-2 bg-background rounded-t-lg", isExpanded ? "-top-4 -left-4" : "-left-[25px] -top-14 py-3 px-4")}>
               <DialogPrimitive.Close
                 data-slot="dialog-close"
                 className={cn(
                   MAC_WINDOW_BUTTON_BASE,
                   "bg-[#ff5f57] hover:bg-[#ff4941] focus-visible:ring-red-400 group"
                 )}
+
               >
-                <XIcon className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 size-2.5" />
+                <XIcon className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus:opacity-100 size-2.5" />
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>
               <button
@@ -108,7 +112,7 @@ function DialogContent({
                   isExpanded && "bg-[#27ae60]"
                 )}
               >
-                <Maximize2 className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 size-2.5" />
+                <Maximize2 className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus:opacity-100 size-2.5" />
                 <span className="sr-only">
                   {isExpanded ? "Restore dialog size" : "Expand dialog"}
                 </span>
@@ -117,7 +121,7 @@ function DialogContent({
           )}
           <div
             className={cn(
-              "mx-auto grid w-full h-full gap-4",
+              "mx-auto grid w-full h-full gap-4 overflow-y-auto scrollbar-hide px-1 pb-1",
               DEFAULT_CONTENT_MAX_WIDTH
             )}
           >
