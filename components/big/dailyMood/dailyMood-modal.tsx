@@ -29,28 +29,28 @@ import { DailyMood } from "@/lib/db/schema"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-export default function DailyMoodModal({ 
+export default function DailyMoodModal({
     date,
     children,
     isOpen,
     onOpenChange
-}: { 
+}: {
     date?: Date
     children?: React.ReactNode
     isOpen?: boolean
     onOpenChange?: (open: boolean) => void
 }) {
     const { user } = useUser()
-    
+
     // State - use external control if provided
     const [internalOpen, setInternalOpen] = useState(false)
     const open = isOpen !== undefined ? isOpen : internalOpen
     const setOpen = onOpenChange || setInternalOpen
-    
+
     const [selectedMood, setSelectedMood] = useState<number | null>(null)
     const [comment, setComment] = useState("")
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    
+
     // Use the passed date or fallback to today
     const targetDate = date || new Date()
     const normalizedDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0)
@@ -63,8 +63,8 @@ export default function DailyMoodModal({
     })
 
     // Get current mood for the target date // Use the last mood entry if multiple exist because the first one might be the one from the previous day
-    const currentMood = dailyMoods && dailyMoods.length > 0 ? dailyMoods[dailyMoods.length-1].mood : null
-    const currentComment = dailyMoods && dailyMoods.length > 0 ? dailyMoods[dailyMoods.length-1].comment : ""
+    const currentMood = dailyMoods && dailyMoods.length > 0 ? dailyMoods[dailyMoods.length - 1].mood : null
+    const currentComment = dailyMoods && dailyMoods.length > 0 ? dailyMoods[dailyMoods.length - 1].comment : ""
 
     // Initialize form state when dialog opens
     const handleOpenChange = (newOpen: boolean) => {
@@ -105,7 +105,7 @@ export default function DailyMoodModal({
         }
 
         setOpen(false)
-        
+
         // Generate monthly query key for calendar optimistic updates
         const monthStart = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), 1)
         const monthEnd = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth() + 1, 0)
@@ -167,7 +167,7 @@ export default function DailyMoodModal({
                     mutateDailyMoods()
                     mutate("/api/mood")
                     mutate(monthlyQueryKey)
-                    
+
                     response.json().then(data => {
                         const errorMessage = data?.error || "Failed to delete mood";
                         toast.error(errorMessage);
@@ -205,7 +205,7 @@ export default function DailyMoodModal({
 
         setOpen(false)
         const method = dailyMoods.length == 0 ? "POST" : "PUT"
-        
+
         // Generate monthly query key for calendar optimistic updates (using same logic as useFilteredData)
         const monthStart = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), 1)
         const monthEnd = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth() + 1, 0)
@@ -217,15 +217,15 @@ export default function DailyMoodModal({
         // Optimistic update for current query (specific date range)
         mutateDailyMoods((prevData: DailyMood.Select[] | undefined) => {
             if (method === "POST") {
-                const newMood: DailyMood.Select = { 
-                    mood: selectedMood, 
-                    date: normalizedDate, 
-                    created_at: new Date(), 
-                    comment: comment, 
+                const newMood: DailyMood.Select = {
+                    mood: selectedMood,
+                    date: normalizedDate,
+                    created_at: new Date(),
+                    comment: comment,
                     id: Date.now(), // Temporary ID for optimistic update
-                    user_id: user?.id || "", 
-                    updated_at: new Date(), 
-                    deleted_at: null 
+                    user_id: user?.id || "",
+                    updated_at: new Date(),
+                    deleted_at: null
                 }
                 return [newMood, ...(prevData || [])]
             }
@@ -246,15 +246,15 @@ export default function DailyMoodModal({
         // Optimistic update for calendar monthly query (for calendar component)
         mutate(monthlyQueryKey, (prevData: DailyMood.Select[] | undefined) => {
             if (method === "POST") {
-                const newMood: DailyMood.Select = { 
-                    mood: selectedMood, 
-                    date: normalizedDate, 
-                    created_at: new Date(), 
-                    comment: comment, 
+                const newMood: DailyMood.Select = {
+                    mood: selectedMood,
+                    date: normalizedDate,
+                    created_at: new Date(),
+                    comment: comment,
                     id: Date.now(), // Temporary ID for optimistic update
-                    user_id: user?.id || "", 
-                    updated_at: new Date(), 
-                    deleted_at: null 
+                    user_id: user?.id || "",
+                    updated_at: new Date(),
+                    deleted_at: null
                 }
                 return [newMood, ...(prevData || [])]
             }
@@ -274,15 +274,15 @@ export default function DailyMoodModal({
         // Optimistic update for global cache (for calendar component)
         mutate("/api/mood", (prevData: DailyMood.Select[] | undefined) => {
             if (method === "POST") {
-                const newMood: DailyMood.Select = { 
-                    mood: selectedMood, 
-                    date: normalizedDate, 
-                    created_at: new Date(), 
-                    comment: comment, 
+                const newMood: DailyMood.Select = {
+                    mood: selectedMood,
+                    date: normalizedDate,
+                    created_at: new Date(),
+                    comment: comment,
                     id: Date.now(), // Temporary ID for optimistic update
-                    user_id: user?.id || "", 
-                    updated_at: new Date(), 
-                    deleted_at: null 
+                    user_id: user?.id || "",
+                    updated_at: new Date(),
+                    deleted_at: null
                 }
                 return [newMood, ...(prevData || [])]
             }
@@ -318,7 +318,7 @@ export default function DailyMoodModal({
                     mutateDailyMoods()
                     mutate("/api/mood")
                     mutate(monthlyQueryKey)
-                    
+
                     response.json().then(data => {
                         const errorMessage = data?.error || "Failed to save mood";
                         toast.error(errorMessage);
@@ -370,23 +370,27 @@ export default function DailyMoodModal({
                     >
                         {getMoodIcon(currentMood)}
                         <p className="hidden">
-                            {isFutureDate() 
+                            {isFutureDate()
                                 ? `Cannot set mood for future date: ${normalizedDate.toLocaleDateString()}`
-                                : isToday() 
-                                    ? "What's your mood today?" 
+                                : isToday()
+                                    ? "What's your mood today?"
                                     : `Mood for ${normalizedDate.toLocaleDateString()}`
                             }
                         </p>
                     </Button>
                 </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent
+                className="md:max-w-[425px] lg:max-w-[425px]"
+                maxHeight="max-h-96"
+                showCloseButton={false}
+            >
                 <DialogHeader>
                     <DialogTitle>
-                        {isFutureDate() 
+                        {isFutureDate()
                             ? `Cannot set mood for future date: ${normalizedDate.toLocaleDateString()}`
-                            : isToday() 
-                                ? "What's your mood today?" 
+                            : isToday()
+                                ? "What's your mood today?"
                                 : `Set mood for ${normalizedDate.toLocaleDateString()}`
                         }
                     </DialogTitle>
@@ -398,7 +402,7 @@ export default function DailyMoodModal({
                             <Button
                                 variant={selectedMood === 0 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 0 ? "bg-red-100 border border-red-500 dark:bg-red-900/30 text-black dark:text-white" : ""}`}
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 0 ? "bg-red-100 border border-red-500 dark:bg-red-900/30 lg:hover:bg-red-200 text-black dark:text-white" : ""}`}
                                 onClick={() => setSelectedMood(0)}
                                 disabled={isFutureDate()}
                             >
@@ -408,7 +412,7 @@ export default function DailyMoodModal({
                             <Button
                                 variant={selectedMood === 1 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 1 ? "bg-blue-100 border border-blue-500 dark:bg-blue-900/30 text-black dark:text-white" : ""}`}
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 1 ? "bg-blue-100 border border-blue-500 dark:bg-blue-900/30 lg:hover:bg-blue-200 text-black dark:text-white" : ""}`}
                                 onClick={() => setSelectedMood(1)}
                                 disabled={isFutureDate()}
                             >
@@ -418,7 +422,7 @@ export default function DailyMoodModal({
                             <Button
                                 variant={selectedMood === 2 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 2 ? "bg-amber-100 border border-amber-500 dark:bg-amber-900/30 text-black dark:text-white" : ""}`}
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 2 ? "bg-amber-100 border border-amber-500 dark:bg-amber-900/30 lg:hover:bg-amber-200 text-black dark:text-white" : ""}`}
                                 onClick={() => setSelectedMood(2)}
                                 disabled={isFutureDate()}
                             >
@@ -428,7 +432,7 @@ export default function DailyMoodModal({
                             <Button
                                 variant={selectedMood === 3 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 3 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 text-black dark:text-white" : ""}`}
+                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 3 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
                                 onClick={() => setSelectedMood(3)}
                                 disabled={isFutureDate()}
                             >
@@ -438,7 +442,7 @@ export default function DailyMoodModal({
                             <Button
                                 variant={selectedMood === 4 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 4 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 text-black dark:text-white" : ""}`}
+                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 4 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
                                 onClick={() => setSelectedMood(4)}
                                 disabled={isFutureDate()}
                             >
@@ -491,7 +495,7 @@ export default function DailyMoodModal({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Mood</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete your mood for {normalizedDate.toLocaleDateString()}? 
+                            Are you sure you want to delete your mood for {normalizedDate.toLocaleDateString()}?
                             This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
