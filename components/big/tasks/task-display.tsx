@@ -398,7 +398,7 @@ export default function TaskDisplay({
 		>
 			{skeleton ? (
 				<>
-					<div className="flex items-center justify-between w-full">
+					<div className="flex items-center justify-between w-full text-xs md:text-sm">
 						<div className="flex items-center w-full">
 							<div
 								className={cn(
@@ -507,23 +507,23 @@ export default function TaskDisplay({
 							<div className={`flex space-x-4 justify-between`}>
 								<div className="space-y-1">
 									<Tooltip tooltip={`(Urgency * Importance) - Duration = Score<br/>(${task.urgency} * ${task.importance}) - ${task.duration} = ${task.score}`}>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Score: <span className="text-black dark:text-white">{task.score}</span>
 										</p>
 									</Tooltip>
 									{task.project_title !== null && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Project: <span className="text-black dark:text-white">{task.project_title}</span>
 										</p>
 									)}
 									{task.importance !== null && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Importance: <span className="text-black dark:text-white">{task.importanceDetails.name}</span>
 										</p>
 									)}
 									{task.due && (
 										<Tooltip tooltip={`${new Date(task.due).toLocaleDateString()}`} cursor="cursor-auto">
-											<p className="text-sm text-muted-foreground">
+											<p className="text-muted-foreground">
 												Due:{" "}
 												<span className="text-black dark:text-white">
 													{(() => {
@@ -540,7 +540,7 @@ export default function TaskDisplay({
 										</Tooltip>
 									)}
 									{task.duration !== undefined && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Duration: <span className="text-black dark:text-white">{task.durationDetails.name}</span>
 										</p>
 									)}
