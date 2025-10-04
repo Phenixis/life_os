@@ -80,6 +80,9 @@ export async function updateMeteo(userId: string, dayOrMeteo: string | lib.Schem
         };
     }
 
+    updatedMeteo.latitude = (updatedMeteo.latitude || "-1").slice(0, 10);
+    updatedMeteo.longitude = (updatedMeteo.longitude || "-1").slice(0, 10);
+
     const result = await lib.db
         .update(lib.Schema.Meteo.table)
         .set(updatedMeteo)
