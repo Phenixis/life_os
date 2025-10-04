@@ -77,46 +77,44 @@ function DialogContent({
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 flex w-full h-full translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg duration-500",
           isExpanded
-            ? "max-h-[95vh] max-w-[95vw]"
+            ? "max-h-[93vh] max-w-[93vw]"
             : cn(DEFAULT_CONTENT_MAX_WIDTH, maxHeight),
           className
         )}
         {...props}
       >
         <div className="relative flex w-full h-full flex-col">
-          <div className="pointer-events-auto absolute right-0 top-0 flex items-center gap-2">
-            {showCloseButton && (
-              <>
-                <button
-                  type="button"
-                  onClick={toggleExpanded}
-                  aria-pressed={isExpanded}
-                  aria-label={isExpanded ? "Restore dialog size" : "Expand dialog"}
-                  title={isExpanded ? "Restore" : "Expand"}
-                  className={cn(
-                    MAC_WINDOW_BUTTON_BASE,
-                    "bg-[#2ecc71] hover:bg-[#29c36a] focus-visible:ring-emerald-400 group",
-                    isExpanded && "bg-[#27ae60]"
-                  )}
-                >
-                  <Maximize2 className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 size-2.5" />
-                  <span className="sr-only">
-                    {isExpanded ? "Restore dialog size" : "Expand dialog"}
-                  </span>
-                </button>
-                <DialogPrimitive.Close
-                  data-slot="dialog-close"
-                  className={cn(
-                    MAC_WINDOW_BUTTON_BASE,
-                    "bg-[#ff5f57] hover:bg-[#ff4941] focus-visible:ring-red-400 group"
-                  )}
-                >
-                  <XIcon className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 size-2.5" />
-                  <span className="sr-only">Close</span>
-                </DialogPrimitive.Close>
-              </>
-            )}
-          </div>
+          {showCloseButton && (
+            <div className="pointer-events-auto absolute -left-[25px] -top-14 flex items-center gap-2 bg-background py-3 px-4 rounded-t-lg">
+              <DialogPrimitive.Close
+                data-slot="dialog-close"
+                className={cn(
+                  MAC_WINDOW_BUTTON_BASE,
+                  "bg-[#ff5f57] hover:bg-[#ff4941] focus-visible:ring-red-400 group"
+                )}
+              >
+                <XIcon className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 size-2.5" />
+                <span className="sr-only">Close</span>
+              </DialogPrimitive.Close>
+              <button
+                type="button"
+                onClick={toggleExpanded}
+                aria-pressed={isExpanded}
+                aria-label={isExpanded ? "Restore dialog size" : "Expand dialog"}
+                title={isExpanded ? "Restore" : "Expand"}
+                className={cn(
+                  MAC_WINDOW_BUTTON_BASE,
+                  "bg-[#2ecc71] hover:bg-[#29c36a] focus-visible:ring-emerald-400 group",
+                  isExpanded && "bg-[#27ae60]"
+                )}
+              >
+                <Maximize2 className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 size-2.5" />
+                <span className="sr-only">
+                  {isExpanded ? "Restore dialog size" : "Expand dialog"}
+                </span>
+              </button>
+            </div>
+          )}
           <div
             className={cn(
               "mx-auto grid w-full h-full gap-4",
