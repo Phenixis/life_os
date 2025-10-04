@@ -75,7 +75,8 @@ export default function MovieTrackerPage() {
                             Add Movie
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogContent maxHeight='max-h-130' className="">
+                        <div className="flex flex-col justify-start gap-4">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <Search className="w-5 h-5" />
@@ -83,6 +84,7 @@ export default function MovieTrackerPage() {
                             </DialogTitle>
                         </DialogHeader>
                         <MovieSearch onMovieAdded={handleMovieAdded} />
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>

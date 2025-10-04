@@ -262,7 +262,9 @@ export default function NoteModal({
                 )}
             </DialogTrigger>
             <DialogContent
-                aria-describedby={undefined}>
+                aria-describedby={undefined}
+                maxHeight="max-h-130"
+                >
                 <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
                     <main className="space-y-4">
                         <DialogHeader>
