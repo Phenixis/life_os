@@ -66,7 +66,7 @@ export default function Menu() {
             <Button onClick={() => setOpen(true)} variant="outline" size="icon" className="whitespace-nowrap transition-transform duration-300" tooltip="Open menu (Ctrl/⌘+K)">
                 <MenuIcon size={24} />
             </Button>
-            <CommandDialog open={open} onOpenChange={setOpen}>
+            <CommandDialog open={open} onOpenChange={setOpen} showCloseButton={false} >
                 <CommandInput placeholder="Type a command or search..." />
                 <CommandList>
                     <CommandEmpty>No results found.</CommandEmpty>

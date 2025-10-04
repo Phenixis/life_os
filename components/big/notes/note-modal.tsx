@@ -263,63 +263,67 @@ export default function NoteModal({
             </DialogTrigger>
             <DialogContent
                 aria-describedby={undefined}>
-                <DialogHeader>
-                    <DialogTitle>
-                        {mode === "create" ? "Create Note" : "Edit Note"}
-                    </DialogTitle>
-                </DialogHeader>
-                <form id="note-form" onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <Label htmlFor="title" required>Title</Label>
-                        <Input
-                            type="text"
-                            id="title"
-                            name="title"
-                            defaultValue={noteTitle}
-                            autoFocus
-                            onChange={(e) => {
-                                setInputNoteTitle(e.target.value)
-                                verifyFormChanged()
-                            }}
-                            className="text-sm lg:text-base"
+                <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
+                    <main className="space-y-4">
+                        <DialogHeader>
+                            <DialogTitle>
+                                {mode === "create" ? "Create Note" : "Edit Note"}
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        <div>
+                            <Label htmlFor="title" required>Title</Label>
+                            <Input
+                                type="text"
+                                id="title"
+                                name="title"
+                                defaultValue={noteTitle}
+                                autoFocus
+                                onChange={(e) => {
+                                    setInputNoteTitle(e.target.value)
+                                    verifyFormChanged()
+                                }}
+                                className="text-sm lg:text-base"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="content" required>Content</Label>
+                            <Textarea
+                                id="content"
+                                name="content"
+                                className="text-xs lg:text-sm"
+                                defaultValue={decryptedContent || noteContent}
+                                onChange={(e) => {
+                                    setInputNoteContent(e.target.value)
+                                    verifyFormChanged()
+                                }}
+                            />
+                        </div>
+                        <SearchProjectsInput
+                            project={project}
+                            setProject={setProject}
+                            defaultValue={project}
                         />
-                    </div>
-                    <div>
-                        <Label htmlFor="content" required>Content</Label>
-                        <Textarea
-                            id="content"
-                            name="content"
-                            className="text-xs lg:text-sm"
-                            defaultValue={decryptedContent || noteContent}
-                            onChange={(e) => {
-                                setInputNoteContent(e.target.value)
-                                verifyFormChanged()
-                            }}
-                        />
-                    </div>
-                    <SearchProjectsInput
-                        project={project}
-                        setProject={setProject}
-                        defaultValue={project}
-                    />
-                    <Collapsible className="w-full" open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
-                        <CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
-                            Advanced Options
-                            <ChevronDown className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`} />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="space-y-4">
-                            <div>
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    type="text"
-                                    id="password"
-                                    name="password"
-                                    value={passwordValue}
-                                    onChange={(e) => setPasswordValue(e.target.value)}
-                                />
-                            </div>
-                        </CollapsibleContent>
-                    </Collapsible>
+                        <Collapsible className="w-full" open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+                            <CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
+                                Advanced Options
+                                <ChevronDown className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`} />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="space-y-4">
+                                <div>
+                                    <Label htmlFor="password">Password</Label>
+                                    <Input
+                                        type="text"
+                                        id="password"
+                                        name="password"
+                                        value={passwordValue}
+                                        onChange={(e) => setPasswordValue(e.target.value)}
+                                    />
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </main>
+
                     <DialogFooter>
                         <Button type="submit" disabled={!formChanged}>
                             {mode === "create" ? "Create" : "Save"}
@@ -327,6 +331,6 @@ export default function NoteModal({
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }
