@@ -1,7 +1,9 @@
 "use server"
 
 import { calculateUrgency } from "@/lib/utils/task";
-import * as lib from "./lib";
+import * as lib from "../lib";
+
+import * as RecurrencyQueries from "./recurrency"
 
 const taskToDoAfterAlias = lib.alias(lib.Schema.Task.ToDoAfter.table, 'taskToDoAfter');
 const taskToDoBeforeAlias = lib.alias(lib.Schema.Task.ToDoAfter.table, 'taskToDoBefore');
@@ -39,6 +41,20 @@ export async function createTask(
     lib.revalidatePath("/my", 'layout')
 
     return taskId
+}
+
+export async function duplicateTask(id: number, newValues: Partial<lib.Schema.Task.Task.Insert> = {}) {
+    const task = await getTaskById(id);
+    if (!task) return null;
+
+    return createTask(
+        newValues.title ? newValues.title : task.title,
+        newValues.importance ? newValues.importance : task.importance,
+        newValues.due ? newValues.due : task.due,
+        newValues.duration ? newValues.duration : task.duration,
+        newValues.project_title ? newValues.project_title : task.project_title ? task.project_title : undefined,
+        newValues.user_id ? newValues.user_id : task.user_id
+    );
 }
 
 // ## Read
@@ -183,7 +199,7 @@ export async function getNumberOfTasks(userId: string, projectTitles?: string[],
 
 export async function getTasks(
     userId: string,
-    orderBy: keyof lib.Schema.Task.Task.Select= "score",
+    orderBy: keyof lib.Schema.Task.Task.Select = "score",
     orderingDirection?: "asc" | "desc",
     limit = 50,
     projectTitles?: string[],
@@ -374,11 +390,11 @@ export async function getTasks(
     return result as lib.Schema.Task.Task.TaskWithRelations[]
 }
 
-export async function getCompletedTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select= "completed_at", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
+export async function getCompletedTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "completed_at", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
     return getTasks(userId, orderBy, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, true);
 }
 
-export async function getUncompletedTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select= "score", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
+export async function getUncompletedTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "score", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
     return getTasks(userId, orderBy, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, false);
 }
 
@@ -395,7 +411,7 @@ export async function searchTasksByTitle(userId: string, title: string, limit = 
         .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as lib.Schema.Task.Task.Select[]
 }
 
-export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select= "score", orderingDirection?: "asc" | "desc") {
+export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "score", orderingDirection?: "asc" | "desc") {
     const today = new Date()
     const threeDaysFromNow = new Date(today)
     threeDaysFromNow.setDate(today.getDate() + 3)
@@ -403,7 +419,7 @@ export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: 
     return getTasks(userId, orderBy, orderingDirection, -1, undefined, undefined, threeDaysFromNow, undefined, false);
 }
 
-export async function getTasksCompletedTheDayBefore(userId: string, orderBy: keyof lib.Schema.Task.Task.Select= "completed_at", orderingDirection: "asc" | "desc" = "asc") {
+export async function getTasksCompletedTheDayBefore(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "completed_at", orderingDirection: "asc" | "desc" = "asc") {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const yesterday = new Date(today)
@@ -475,7 +491,10 @@ export async function updateTaskUrgency(userId: string, id: number) {
     return result[0].id
 }
 
-export async function markTaskAsDone(userId: string, id: number) {
+export async function markTaskAsDone(userId: string, id: number) : Promise<{
+    done_task_id: number,
+    new_task_id?: number
+}> {
     const result = await lib.db
         .update(lib.Schema.Task.Task.table)
         .set({
@@ -488,14 +507,26 @@ export async function markTaskAsDone(userId: string, id: number) {
         ))
         .returning({ id: lib.Schema.Task.Task.table.id })
 
+    RecurrencyQueries.IncrementCurrentCount(id);
+
+    const nextDue = await RecurrencyQueries.CalculateNextDue(id);
+
+    let new_task_id: number | undefined = undefined;
+
+    if (nextDue) {
+        const local_new_task_id = await duplicateTask(id, { due: nextDue });
+        if (local_new_task_id) {
+            new_task_id = local_new_task_id;
+        }
+    }
+
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
 
-    if (!result) {
-        return null
+    return {
+        done_task_id: result[0].id,
+        new_task_id
     }
-
-    return result[0].id
 }
 
 export async function markTaskAsUndone(userId: string, id: number) {

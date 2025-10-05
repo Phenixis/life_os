@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
     if ('error' in verification) return verification.error
 
     try {
-        const tasks = await TaskQueries.getUncompletedTasks(verification.userId);
+        const tasks = await TaskQueries.Task.getUncompletedTasks(verification.userId);
 
         for (const task of tasks) {
-            const result = await TaskQueries.updateTaskUrgency(verification.userId, task.id);
+            const result = await TaskQueries.Task.updateTaskUrgency(verification.userId, task.id);
 
             if (!result) {
                 throw new Error(`Task ${task.id} urgency update failed`);
