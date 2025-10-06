@@ -2,9 +2,15 @@
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { XIcon } from "lucide-react"
+import { Maximize2, XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+
+const DEFAULT_CONTENT_MAX_WIDTH =
+  "max-w-[calc(100%-2rem)] sm:max-w-lg lg:max-w-3xl"
+
+const MAC_WINDOW_BUTTON_BASE =
+  "ring-offset-background focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 flex h-4 w-4 items-center justify-center rounded-full border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_1px_2px_rgba(15,23,42,0.35)] opacity-90 transition-opacity duration-200 hover:opacity-100 disabled:pointer-events-none"
 
 function Dialog({
   ...props
@@ -50,31 +56,78 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  maxHeight = "max-h-124 lg:max-h-124",
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean
+  showCloseButton?: boolean,
+  maxHeight?: string
 }) {
+  const [isExpanded, setIsExpanded] = React.useState(false)
+
+  const toggleExpanded = React.useCallback(() => {
+    setIsExpanded((previous) => !previous)
+  }, [])
+
+
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
+        forceMount
         data-slot="dialog-content"
+        data-expanded={isExpanded ? "true" : undefined}
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg lg:max-w-3xl",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 flex w-full h-full translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg duration-500",
+          isExpanded
+            ? "max-h-[90vh] lg:max-h-[93vh] lg:max-w-[93vw]"
+            : cn(DEFAULT_CONTENT_MAX_WIDTH, maxHeight),
           className
         )}
         {...props}
       >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer"
+        <div className="relative flex w-full h-full flex-col">
+          {showCloseButton && (
+            <div className={cn("pointer-events-auto absolute flex items-center gap-2 bg-background rounded-t-lg", isExpanded ? "-top-4 -left-4" : "-left-[25px] -top-14 py-3 px-4")}>
+              <DialogPrimitive.Close
+                data-slot="dialog-close"
+                className={cn(
+                  MAC_WINDOW_BUTTON_BASE,
+                  "bg-[#ff5f57] hover:bg-[#ff4941] focus-visible:ring-red-400 group"
+                )}
+
+              >
+                <XIcon className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus:opacity-100 size-2.5" />
+                <span className="sr-only">Close</span>
+              </DialogPrimitive.Close>
+              <button
+                type="button"
+                onClick={toggleExpanded}
+                aria-pressed={isExpanded}
+                aria-label={isExpanded ? "Restore dialog size" : "Expand dialog"}
+                title={isExpanded ? "Restore" : "Expand"}
+                className={cn(
+                  MAC_WINDOW_BUTTON_BASE,
+                  "bg-[#2ecc71] hover:bg-[#29c36a] focus-visible:ring-emerald-400 group",
+                  isExpanded && "bg-[#27ae60]"
+                )}
+              >
+                <Maximize2 className="text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus:opacity-100 size-2.5" />
+                <span className="sr-only">
+                  {isExpanded ? "Restore dialog size" : "Expand dialog"}
+                </span>
+              </button>
+            </div>
+          )}
+          <div
+            className={cn(
+              "mx-auto grid w-full h-full gap-4 overflow-y-auto scrollbar-hide px-1 pb-1",
+              DEFAULT_CONTENT_MAX_WIDTH
+            )}
           >
-            <XIcon />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
+            {children}
+          </div>
+        </div>
       </DialogPrimitive.Content>
     </DialogPortal>
   )

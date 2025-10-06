@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button"
 import { useUser } from "@/hooks/use-user"
 import { toast } from "sonner"
 import { TaskCount } from "@/components/ui/calendar"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 export default function TaskDisplay({
 	task,
@@ -55,6 +57,7 @@ export default function TaskDisplay({
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 	const [isDependencyDialogOpen, setIsDependencyDialogOpen] = useState(false)
 	const [dependencyToDelete, setDependencyToDelete] = useState<number | null>(null)
+	const [deleteRecurrency, setDeleteRecurrency] = useState(false)
 
 	// Add a new state variable for the toggle confirmation dialog
 	const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false)
@@ -122,7 +125,7 @@ export default function TaskDisplay({
 					return currentData.filter((item: Task.Task.Select) => item.id !== task.id)
 				},
 				{ revalidate: false },
-				)
+			)
 
 			// Store original task state to revert if canceled
 			const originalState = { completed: !newIsToggled }
@@ -398,7 +401,7 @@ export default function TaskDisplay({
 		>
 			{skeleton ? (
 				<>
-					<div className="flex items-center justify-between w-full">
+					<div className="flex items-center justify-between w-full text-xs md:text-sm">
 						<div className="flex items-center w-full">
 							<div
 								className={cn(
@@ -507,23 +510,23 @@ export default function TaskDisplay({
 							<div className={`flex space-x-4 justify-between`}>
 								<div className="space-y-1">
 									<Tooltip tooltip={`(Urgency * Importance) - Duration = Score<br/>(${task.urgency} * ${task.importance}) - ${task.duration} = ${task.score}`}>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Score: <span className="text-black dark:text-white">{task.score}</span>
 										</p>
 									</Tooltip>
 									{task.project_title !== null && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Project: <span className="text-black dark:text-white">{task.project_title}</span>
 										</p>
 									)}
 									{task.importance !== null && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Importance: <span className="text-black dark:text-white">{task.importanceDetails.name}</span>
 										</p>
 									)}
 									{task.due && (
 										<Tooltip tooltip={`${new Date(task.due).toLocaleDateString()}`} cursor="cursor-auto">
-											<p className="text-sm text-muted-foreground">
+											<p className="text-muted-foreground">
 												Due:{" "}
 												<span className="text-black dark:text-white">
 													{(() => {
@@ -540,7 +543,7 @@ export default function TaskDisplay({
 										</Tooltip>
 									)}
 									{task.duration !== undefined && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground">
 											Duration: <span className="text-black dark:text-white">{task.durationDetails.name}</span>
 										</p>
 									)}
@@ -590,6 +593,17 @@ export default function TaskDisplay({
 						<DialogDescription>
 							Are you sure you want to delete this task?<br /><br />You will be able to find it back in your Trash (Settings &gt; Trash &gt; Tasks).
 						</DialogDescription>
+						<div className="flex items-center gap-2 text-muted-foreground text-sm">
+							<Checkbox
+								id="delete-recurrency"
+								className="border-muted-foreground"
+								checked={deleteRecurrency}
+								onClick={() => setDeleteRecurrency(!deleteRecurrency)}
+							/>
+							<Label htmlFor="delete-recurrency" className="cursor-pointer">
+								Delete task recurrency ?
+							</Label>
+						</div>
 					</DialogHeader>
 					<DialogFooter className="flex justify-between sm:justify-between">
 						<Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>

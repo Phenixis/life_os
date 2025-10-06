@@ -60,7 +60,7 @@ export default function TaskModal({
 	// State management for the dialog
 	const mode = task ? "edit" : "create"
 	const [internalOpen, setInternalOpen] = useState(false)
-	
+
 	// Use external control if provided, otherwise use internal state
 	const open = isOpen !== undefined ? isOpen : internalOpen
 	const setOpen = onOpenChange || setInternalOpen
@@ -391,14 +391,14 @@ export default function TaskModal({
 
 			resetForm();
 			toast.success(`Task ${mode === "edit" ? "updated" : "created"} successfully`)
-			
+
 			// Invalidate all task-related cache keys to ensure calendar and other components refresh
 			mutate((key) => {
 				if (typeof key === "string") {
-					return key.startsWith("/api/task") || 
-						   key.startsWith("/api/number-of-tasks") ||
-						   key === "/api/task/count" ||
-						   key.startsWith("/api/task/count?")
+					return key.startsWith("/api/task") ||
+						key.startsWith("/api/number-of-tasks") ||
+						key === "/api/task/count" ||
+						key.startsWith("/api/task/count?")
 				}
 				return false
 			})
@@ -504,234 +504,237 @@ export default function TaskModal({
 					</DialogTrigger>
 				)}
 				<DialogContent
-					className="sm:max-w-2xl"
+					className=""
 					aria-describedby={undefined}
+					maxHeight="max-h-105"
 				>
-					<DialogHeader>
-						<DialogTitle>{mode === "edit" ? "Edit Task" : "Create Task"}</DialogTitle>
-					</DialogHeader>
-					<form id="task-form" onSubmit={handleSubmit} className="space-y-4">
-						<div>
-							<Label htmlFor="title" required>Title</Label>
-							<Input
-								ref={titleRef}
-								type="text"
-								id="title"
-								name="title"
-								defaultValue={task?.title || ""}
-								autoFocus
-								onChange={() => setFormChanged(
-									(titleRef.current?.value !== task?.title && mode === "edit") || titleRef.current?.value !== ""
-								)}
-							/>
-						</div>
-						<div className="flex flex-col justify-between lg:flex-row lg:space-x-4">
-							<div className="w-full">
-								<Label htmlFor="importance" required>Importance</Label>
-								<Select
-									name="importance"
-									defaultValue={task?.importance?.toString() || "0"}
-									onValueChange={(value) => {
-										importanceRef.current = value
-										setFormChanged(
-											(value !== task?.importance?.toString() && mode === "edit") || value !== "0"
-										)
-									}}
-								>
-									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Select importance" />
-									</SelectTrigger>
-									<SelectContent>
-										{importanceData ? (
-											importanceData.map((item) => (
-												<SelectItem key={item.level} value={item.level.toString()}>
-													{item.name}
-												</SelectItem>
-											))
-										) : (
-											<SelectItem value="-1" disabled>
-												Loading...
-											</SelectItem>
-										)}
-									</SelectContent>
-								</Select>
+					<form id="task-form" onSubmit={handleSubmit} className="space-y-4 h-full flex flex-col justify-between">
+						<main className="space-y-4">
+							<DialogHeader>
+								<DialogTitle>{mode === "edit" ? "Edit Task" : "Create Task"}</DialogTitle>
+							</DialogHeader>
+							<div>
+								<Label htmlFor="title" required>Title</Label>
+								<Input
+									ref={titleRef}
+									type="text"
+									id="title"
+									name="title"
+									defaultValue={task?.title || ""}
+									autoFocus
+									onChange={() => setFormChanged(
+										(titleRef.current?.value !== task?.title && mode === "edit") || titleRef.current?.value !== ""
+									)}
+								/>
 							</div>
-							<div className="relative">
-								<Label htmlFor="dueDate" required>Due date</Label>
-								<div className="flex gap-1">
-									<Button
-										type="button"
-										variant="outline"
-										className="px-2"
-										onClick={() => {
-											const newDate = new Date(dueDate.getTime() - 24 * 60 * 60 * 1000)
-											const today = new Date()
-											today.setHours(0, 0, 0, 0)
-											if (newDate >= today) {
-												setDueDate(newDate)
-											} else {
-												setDueDate(today)
-											}
+							<div className="flex flex-col justify-between lg:flex-row lg:space-x-4">
+								<div className="w-full">
+									<Label htmlFor="importance" required>Importance</Label>
+									<Select
+										name="importance"
+										defaultValue={task?.importance?.toString() || "0"}
+										onValueChange={(value) => {
+											importanceRef.current = value
 											setFormChanged(
-												(mode === "edit" && task && newDate.toDateString() !== new Date(task.due).toDateString()) || newDate.toDateString() !== new Date().toDateString()
+												(value !== task?.importance?.toString() && mode === "edit") || value !== "0"
 											)
 										}}
 									>
-										<Minus />
-									</Button>
-									<Button
-										type="button"
-										variant="outline"
-										className="w-full"
-										onClick={() => setShowCalendar(!showCalendar)}
-									>
-										{format(dueDate, "dd/MM/yyyy")}
-									</Button>
-									<Button
-										type="button"
-										variant="outline"
-										className="px-2"
-										onClick={() => {
-											const nextDate = new Date(dueDate.getTime() + 24 * 60 * 60 * 1000)
-											setDueDate(nextDate)
-											setFormChanged(
-												(mode === "edit" && task && nextDate.toDateString() !== new Date(task.due).toDateString()) || nextDate.toDateString() !== new Date().toDateString()
-											)
-										}}
-									>
-										<Plus />
-									</Button>
+										<SelectTrigger className="w-full">
+											<SelectValue placeholder="Select importance" />
+										</SelectTrigger>
+										<SelectContent>
+											{importanceData ? (
+												importanceData.map((item) => (
+													<SelectItem key={item.level} value={item.level.toString()}>
+														{item.name}
+													</SelectItem>
+												))
+											) : (
+												<SelectItem value="-1" disabled>
+													Loading...
+												</SelectItem>
+											)}
+										</SelectContent>
+									</Select>
 								</div>
-
-								{showCalendar && (
-									<div
-										ref={calendarRef}
-										className="absolute z-50 mt-1 bg-popover p-3 rounded-md shadow-md border border-border"
-									>
-										<Calendar
-											mode="single"
-											selected={dueDate}
-											onSelect={handleDateChange}
-											disabled={(date) => {
+								<div className="relative">
+									<Label htmlFor="dueDate" required>Due date</Label>
+									<div className="flex gap-1">
+										<Button
+											type="button"
+											variant="outline"
+											className="px-2"
+											onClick={() => {
+												const newDate = new Date(dueDate.getTime() - 24 * 60 * 60 * 1000)
 												const today = new Date()
 												today.setHours(0, 0, 0, 0)
-												return date < today
-											}}
-										/>
-									</div>
-								)}
-							</div>
-							<div className="w-full">
-								<Label htmlFor="duration" required>
-									Duration
-								</Label>
-								{
-									durationRef.current === "3" && (
-										<Help className="ml-1" message="It is not recommended to mark a task as longer than 60 minutes, consider divide it into smaller tasks." size="sm" />
-									)
-								}
-								<Select
-									name="duration"
-									defaultValue={task?.duration?.toString() || "0"}
-									onValueChange={(value) => {
-										durationRef.current = value
-										setFormChanged(
-											(value !== task?.duration?.toString() && mode === "edit") || value !== "0"
-										)
-									}}
-								>
-									<SelectTrigger ref={durationTriggerRef} className="w-full">
-										<SelectValue placeholder="Select duration" />
-									</SelectTrigger>
-									<SelectContent>
-										{durationData ? (
-											durationData.map((item) => (
-												<SelectItem key={item.level} value={item.level.toString()}>
-													{item.name}
-												</SelectItem>
-											))
-										) : (
-											<SelectItem value="-1" disabled>
-												Loading...
-											</SelectItem>
-										)}
-									</SelectContent>
-								</Select>
-							</div>
-						</div>
-						<div className="flex space-x-4">
-							<SearchProjectsInput
-								project={project}
-								setProject={setProject}
-								defaultValue={project}
-								className="w-full"
-								label="Project"
-								enabled={open}
-							/>
-						</div>
-						<Collapsible className="w-full" open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
-							<CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
-								Advanced Options
-								<ChevronDown className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`} />
-							</CollapsibleTrigger>
-							<CollapsibleContent className="space-y-4">
-								<div className="flex space-x-4">
-									<div className="w-full">
-										<Label htmlFor="task" className="flex items-center space-x-2 pb-1">
-											To do before
-											<Tooltip tooltip={`Select a task that needs to be done before this task.<br/>For example, if you are ${mode === 'edit' ? "editing" : "creating"} a Task B that needs to be done after a Task A, enter the title of the Task A here.`}>
-												<CircleHelp className="ml-1 size-4 text-muted-foreground" />
-											</Tooltip>
-										</Label>
-										<Input
-											type="text"
-											id="task"
-											name="task"
-											value={toDoAfterInputValue}
-											onChange={(e) => {
-												setToDoAfterInputValue(e.target.value)
-												handleToDoAfterChange(e.target.value)
+												if (newDate >= today) {
+													setDueDate(newDate)
+												} else {
+													setDueDate(today)
+												}
 												setFormChanged(
-													(mode === "edit" && task && e.target.value !== task.project_title) || e.target.value !== ""
+													(mode === "edit" && task && newDate.toDateString() !== new Date(task.due).toDateString()) || newDate.toDateString() !== new Date().toDateString()
 												)
 											}}
-										/>
-										{toDoAfterInputValue && !(tasks && tasks.length == 1 && tasks[0].id == toDoAfter) && (
-											<div className="mt-1 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
-												{isLoadingTasks ? (
-													<div className="p-2 text-sm text-muted-foreground">Loading tasks...</div>
-												) : isErrorTasks ? (
-													<div className="p-2 text-sm text-destructive">Error loading tasks</div>
-												) : tasks && tasks.length > 0 ? (
-													<ul className="py-1">
-														{tasks.map((currentTask, index) => (
-															<li
-																key={index}
-																className="cursor-pointer px-3 py-2 text-sm lg:hover:bg-accent"
-																onClick={() => {
-																	setToDoAfterInputValue(currentTask.title)
-																	setToDoAfterDebounceValue(currentTask.title)
-																	setToDoAfter(currentTask.id)
-																	setTimeout(() => {
-																		if (durationTriggerRef.current) {
-																			durationTriggerRef.current.focus()
-																		}
-																	}, 0)
-																}}
-															>
-																{currentTask.title}
-															</li>
-														))}
-													</ul>
-												) : (
-													<div className="p-2 text-sm text-muted-foreground">No tasks found</div>
-												)}
-											</div>
-										)}
+										>
+											<Minus />
+										</Button>
+										<Button
+											type="button"
+											variant="outline"
+											className="w-full"
+											onClick={() => setShowCalendar(!showCalendar)}
+										>
+											{format(dueDate, "dd/MM/yyyy")}
+										</Button>
+										<Button
+											type="button"
+											variant="outline"
+											className="px-2"
+											onClick={() => {
+												const nextDate = new Date(dueDate.getTime() + 24 * 60 * 60 * 1000)
+												setDueDate(nextDate)
+												setFormChanged(
+													(mode === "edit" && task && nextDate.toDateString() !== new Date(task.due).toDateString()) || nextDate.toDateString() !== new Date().toDateString()
+												)
+											}}
+										>
+											<Plus />
+										</Button>
 									</div>
+
+									{showCalendar && (
+										<div
+											ref={calendarRef}
+											className="absolute z-50 mt-1 bg-popover p-3 rounded-md shadow-md border border-border"
+										>
+											<Calendar
+												mode="single"
+												selected={dueDate}
+												onSelect={handleDateChange}
+												disabled={(date) => {
+													const today = new Date()
+													today.setHours(0, 0, 0, 0)
+													return date < today
+												}}
+											/>
+										</div>
+									)}
 								</div>
-							</CollapsibleContent>
-						</Collapsible>
+								<div className="w-full">
+									<Label htmlFor="duration" required>
+										Duration
+									</Label>
+									{
+										durationRef.current === "3" && (
+											<Help className="ml-1" message="It is not recommended to mark a task as longer than 60 minutes, consider divide it into smaller tasks." size="sm" />
+										)
+									}
+									<Select
+										name="duration"
+										defaultValue={task?.duration?.toString() || "0"}
+										onValueChange={(value) => {
+											durationRef.current = value
+											setFormChanged(
+												(value !== task?.duration?.toString() && mode === "edit") || value !== "0"
+											)
+										}}
+									>
+										<SelectTrigger ref={durationTriggerRef} className="w-full">
+											<SelectValue placeholder="Select duration" />
+										</SelectTrigger>
+										<SelectContent>
+											{durationData ? (
+												durationData.map((item) => (
+													<SelectItem key={item.level} value={item.level.toString()}>
+														{item.name}
+													</SelectItem>
+												))
+											) : (
+												<SelectItem value="-1" disabled>
+													Loading...
+												</SelectItem>
+											)}
+										</SelectContent>
+									</Select>
+								</div>
+							</div>
+							<div className="flex space-x-4">
+								<SearchProjectsInput
+									project={project}
+									setProject={setProject}
+									defaultValue={project}
+									className="w-full"
+									label="Project"
+									enabled={open}
+								/>
+							</div>
+							<Collapsible className="w-full" open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+								<CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
+									Advanced Options
+									<ChevronDown className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`} />
+								</CollapsibleTrigger>
+								<CollapsibleContent className="space-y-4">
+									<div className="flex space-x-4">
+										<div className="w-full">
+											<Label htmlFor="task" className="flex items-center space-x-2 pb-1">
+												To do before
+												<Tooltip tooltip={`Select a task that needs to be done before this task.<br/>For example, if you are ${mode === 'edit' ? "editing" : "creating"} a Task B that needs to be done after a Task A, enter the title of the Task A here.`}>
+													<CircleHelp className="ml-1 size-4 text-muted-foreground" />
+												</Tooltip>
+											</Label>
+											<Input
+												type="text"
+												id="task"
+												name="task"
+												value={toDoAfterInputValue}
+												onChange={(e) => {
+													setToDoAfterInputValue(e.target.value)
+													handleToDoAfterChange(e.target.value)
+													setFormChanged(
+														(mode === "edit" && task && e.target.value !== task.project_title) || e.target.value !== ""
+													)
+												}}
+											/>
+											{toDoAfterInputValue && !(tasks && tasks.length == 1 && tasks[0].id == toDoAfter) && (
+												<div className="mt-1 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
+													{isLoadingTasks ? (
+														<div className="p-2 text-sm text-muted-foreground">Loading tasks...</div>
+													) : isErrorTasks ? (
+														<div className="p-2 text-sm text-destructive">Error loading tasks</div>
+													) : tasks && tasks.length > 0 ? (
+														<ul className="py-1">
+															{tasks.map((currentTask, index) => (
+																<li
+																	key={index}
+																	className="cursor-pointer px-3 py-2 text-sm lg:hover:bg-accent"
+																	onClick={() => {
+																		setToDoAfterInputValue(currentTask.title)
+																		setToDoAfterDebounceValue(currentTask.title)
+																		setToDoAfter(currentTask.id)
+																		setTimeout(() => {
+																			if (durationTriggerRef.current) {
+																				durationTriggerRef.current.focus()
+																			}
+																		}, 0)
+																	}}
+																>
+																	{currentTask.title}
+																</li>
+															))}
+														</ul>
+													) : (
+														<div className="p-2 text-sm text-muted-foreground">No tasks found</div>
+													)}
+												</div>
+											)}
+										</div>
+									</div>
+								</CollapsibleContent>
+							</Collapsible>
+						</main>
 						<DialogFooter>
 							<Button type="submit">{mode === "edit" ? "Save" : "Create"}</Button>
 						</DialogFooter>

@@ -60,12 +60,12 @@ type Criterion = {
 };
 
 // Memoized ScoreSelect component to prevent unnecessary re-renders
-const ScoreSelect = React.memo(({ 
-    score, 
-    onScoreChange 
-}: { 
-    score: number; 
-    onScoreChange: (value: number) => void; 
+const ScoreSelect = React.memo(({
+    score,
+    onScoreChange
+}: {
+    score: number;
+    onScoreChange: (value: number) => void;
 }) => (
     <Select
         value={score.toString()}
@@ -190,9 +190,9 @@ export default function Page() {
     // Function to add a new criterion
     const addCriterion = useCallback(() => {
         if (isSubmittingCriterion.current) return;
-        
+
         if (!newCriterionName.trim()) {
-            toast.error("Criterion name cannot be empty"); 
+            toast.error("Criterion name cannot be empty");
             return;
         }
 
@@ -268,7 +268,7 @@ export default function Page() {
     // Function to add a new option
     const addOption = useCallback(() => {
         if (isSubmittingOption.current) return;
-        
+
         if (!newOptionName.trim()) {
             toast.error("Option name cannot be empty");
             return;
@@ -464,7 +464,7 @@ export default function Page() {
             };
 
             const result = await saveMatrix(matrixToSave);
-            
+
             if (result.success) {
                 setCurrentMatrixId(result.matrixId || null);
                 setOnlineSaveStatus('saved');
@@ -491,7 +491,7 @@ export default function Page() {
         setIsLoading(true);
         try {
             const result = await getMatrix(matrixId);
-            
+
             if (result.success && result.matrix) {
                 setMatrix(result.matrix);
                 setCurrentMatrixId(matrixId);
@@ -517,11 +517,11 @@ export default function Page() {
         setIsLoading(true);
         try {
             const result = await removeMatrix(matrixId);
-            
+
             if (result.success) {
                 toast.success("Matrix deleted successfully");
                 await loadUserMatrices(); // Refresh the list
-                
+
                 // If we deleted the currently loaded matrix, reset the current state
                 if (currentMatrixId === matrixId) {
                     setMatrix({ name: "", criteria: [], options: [] });
@@ -541,7 +541,7 @@ export default function Page() {
     // Duplicate a matrix
     const duplicateMatrixFromDatabase = async (matrixId: number, originalName: string) => {
         const newName = prompt(`Enter a name for the duplicated matrix:`, `${originalName} (Copy)`);
-        
+
         if (!newName || !newName.trim()) {
             return;
         }
@@ -549,7 +549,7 @@ export default function Page() {
         setIsLoading(true);
         try {
             const result = await duplicateMatrix(matrixId, newName.trim());
-            
+
             if (result.success) {
                 toast.success("Matrix duplicated successfully");
                 await loadUserMatrices(); // Refresh the list
@@ -601,7 +601,7 @@ export default function Page() {
     // Find the best overall option (highest normalized score) - memoized
     const bestOption = useMemo(() => {
         if (matrix.options.length === 0) return null;
-        
+
         return matrix.options.reduce((best, current) => {
             const currentScore = totals[current.id]?.normalized || 0;
             const bestScore = best ? totals[best.id]?.normalized || 0 : -1;
@@ -627,7 +627,7 @@ export default function Page() {
                     A decision-making tool that helps evaluate multiple options against various criteria,
                     with each criterion having a different level of importance (weight).
                 </p>
-                
+
                 {/* Save Status Indicators */}
                 <div className="flex gap-4 text-sm">
                     <div className="flex items-center gap-2">
@@ -667,57 +667,61 @@ export default function Page() {
                                 <Plus className="mr-2 h-4 w-4" /> Add Criterion
                             </Button>
                         </DialogTrigger>
-                        <DialogContent onKeyDown={handleCriterionKeyDown}>
-                            <DialogHeader>
-                                <DialogTitle>Add New Criterion</DialogTitle>
-                                <DialogDescription>
-                                    Define a criterion for evaluating your options. Press Ctrl+Enter to quickly add.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="criterion-name">Criterion Name</Label>
-                                    <Input
-                                        ref={criterionNameRef}
-                                        id="criterion-name"
-                                        value={newCriterionName}
-                                        onChange={(e) => setNewCriterionName(e.target.value)}
-                                        placeholder="e.g., Cost, Quality, etc."
-                                        onKeyDown={handleCriterionKeyDown}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="criterion-weight">Weight (1-5)</Label>
-                                    <Select
-                                        value={newCriterionWeight.toString()}
-                                        onValueChange={(value) => setNewCriterionWeight(parseInt(value))}
-                                    >
-                                        <SelectTrigger id="criterion-weight">
-                                            <SelectValue placeholder="Weight" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="1">1 - Least Important</SelectItem>
-                                            <SelectItem value="2">2 - Somewhat Important</SelectItem>
-                                            <SelectItem value="3">3 - Important</SelectItem>
-                                            <SelectItem value="4">4 - Very Important</SelectItem>
-                                            <SelectItem value="5">5 - Critical</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="criterion-description">Description (Optional)</Label>
-                                    <Textarea
-                                        id="criterion-description"
-                                        value={newCriterionDescription}
-                                        onChange={(e) => setNewCriterionDescription(e.target.value)}
-                                        placeholder="Describe what this criterion means..."
-                                        onKeyDown={handleCriterionKeyDown}
-                                    />
-                                </div>
+                        <DialogContent maxHeight="max-h-110" onKeyDown={handleCriterionKeyDown}>
+                            <div className="h-full flex flex-col gap-4 justify-between">
+                                <main>
+                                    <DialogHeader>
+                                        <DialogTitle>Add New Criterion</DialogTitle>
+                                        <DialogDescription>
+                                            Define a criterion for evaluating your options. Press Ctrl+Enter to quickly add.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="criterion-name">Criterion Name</Label>
+                                            <Input
+                                                ref={criterionNameRef}
+                                                id="criterion-name"
+                                                value={newCriterionName}
+                                                onChange={(e) => setNewCriterionName(e.target.value)}
+                                                placeholder="e.g., Cost, Quality, etc."
+                                                onKeyDown={handleCriterionKeyDown}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="criterion-weight">Weight (1-5)</Label>
+                                            <Select
+                                                value={newCriterionWeight.toString()}
+                                                onValueChange={(value) => setNewCriterionWeight(parseInt(value))}
+                                            >
+                                                <SelectTrigger id="criterion-weight">
+                                                    <SelectValue placeholder="Weight" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="1">1 - Least Important</SelectItem>
+                                                    <SelectItem value="2">2 - Somewhat Important</SelectItem>
+                                                    <SelectItem value="3">3 - Important</SelectItem>
+                                                    <SelectItem value="4">4 - Very Important</SelectItem>
+                                                    <SelectItem value="5">5 - Critical</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="criterion-description">Description (Optional)</Label>
+                                            <Textarea
+                                                id="criterion-description"
+                                                value={newCriterionDescription}
+                                                onChange={(e) => setNewCriterionDescription(e.target.value)}
+                                                placeholder="Describe what this criterion means..."
+                                                onKeyDown={handleCriterionKeyDown}
+                                            />
+                                        </div>
+                                    </div>
+                                </main>
+                                <DialogFooter>
+                                    <Button onClick={addCriterion}>Add Criterion</Button>
+                                </DialogFooter>
                             </div>
-                            <DialogFooter>
-                                <Button onClick={addCriterion}>Add Criterion</Button>
-                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
 
@@ -727,29 +731,34 @@ export default function Page() {
                                 <Plus className="mr-2 h-4 w-4" /> Add Option
                             </Button>
                         </DialogTrigger>
-                        <DialogContent onKeyDown={handleOptionKeyDown}>
-                            <DialogHeader>
-                                <DialogTitle>Add New Option</DialogTitle>
-                                <DialogDescription>
-                                    Add an option to evaluate against your criteria. Press Ctrl+Enter to quickly add.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="option-name">Option Name</Label>
-                                    <Input
-                                        ref={optionNameRef}
-                                        id="option-name"
-                                        value={newOptionName}
-                                        onChange={(e) => setNewOptionName(e.target.value)}
-                                        placeholder="e.g., Option A, Plan 1, etc."
-                                        onKeyDown={handleOptionKeyDown}
-                                    />
-                                </div>
+                        <DialogContent onKeyDown={handleOptionKeyDown} maxHeight="max-h-64">
+                            <div className="h-full flex flex-col gap-4 justify-between">
+                                <main>
+
+                                    <DialogHeader>
+                                        <DialogTitle>Add New Option</DialogTitle>
+                                        <DialogDescription>
+                                            Add an option to evaluate against your criteria. Press Ctrl+Enter to quickly add.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="option-name">Option Name</Label>
+                                            <Input
+                                                ref={optionNameRef}
+                                                id="option-name"
+                                                value={newOptionName}
+                                                onChange={(e) => setNewOptionName(e.target.value)}
+                                                placeholder="e.g., Option A, Plan 1, etc."
+                                                onKeyDown={handleOptionKeyDown}
+                                            />
+                                        </div>
+                                    </div>
+                                </main>
+                                <DialogFooter>
+                                    <Button onClick={addOption}>Add Option</Button>
+                                </DialogFooter>
                             </div>
-                            <DialogFooter>
-                                <Button onClick={addOption}>Add Option</Button>
-                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -767,7 +776,7 @@ export default function Page() {
                                     {currentMatrixId ? "Update Matrix" : "Save Matrix"}
                                 </DialogTitle>
                                 <DialogDescription>
-                                    {currentMatrixId 
+                                    {currentMatrixId
                                         ? "Update your existing decision matrix in the database."
                                         : "Save your decision matrix to the database for later use."
                                     }
@@ -796,8 +805,8 @@ export default function Page() {
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setShowMatrixDialog(false)}>Cancel</Button>
                                 <Button onClick={saveCurrentMatrix} disabled={isLoading}>
-                                    {isLoading 
-                                        ? (currentMatrixId ? "Updating..." : "Saving...") 
+                                    {isLoading
+                                        ? (currentMatrixId ? "Updating..." : "Saving...")
                                         : (currentMatrixId ? "Update Matrix" : "Save Matrix")
                                     }
                                 </Button>
@@ -869,7 +878,7 @@ export default function Page() {
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
                                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction 
+                                                                <AlertDialogAction
                                                                     onClick={() => deleteMatrixFromDatabase(savedMatrix.id)}
                                                                     className="bg-destructive text-destructive-foreground"
                                                                 >

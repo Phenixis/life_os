@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 			dueBefore.setHours(23, 59, 59, 999)
 		}
 
-		const result = await TaskQueries.getNumberOfTasks(verification.userId, projectTitles, excludedProjectTitles, dueAfter, dueBefore)
+		const result = await TaskQueries.Task.getNumberOfTasks(verification.userId, projectTitles, excludedProjectTitles, dueAfter, dueBefore)
 		
 		return NextResponse.json(result.map((task) => ({
 			...task,

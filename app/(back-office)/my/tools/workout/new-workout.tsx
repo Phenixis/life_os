@@ -8,13 +8,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import {Button} from "@/components/ui/button";
-import {useState} from "react"
-import {Input} from "@/components/ui/input";
-import {InvisibleInput} from "@/components/ui/invisible-input";
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from "@/components/ui/carousel"
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
-import {Minus, Plus} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { Input } from "@/components/ui/input";
+import { InvisibleInput } from "@/components/ui/invisible-input";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, } from "@/components/ui/carousel"
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Minus, Plus } from "lucide-react";
 
 type Exercice = {
     name: string,
@@ -29,10 +29,10 @@ export function NewWorkout(
     {
         defaultExercices = []
     }
-    :
-    {
-        defaultExercices?: Exercice[]
-    }
+        :
+        {
+            defaultExercices?: Exercice[]
+        }
 ) {
     const initialExercices = defaultExercices.values();
     const [showDialog, setShowDialog] = useState(false)
@@ -53,38 +53,42 @@ export function NewWorkout(
                     )
                 }
             </DialogTrigger>
-            <DialogContent showCloseButton={false}>
-                <DialogHeader className="flex flex-row justify-between items-center">
-                    <DialogTitle>
-                        Create New Workout
-                    </DialogTitle>
-                    <Button variant={"ghost"} onClick={() => {
-                        setExercices([...exercices, {
-                            name: "New Exercice",
-                            sets: [{
-                                id: 0,
-                                weight: 0,
-                                nb_rep: 0,
-                            }],
-                        }])
-                    }}>
-                        <Plus className={"size-4"}/>
-                        <span className={"hidden lg:block"}>
-                            Add an Exercice
-                        </span>
-                    </Button>
-                </DialogHeader>
-                <DialogDescription className={"hidden"}>
-                    Add a new workout
-                </DialogDescription>
+            <DialogContent maxHeight="max-h-130">
                 <form
-                    className={"space-y-4 mx-auto w-full max-w-[calc(100vw-5.25rem)] max-h-[calc(100vh-12rem)] overflow-y-auto sm:max-w-[462px] lg:max-w-[718px]"}>
+                    className={"space-y-4 mx-auto w-full max-w-[calc(100vw-5.25rem)] overflow-y-auto sm:max-w-[462px] lg:max-w-[718px] flex flex-col justify-between"}>
+                    <DialogHeader className="flex flex-row justify-between items-center">
+                        <DialogTitle>
+                            Create New Workout
+                        </DialogTitle>
+                        <Button
+                            variant={"ghost"}
+                            onClick={() => {
+                                setExercices([...exercices, {
+                                    name: "New Exercice",
+                                    sets: [{
+                                        id: 0,
+                                        weight: 0,
+                                        nb_rep: 0,
+                                    }],
+                                }])
+                            }}
+                            type="button"
+                        >
+                            <Plus className={"size-4"} />
+                            <span className={"hidden lg:block"}>
+                                Add an Exercice
+                            </span>
+                        </Button>
+                    </DialogHeader>
+                    <DialogDescription className={"hidden"}>
+                        Add a new workout
+                    </DialogDescription>
                     <Carousel className={"my-2 mx-auto lg:w-[80%] pb-12 lg:pb-0"}>
                         <CarouselContent>
                             {
                                 exercices.map((exercice, index) => (
                                     <CarouselItem key={index}
-                                                  className={"flex flex-col items-center justify-start"}>
+                                        className={"flex flex-col items-center justify-start"}>
                                         <Table className={"mx-auto"} captionPosition={"top"}>
                                             <TableCaption
                                                 className={"mt-0 p-1 flex items-center justify-between text-black dark:text-white"}>
@@ -109,7 +113,7 @@ export function NewWorkout(
                                                     onClick={() => {
                                                         setExercices([...exercices.slice(0, index), ...exercices.slice(index + 1)])
                                                     }}>
-                                                    <Minus className={"size-4"}/>
+                                                    <Minus className={"size-4"} />
                                                     <span className={"hidden lg:block"}>
                                                         Remove Exercice
                                                     </span>
@@ -137,7 +141,7 @@ export function NewWorkout(
                                                                 setExercices(newExercices);
                                                             }}
                                                         >
-                                                            <Plus className={"size-4"}/>
+                                                            <Plus className={"size-4"} />
                                                         </Button>
                                                     </TableHead>
                                                     <TableHead>Weight</TableHead>
@@ -150,7 +154,7 @@ export function NewWorkout(
                                                         <TableRow key={setIndex} className={"group/row"}>
                                                             <TableCell
                                                                 className="flex justify-between items-center">
-                                                                <input type={"hidden"} id={"exercice-" + index + "-set-id-" + set.id}/>
+                                                                <input type={"hidden"} id={"exercice-" + index + "-set-id-" + set.id} />
                                                                 {setIndex + 1}
                                                                 <Button
                                                                     size={"icon"}
@@ -163,7 +167,7 @@ export function NewWorkout(
                                                                         setExercices(newExercices);
                                                                     }}
                                                                 >
-                                                                    <Minus className={"size-4"}/>
+                                                                    <Minus className={"size-4"} />
                                                                 </Button>
                                                             </TableCell>
                                                             <TableCell className="w-2/6">
@@ -204,8 +208,8 @@ export function NewWorkout(
                         {
                             exercices.length > 0 ? (
                                 <>
-                                    <CarouselNext/>
-                                    <CarouselPrevious/>
+                                    <CarouselNext />
+                                    <CarouselPrevious />
                                 </>
                             ) : null
                         }
@@ -226,6 +230,6 @@ export function NewWorkout(
                     </footer>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }
