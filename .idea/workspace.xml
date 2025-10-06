@@ -5,7 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6e3517ae-b7fc-4690-bcfe-422aef80c67c" name="Changes" comment="feat: work on workout integration">
-      <change beforePath="$PROJECT_DIR$/components/big/projects/search-projects-input.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/projects/search-projects-input.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/big/auth/subcription-wall.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(back-office)/my/tools/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(back-office)/my/tools/layout.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,28 +43,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "fix",
-    "js.debugger.nextJs.config.created.client": "true",
-    "js.debugger.nextJs.config.created.server": "true",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/MaximeDuhamel/Perso/life_os/app/(back-office)/my/tools/workout/past-workout",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "pnpm",
-    "npm.Next.js: server-side.executor": "Run",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Users\\MaximeDuhamel\\Perso\\life_os\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
+    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/MaximeDuhamel/Perso/life_os/app/(back-office)/my/tools/workout/past-workout&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
+    &quot;npm.Next.js: server-side.executor&quot;: &quot;Run&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\MaximeDuhamel\\Perso\\life_os\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\MaximeDuhamel\Perso\life_os\app\(back-office)\my\tools\workout\past-workout" />
@@ -105,6 +107,9 @@
       <workItem from="1758963247895" duration="39122000" />
       <workItem from="1759079407970" duration="8024000" />
       <workItem from="1759480428600" duration="1982000" />
+      <workItem from="1759483098897" duration="222000" />
+      <workItem from="1759515594540" duration="162000" />
+      <workItem from="1759733941618" duration="615000" />
     </task>
     <task id="LOCAL-00001" summary="refactor: improved dark mode and create workout tools">
       <option name="closed" value="true" />
@@ -143,6 +148,12 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="dependencySupport" implementationName="javascript:npm:react" />
+    <option featureType="dependencySupport" implementationName="javascript:npm:tailwindcss" />
+    <option featureType="dependencySupport" implementationName="javascript:npm:next" />
+    <option featureType="dependencySupport" implementationName="javascript:npm:postcss" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="improved dark mode and create workout tools" />
