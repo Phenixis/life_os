@@ -1,4 +1,4 @@
-import { getUser } from "@/lib/db/queries/user"
+import { getUser } from "@/lib/db/queries/user/user"
 import { PasswordResetForm } from "@/components/big/settings/password-reset-form"
 import { PasswordResetFormSkeleton } from "@/components/big/settings/password-reset-form-skeleton"
 import { Suspense } from "react"

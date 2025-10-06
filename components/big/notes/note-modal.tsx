@@ -21,7 +21,7 @@ import {
 import { useDebouncedCallback } from "use-debounce"
 import SearchProjectsInput from "@/components/big/projects/search-projects-input"
 import { NotesAndData } from "@/lib/db/queries/note"
-import { updateUserDraftNote } from "@/lib/db/queries/user"
+import { updateUserDraftNote } from "@/lib/db/queries/user/user"
 
 export default function NoteModal({
     className,

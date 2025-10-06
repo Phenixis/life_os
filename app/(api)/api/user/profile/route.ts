@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
-import { updateUserProfile, getUser } from "@/lib/db/queries/user"
+import { updateUserProfile, getUser } from "@/lib/db/queries/user/user"
 import { eq } from "drizzle-orm"
 import { db } from "@/lib/db/drizzle"
 import * as Schema from "@/lib/db/schema"

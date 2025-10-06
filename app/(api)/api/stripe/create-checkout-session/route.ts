@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
 import { stripe } from "@/lib/services/payments/stripe"
-import { getUser, updateUserStripeCustomerId } from "@/lib/db/queries/user"
+import { getUser, updateUserStripeCustomerId } from "@/lib/db/queries/user/user"
 
 export async function POST(request: NextRequest) {
     try {

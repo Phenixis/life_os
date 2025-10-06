@@ -1,6 +1,6 @@
 import Header from "@/components/big/header"
 import { UserProvider } from "@/hooks/use-user"
-import { getUser } from "@/lib/db/queries/user"
+import { getUser } from "@/lib/db/queries/user/user"
 import { getDarkModeCookie } from "@/lib/cookies"
 import { ModalCommandsProvider } from "@/contexts/modal-commands-context"
 import ModalManager from "@/components/big/modal-manager"

@@ -1,6 +1,6 @@
 "use server"
 
-import * as lib from "./lib"
+import * as lib from "../lib"
 import { hashPassword } from "@/lib/utils/password"
 import { getClientSession } from "@/lib/auth/session"
 import { DarkModeCookie } from "@/lib/flags"

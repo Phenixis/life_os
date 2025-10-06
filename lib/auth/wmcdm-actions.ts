@@ -1,6 +1,6 @@
 "use server";
 
-import { getUser } from "@/lib/db/queries/user";
+import { getUser } from "@/lib/db/queries/user/user";
 import { redirect } from "next/navigation";
 import {
     createWmcdmMatrix,

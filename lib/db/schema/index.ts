@@ -10,7 +10,5 @@ export * as User from "./user";
 
 // FILE
 export * as DailyMood from "./daily-mood"
-export * as Feature from "./feature"
 export * as Meteo from "./meteo"
-export * as PlanFeature from "./plan-feature"
 export * as Project from "./project"

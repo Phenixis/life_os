@@ -2,8 +2,8 @@ import Stripe from 'stripe';
 import { redirect } from 'next/navigation';
 import {
     getUser
-} from '@/lib/db/queries/user';
-import { getUserActiveSubscription, updateSubscription } from '@/lib/db/queries/subscription-features';
+} from '@/lib/db/queries/user/user';
+import { GetActive, Update } from '@/lib/db/queries/user/subscription';
 import { User } from '@/lib/db/schema';
 
 const stripeApiKey = process.env.STRIPE_API_KEY;
@@ -63,7 +63,7 @@ export async function createCheckoutSession({
 }
 
 export async function createCustomerPortalSession(user: User.User.Select) {
-    const subscription = await getUserActiveSubscription(user.id);
+    const subscription = await GetActive(user.id);
 
     if (!subscription || !user.stripe_customer_id) {
         redirect('/pricing');
@@ -147,29 +147,31 @@ export async function handleSubscriptionChange(
         return;
     }
 
+    const subscriptionInDb = await GetActive(user.id);
+
+    if (subscriptionInDb === null) {
+        console.error('No active subscription found for user:', user.id);
+        return;
+    }
+
     if (status === 'active' || status === 'trialing') {
         const plan = subscription.items.data[0]?.plan;
-        await updateSubscription(
-            user.id,
-            customerId,
-            subscriptionId,
-            plan?.product as string,
-            plan?.id as string,
-            status,
-            subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
-            subscription.cancel_at_period_end || false 
-        );
+        await Update(subscriptionInDb.id, {
+            user_id: user.id,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+            stripe_product_id: plan?.product as string,
+            stripe_price_id: plan?.id as string,
+            status: status,
+            canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+            cancel_at_period_end: subscription.cancel_at_period_end || false
+        });
     } else if (status === 'canceled' || status === 'unpaid') {
-        await updateSubscription(
-            user.id,
-            customerId,
-            null,
-            null,
-            null,
-            status,
-            subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
-            subscription.cancel_at_period_end || false 
-        );
+        await Update(subscriptionInDb.id, {
+            status: status,
+            canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+            cancel_at_period_end: subscription.cancel_at_period_end || false
+        });
     }
 }
 

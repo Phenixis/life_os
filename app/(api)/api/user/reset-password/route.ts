@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
-import { getUser, generateUserPassword, updateUserPassword } from "@/lib/db/queries/user"
+import { getUser, generateUserPassword, updateUserPassword } from "@/lib/db/queries/user/user"
 import { sendPasswordResetEmail } from "@/components/utils/send_email"
 
 /**

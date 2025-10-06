@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserByEmail, generateUserPassword, updateUserPassword } from "@/lib/db/queries/user"
+import { getUserByEmail, generateUserPassword, updateUserPassword } from "@/lib/db/queries/user/user"
 import { sendPasswordResetEmail } from "@/components/utils/send_email"
 
 /**

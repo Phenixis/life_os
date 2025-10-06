@@ -6,7 +6,7 @@ import { removeSession, setSession } from '@/lib/auth/session';
 import { db } from "@/lib/db/drizzle"
 import { eq } from "drizzle-orm"
 import { verifyPassword } from "@/lib/utils/password"
-import { createUser } from "@/lib/db/queries/user"
+import { createUser } from "@/lib/db/queries/user/user"
 import { User } from "@/lib/db/schema"
 import { sendWelcomeEmail } from "@/components/utils/send_email"
 import { updateDarkModeCookie } from "@/lib/cookies"

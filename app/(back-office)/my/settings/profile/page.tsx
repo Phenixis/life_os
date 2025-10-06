@@ -1,4 +1,4 @@
-import { getUser } from "@/lib/db/queries/user"
+import { getUser } from "@/lib/db/queries/user/user"
 import { ProfileForm } from "@/components/big/settings/profile-form"
 import { ProfileFormSkeleton } from "@/components/big/settings/profile-form-skeleton"
 import { Suspense } from "react"

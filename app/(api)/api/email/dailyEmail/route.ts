@@ -9,7 +9,7 @@ import {
     sendEmail
 } from "@/components/utils/send_email"
 import { verifyRequest } from "@/lib/auth/api"
-import { getAllUsers } from "@/lib/db/queries/user"
+import { getAllUsers } from "@/lib/db/queries/user/user"
 
 export async function GET(request: NextRequest) {
     const verification = await verifyRequest(request)

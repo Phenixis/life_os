@@ -12,12 +12,10 @@ export * as NoteQueries from "./note"
 
 export * as ProjectQueries from "./project"
 
-export * as SubscriptionFeaturesQueries from "./subscription-features"
-
 export * as TaskQueries from "./task"
-
-export * as UserQueries from "./user";
 
 export * as WMCDMQueries from "./wmcdm"
 
 export * as WorkoutQueries from "./workout"
+
+export * as UserQueries from "./user"
