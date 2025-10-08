@@ -1,5 +1,8 @@
 import PricingCard from '@/components/big/pricing/pricing_card'
 import Link from "next/link";
+import {UserQueries} from "@/lib/db/queries"
+import {redirect} from "next/navigation";
+import {free, basic, pro} from "@/app/(back-office)/my/settings/subscription/plans";
 
 interface ProfileSettingsPageProps {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
@@ -9,12 +12,22 @@ interface ProfileSettingsPageProps {
  * Subscription Settings page.
  * Reads 'isYearly' from URL search params and sets pricing accordingly.
  */
-export default async function ProfileSettingsPage({ searchParams }: ProfileSettingsPageProps) {
+export default async function ProfileSettingsPage({searchParams}: ProfileSettingsPageProps) {
     // Validate and parse isYearly from searchParams
     const isYearlyParam = (await searchParams)?.isYearly
     const isYearly = typeof isYearlyParam === 'string'
         ? isYearlyParam === 'true'
         : false
+
+    const user = await UserQueries.User.getUser();
+
+    if (!user) {
+        redirect('/my')
+    }
+
+    const currentSubscription = await UserQueries.Subscription.GetActive(user.id);
+
+    const currentSubscriptionStripeProductId = currentSubscription?.stripe_product_id || "free";
 
     return (
         <section className="page">
@@ -25,66 +38,39 @@ export default async function ProfileSettingsPage({ searchParams }: ProfileSetti
 
             <div className="w-full h-fit flex items-center justify-center">
                 <div className="flex justify-center items-center gap-1 mb-12 border rounded-full">
-                    <Link className={`block p-3 -mr-1 ${!isYearly ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-black rounded-full" : ""}`} href='?isYearly=false'>
+                    <Link
+                        className={`block px-2 py-1 -mr-1 ${!isYearly ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-black rounded-full" : ""}`}
+                        href='?isYearly=false'>
                         Monthly
                     </Link>
-                    <Link className={`block p-3 -ml-1 ${isYearly ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-black rounded-full" : ""}`} href='?isYearly=true'>
+                    <Link
+                        className={`block px-2 py-1 -ml-1 ${isYearly ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-black rounded-full" : ""}`}
+                        href='?isYearly=true'>
                         Yearly
                     </Link>
                 </div>
             </div>
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <PricingCard plan={{
-                    features: {
-                        enabled: [{
-                            id: 1,
-                            name: "tasks",
-                            display_name: "Tasks Manager",
-                            description: "A tasks manager where you can create, edit and complete tasks connected to projects.",
-                        }],
-                        disabled: [{
-                            id: 5,
-                            name: "movie_tracker",
-                            display_name: "Movie Tracker",
-                            description: "A tool to track the movie & tv shows you watched, the ones you want to watch and get recommendations based on your favourite movies and tv shows",
-                        }]
-                    }
-                }} recurrency={isYearly ? 'yearly' : 'monthly'} />
+                <PricingCard
+                    plan={free}
+                    recurrency={isYearly ? 'yearly' : 'monthly'}
+                    currentSubscription={currentSubscriptionStripeProductId === (free.stripe_product_id || "")}
+                />
 
                 {/* Basic Plan */}
-                <PricingCard plan={{
-                    stripe_product_id: 1,
-                    name: "basic",
-                    display_name: "Basic",
-                    description: "Everything you need + all advanced tools",
-                    price: {
-                        monthly: {
-                            amount: 2000,
-                            priceId: "price_1RixYOEEBVavDyUcTY40nPGx",
-                            currency: "eur"
-                        },
-                        yearly: {
-                            amount: 16000,
-                            priceId: "price_1RixZ0EEBVavDyUcfcll7er5",
-                            currency: "eur"
-                        }
-                    },
-                    features: {
-                        enabled: [
-                            {
-                                id: 1,
-                                name: "tasks",
-                                display_name: "Tasks Manager",
-                                description: "A tasks manager where you can create, edit and complete tasks connected to projects.",
-                            }, {
-                                id: 5,
-                                name: "movie_tracker",
-                                display_name: "Movie Tracker",
-                                description: "A tool to track the movie & tv shows you watched, the ones you want to watch and get recommendations based on your favourite movies and tv shows",
-                            }
-                        ]
-                    }
-                }} isPopular recurrency={isYearly ? 'yearly' : 'monthly'} />
+                <PricingCard
+                    plan={basic}
+                    recurrency={isYearly ? 'yearly' : 'monthly'}
+                    currentSubscription={currentSubscriptionStripeProductId === (basic.stripe_product_id || "")}
+                />
+
+                {/* Basic Plan */}
+                <PricingCard
+                    plan={pro}
+                    recurrency={isYearly ? 'yearly' : 'monthly'}
+                    active={false}
+                    currentSubscription={currentSubscriptionStripeProductId === (pro.stripe_product_id || "")}
+                />
             </div>
         </section>
     )

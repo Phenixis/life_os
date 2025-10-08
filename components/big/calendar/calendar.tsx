@@ -78,7 +78,7 @@ export default function Calendar({
     return (
         <div
             className={cn(
-                "flex flex-row md:flex-col justify-start items-start md:items-center border-l border-gray-100 dark:border-gray-800 md:h-screen md:max-w-[300px] md:pl-2",
+                "flex flex-row md:flex-col justify-start items-start md:items-center border-l border-gray-100 dark:border-gray-800 md:h-screen md:max-w-[300px] md:p-2",
                 className,
             )}
         >
@@ -139,7 +139,7 @@ export default function Calendar({
                 )}
             </div>
             <div className="w-full h-full flex flex-col items-start justify-between">
-                <div className="w-full md:w-[299px] flex flex-col items-center justify-center">
+                <div className="w-full flex flex-col items-center justify-center">
                     {
                         !isTaskError && !isLoading ? (
                             <div className="flex flex-col items-start justify-center w-full">

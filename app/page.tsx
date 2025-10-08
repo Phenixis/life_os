@@ -11,6 +11,7 @@ import { CheckCircle, Zap, Shield, Target, Users, Sparkles, ArrowRight, Menu, X 
 import Link from "next/link"
 import Logo from "@/components/big/logo"
 import PricingCard from '@/components/big/pricing/pricing_card'
+import {basic, free} from "@/app/(back-office)/my/settings/subscription/plans";
 
 export default function LandingPage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -732,57 +733,10 @@ export default function LandingPage() {
                         whileInView="animate"
                         viewport={{ once: true, margin: "-50px" }}
                     >
-                        <PricingCard plan={{
-                            features: {
-                                enabled: [{
-                                    id: 1,
-                                    name: "tasks",
-                                    display_name: "Tasks Manager",
-                                    description: "A tasks manager where you can create, edit and complete tasks connected to projects.",
-                                }],
-                                disabled: [{
-                                    id: 5,
-                                    name: "movie_tracker",
-                                    display_name: "Movie Tracker",
-                                    description: "A tool to track the movie & tv shows you watched, the ones you want to watch and get recommendations based on your favourite movies and tv shows",
-                                }]
-                            }
-                        }} recurrency={isYearly ? 'yearly' : 'monthly'} />
+                        <PricingCard plan={free} recurrency={isYearly ? 'yearly' : 'monthly'} />
 
                         {/* Basic Plan */}
-                        <PricingCard plan={{
-                            stripe_product_id: 1,
-                            name: "basic",
-                            display_name: "Basic",
-                            description: "Everything you need + all advanced tools",
-                            price: {
-                                monthly: {
-                                    amount: 2000,
-                                    priceId: "price_1RixYOEEBVavDyUcTY40nPGx",
-                                    currency: "eur"
-                                },
-                                yearly: {
-                                    amount: 16000,
-                                    priceId: "price_1RixZ0EEBVavDyUcfcll7er5",
-                                    currency: "eur"
-                                }
-                            },
-                            features: {
-                                enabled: [
-                                    {
-                                        id: 1,
-                                        name: "tasks",
-                                        display_name: "Tasks Manager",
-                                        description: "A tasks manager where you can create, edit and complete tasks connected to projects.",
-                                    }, {
-                                        id: 5,
-                                        name: "movie_tracker",
-                                        display_name: "Movie Tracker",
-                                        description: "A tool to track the movie & tv shows you watched, the ones you want to watch and get recommendations based on your favourite movies and tv shows",
-                                    }
-                                ]
-                            }
-                        }} isPopular recurrency={isYearly ? 'yearly' : 'monthly'} />
+                        <PricingCard plan={basic} isPopular recurrency={isYearly ? 'yearly' : 'monthly'} />
 
                         {/* Pro Plan */}
                         <MotionDiv variants={staggerItem} className="grayscale pointer-events-none">
