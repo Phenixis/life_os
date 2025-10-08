@@ -1,15 +1,15 @@
-import { cn } from "@/lib/utils";
-import Tooltip from "./tooltip";
-import { HelpCircle } from "lucide-react";
+import {cn} from "@/lib/utils";
+import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip"
+import {HelpCircle} from "lucide-react";
 
 export default function Help({
-    message = "",
-    size = "base",
-    className = "",
-} : {
-    message?: string;
-    size?: "xs" | "sm" | "base" | "lg" | "xl" ;
+                                 size = "base",
+                                 className = "",
+                                 children
+                             }: {
+    size?: "xs" | "sm" | "base" | "lg" | "xl";
     className?: string;
+    children?: React.ReactNode;
 }) {
     const sizeClass = {
         xs: "w-3 h-3",
@@ -20,8 +20,13 @@ export default function Help({
     }[size];
 
     return (
-        <Tooltip tooltip={message} cursor="cursor-auto">
-            <HelpCircle className={cn(sizeClass, className)} />
+        <Tooltip>
+            <TooltipTrigger>
+                <HelpCircle className={cn("cursor-pointer", sizeClass, className)}/>
+            </TooltipTrigger>
+            <TooltipContent>
+                {children}
+            </TooltipContent>
         </Tooltip>
     )
 }
