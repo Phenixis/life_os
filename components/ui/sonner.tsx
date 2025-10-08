@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react"
-import { Toaster as Sonner } from "sonner"
+import {useEffect, useState} from "react"
+import {Toaster as Sonner} from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({...props}: ToasterProps) => {
     const [isDark, setIsDark] = useState<boolean>(false)
 
     useEffect(() => {
@@ -16,7 +16,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
         // Watch for changes to the html class list
         const observer = new MutationObserver(update)
-        observer.observe(html, { attributes: true, attributeFilter: ["class"] })
+        observer.observe(html, {attributes: true, attributeFilter: ["class"]})
         return () => observer.disconnect()
     }, [])
 
@@ -41,4 +41,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
     )
 }
 
-export { Toaster }
+export {Toaster}
