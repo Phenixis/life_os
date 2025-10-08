@@ -4,13 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e3517ae-b7fc-4690-bcfe-422aef80c67c" name="Changes" comment="fix: integrate personalized dark mode handling into Toaster component">
-      <change afterPath="$PROJECT_DIR$/app/(back-office)/my/settings/subscription/plans.ts" afterDir="false" />
+    <list default="true" id="6e3517ae-b7fc-4690-bcfe-422aef80c67c" name="Changes" comment="fix: remove useless console.log">
+      <change afterPath="$PROJECT_DIR$/components/big/filtering/projects-multiple-selects.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/big/filtering/radio-buttons.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(back-office)/my/settings/subscription/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(back-office)/my/settings/subscription/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/big/calendar/calendar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/calendar/calendar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/big/pricing/pricing_card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/pricing/pricing_card.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/help.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/help.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/notes/note-modal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/notes/note-modal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/notes/notes-card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/notes/notes-card.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/tasks/task-modal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/tasks/task-modal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/tasks/tasks-card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/tasks/tasks-card.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/ui/dialog.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -210,6 +214,7 @@
     <MESSAGE value="feat: added the subscription wall component" />
     <MESSAGE value="feat: move the user file and set up the subscription wall" />
     <MESSAGE value="fix: integrate personalized dark mode handling into Toaster component" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: integrate personalized dark mode handling into Toaster component" />
+    <MESSAGE value="fix: remove useless console.log" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: remove useless console.log" />
   </component>
 </project>

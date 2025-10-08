@@ -1,21 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
-import { useSearchParams } from "next/navigation"
-import { TASK_PARAMS } from "../tasks/tasks-card"
-import { useNumberOfTasks } from "@/hooks/use-number-of-tasks"
-import { useDailyMoods } from "@/hooks/use-daily-moods"
-import { useTasks } from "@/hooks/use-tasks"
+import {useEffect, useState} from "react"
+import {Calendar as CalendarComponent} from "@/components/ui/calendar"
+import {cn} from "@/lib/utils"
+import {useSearchParams} from "next/navigation"
+import {TASK_PARAMS} from "../tasks/tasks-card"
+import {useNumberOfTasks} from "@/hooks/use-number-of-tasks"
+import {useDailyMoods} from "@/hooks/use-daily-moods"
+import {useTasks} from "@/hooks/use-tasks"
 import TaskDisplay from "@/components/big/tasks/task-display"
 import DailyMoodModal from "@/components/big/dailyMood/dailyMood-modal"
 
 export default function Calendar({
-    className,
-    showNumberOfTasks = true,
-    showDailyMood = true,
-}: {
+                                     className,
+                                     showNumberOfTasks = true,
+                                     showDailyMood = true,
+                                 }: {
     className: string,
     showNumberOfTasks?: boolean
     showDailyMood?: boolean
@@ -26,7 +26,7 @@ export default function Calendar({
     const [month, setMonth] = useState<Date>(date ? new Date(date.getFullYear(), date.getMonth(), 1) : new Date(now.getFullYear(), now.getMonth(), 1))
 
     // Only fetch data when showNumberOfTasks is true
-    const { data: numberOfTasks, isLoading } = useNumberOfTasks({
+    const {data: numberOfTasks, isLoading} = useNumberOfTasks({
         projectTitles: searchParams.get(TASK_PARAMS.PROJECTS)
             ? searchParams.get(TASK_PARAMS.PROJECTS)?.split(",")
             : undefined,
@@ -39,13 +39,13 @@ export default function Calendar({
     })
 
     // Fetch daily moods data
-    const { data: dailyMoods } = useDailyMoods({
+    const {data: dailyMoods} = useDailyMoods({
         startDate: new Date(month.getFullYear(), month.getMonth(), 1),
         endDate: new Date(month.getFullYear(), month.getMonth() + 1, 0),
         enabled: showDailyMood,
     })
 
-    const { tasks, isLoading: isTaskLoading, isError: isTaskError } = useTasks({
+    const {tasks, isLoading: isTaskLoading, isError: isTaskError} = useTasks({
         completed: false,
         dueBefore: date ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59) : undefined,
         dueAfter: date ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0) : undefined,
@@ -63,9 +63,9 @@ export default function Calendar({
     // Get the mood for the currently selected date
     const getCurrentDateMood = () => {
         if (!date || !dailyMoods || dailyMoods.length === 0) return null
-        
+
         const normalizedSelectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-        
+
         return dailyMoods.find(mood => {
             const moodDate = new Date(mood.date)
             const normalizedMoodDate = new Date(moodDate.getFullYear(), moodDate.getMonth(), moodDate.getDate())
@@ -128,11 +128,11 @@ export default function Calendar({
                             </div>
                         </div>
                     </div>
-                    <DailyMoodModal date={date} />
+                    <DailyMoodModal date={date}/>
                 </div>
                 {currentMood && currentMood.comment && (
-                    <div className="w-full mt-2 px-2">
-                        <div className="text-sm text-gray-600 dark:text-gray-400 italic text-center break-words">
+                    <div className="w-full mt-2 px-2 pb-4">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 italic break-words text-justify">
                             &quot;{currentMood.comment}&quot;
                         </div>
                     </div>
@@ -152,7 +152,7 @@ export default function Calendar({
                                     ) : (
                                         <>
                                             {
-                                                Array.from({ length: numberOfTasks.filter((task) => task.due === date?.toISOString())[0].uncompleted_count || 1 }).map((_, i) => (
+                                                Array.from({length: numberOfTasks.filter((task) => task.due === date?.toISOString())[0].uncompleted_count || 1}).map((_, i) => (
                                                     <TaskDisplay
                                                         key={i}
                                                         className="w-full"

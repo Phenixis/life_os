@@ -1,36 +1,36 @@
 "use client"
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Plus, PenIcon, ChevronDown } from "lucide-react"
-import { useUser } from "@/hooks/use-user"
-import { Note } from "@/lib/db/schema"
-import { useState, useRef, useEffect } from "react"
-import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useSWRConfig } from "swr"
-import { toast } from "sonner"
-import { encryptNote, decryptNote } from "@/lib/utils/crypt"
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog"
+import {Button} from "@/components/ui/button"
+import {Plus, PenIcon, ChevronDown} from "lucide-react"
+import {useUser} from "@/hooks/use-user"
+import {Note} from "@/lib/db/schema"
+import {useState, useRef, useEffect} from "react"
+import {cn} from "@/lib/utils"
+import {Input} from "@/components/ui/input"
+import {Label} from "@/components/ui/label"
+import {Textarea} from "@/components/ui/textarea"
+import {useSWRConfig} from "swr"
+import {toast} from "sonner"
+import {encryptNote, decryptNote} from "@/lib/utils/crypt"
 import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { useDebouncedCallback } from "use-debounce"
+import {useDebouncedCallback} from "use-debounce"
 import SearchProjectsInput from "@/components/big/projects/search-projects-input"
-import { NotesAndData } from "@/lib/db/queries/note"
-import { updateUserDraftNote } from "@/lib/db/queries/user/user"
+import {NotesAndData} from "@/lib/db/queries/note"
+import {updateUserDraftNote} from "@/lib/db/queries/user/user"
 
 export default function NoteModal({
-    className,
-    note,
-    password,
-    children,
-    isOpen,
-    onOpenChange,
-}: {
+                                      className,
+                                      note,
+                                      password,
+                                      children,
+                                      isOpen,
+                                      onOpenChange,
+                                  }: {
     className?: string
     note?: Note.Note.Select
     password?: string
@@ -40,7 +40,7 @@ export default function NoteModal({
 }) {
     const user = useUser().user;
     const mode = note ? "edit" : "create"
-    const { mutate } = useSWRConfig()
+    const {mutate} = useSWRConfig()
 
     // State - use external control if provided
     const [internalOpen, setInternalOpen] = useState(false)
@@ -74,7 +74,7 @@ export default function NoteModal({
             note_content: noteContent,
             note_project_title: project,
         }).then(() => {
-        }
+            }
         ).catch((error) => {
             console.error("Error updating draft note:", error)
         })
@@ -82,25 +82,24 @@ export default function NoteModal({
 
     useEffect(() => {
         updateNoteTitle(inputNoteTitle)
-    }, [inputNoteTitle])
+    }, [inputNoteTitle, updateNoteTitle])
 
     useEffect(() => {
         updateNoteContent(inputNoteContent)
-    }, [inputNoteContent])
+    }, [inputNoteContent, updateNoteContent])
 
 
     useEffect(() => {
         updateUserDraftNoteDebounced()
-    }, [noteContent, noteTitle, project])
+    }, [noteContent, noteTitle, project, updateUserDraftNoteDebounced])
 
     useEffect(() => {
-        console.log("[", inputNoteTitle.trim(), "] [", note?.title.trim(), "]", "[", inputNoteContent.trim(), "] [", note?.content.trim(), "]", "[", project.trim(), "] [", note?.project_title?.trim(), "]", "[", passwordValue.trim(), "] [", password?.trim(), "]")
         setFormChanged(
             mode === "edit" ?
                 inputNoteTitle.trim() !== note?.title.trim() || inputNoteContent.trim() !== note?.content.trim() || project.trim() !== (note?.project_title ? note.project_title.trim() : "") || passwordValue.trim() !== password?.trim() :
                 inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
         )
-    }, [inputNoteTitle, inputNoteContent, project, passwordValue])
+    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_title, password])
 
     // Refs
     const isSubmittingRef = useRef(false)
@@ -196,7 +195,7 @@ export default function NoteModal({
                         return currentData
                     }
                 },
-                { revalidate: false },
+                {revalidate: false},
             )
 
             toast.success(`Note ${mode === "edit" ? "updated" : "created"} successfully`)
@@ -239,7 +238,7 @@ export default function NoteModal({
     // Decrypt content when dialog opens
     useEffect(() => {
         debouncedDecrypt(password || "")
-    }, [password])
+    }, [debouncedDecrypt, password])
 
     // Effects
 
@@ -248,11 +247,13 @@ export default function NoteModal({
             <DialogTrigger asChild>
                 {children ? children : (
                     mode === "create" ? (
-                        <Button variant="outline" size="icon" className={cn("whitespace-nowrap transition-transform duration-300 border-none", className)}>
-                            <Plus size={24} />
+                        <Button variant="outline" size="icon"
+                                className={cn("whitespace-nowrap transition-transform duration-300 border-none", className)}>
+                            <Plus size={24}/>
                         </Button>
                     ) : (
-                        <PenIcon className={cn("min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer", className)} />
+                        <PenIcon
+                            className={cn("min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer", className)}/>
                     )
                 )}
             </DialogTrigger>
@@ -299,10 +300,12 @@ export default function NoteModal({
                             setProject={setProject}
                             defaultValue={project}
                         />
-                        <Collapsible className="w-full" open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+                        <Collapsible className="w-full" open={showAdvancedOptions}
+                                     onOpenChange={setShowAdvancedOptions}>
                             <CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
                                 Advanced Options
-                                <ChevronDown className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`} />
+                                <ChevronDown
+                                    className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`}/>
                             </CollapsibleTrigger>
                             <CollapsibleContent className="space-y-4">
                                 <div>
@@ -326,6 +329,6 @@ export default function NoteModal({
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog >
+        </Dialog>
     )
 }
