@@ -27,11 +27,11 @@ export default function Calendar({
 
     // Only fetch data when showNumberOfTasks is true
     const {data: numberOfTasks, isLoading} = useNumberOfTasks({
-        projectTitles: searchParams.get(TASK_PARAMS.PROJECTS)
-            ? searchParams.get(TASK_PARAMS.PROJECTS)?.split(",")
+        projects: searchParams.get(TASK_PARAMS.PROJECTS)
+            ? searchParams.get(TASK_PARAMS.PROJECTS)!.split(",").map(title => ({ title, id: -1 }))
             : undefined,
-        excludedProjectTitles: searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)
-            ? searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)?.split(",")
+        excludedProjects: searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)
+            ? searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)!.split(",").map(title => ({ title, id: -1 }))
             : undefined,
         dueAfter: month ? new Date(month.getFullYear(), month.getMonth(), 0) : undefined,
         dueBefore: month ? new Date(month.getFullYear(), month.getMonth() + 1, 0) : undefined,

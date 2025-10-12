@@ -1,13 +1,12 @@
 "use client"
 
-import { Note } from "@/lib/db/schema"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useState } from "react"
-import { ChevronDown, ChevronUp, ClipboardPlus, ClipboardCheck, Trash, Lock } from "lucide-react"
-import NoteModal from "./note-modal"
-import { toast } from "sonner"
-import { useSWRConfig } from "swr"
-import { useUser } from "@/hooks/use-user"
+import {Note} from "@/lib/db/schema"
+import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card"
+import {useState} from "react"
+import {ChevronDown, ChevronUp, ClipboardCheck, ClipboardPlus, Lock, PenIcon, Trash} from "lucide-react"
+import {toast} from "sonner"
+import {useSWRConfig} from "swr"
+import {useUser} from "@/hooks/use-user"
 import {
     Dialog,
     DialogContent,
@@ -16,16 +15,20 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { decryptNote } from "@/lib/utils/crypt"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { NotesAndData } from "@/lib/db/queries/note"
-import { cn } from "@/lib/utils"
+import {Button} from "@/components/ui/button"
+import {decryptNote} from "@/lib/utils/crypt"
+import {Input} from "@/components/ui/input"
+import {Label} from "@/components/ui/label"
+import {NotesAndData} from "@/lib/db/queries/note"
+import {cn} from "@/lib/utils"
+import {useNoteModal} from "@/contexts/modal-commands-context";
+import {useProjects} from "@/hooks/use-projects";
 
-export default function NoteDisplay({ note, className }: { note?: Note.Note.Select, className?: string }) {
+export default function NoteDisplay({note, className}: { note?: Note.Note.Select, className?: string }) {
     const user = useUser().user
-    const { mutate } = useSWRConfig()
+    const noteModal = useNoteModal()
+    const {mutate} = useSWRConfig()
+    const {projects: allProjects} = useProjects({})
 
     const [isOpen, setIsOpen] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
@@ -34,6 +37,8 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
     const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
     const [password, setPassword] = useState("")
     const [decryptError, setDecryptError] = useState(false)
+
+    const projectTitle = note?.project_id ? allProjects.find(p => p.id === note.project_id)?.title : undefined
 
     const handleDecrypt = () => {
         if (note && note.salt && note.iv && password && !decryptedContent) {
@@ -92,15 +97,15 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                         return currentData
                     }
                 },
-                { revalidate: false }
+                {revalidate: false}
             )
 
             toast.success(`"${note.title}" deleted successfully`)
 
             fetch(`/api/note`, {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${user?.api_key}` },
-                body: JSON.stringify({ id: note.id })
+                headers: {"Content-Type": "application/json", "Authorization": `Bearer ${user?.api_key}`},
+                body: JSON.stringify({id: note.id})
             })
 
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
@@ -114,7 +119,8 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
     return (
         <>
             <Card className={cn(`h-fit group/Note`, className)}>
-                <CardHeader className={`flex flex-row justify-between items-center space-y-0 px-2 pt-2 pb-2 md:px-4 md:pt-2 md:pb-2 xl:px-2 xl:pt-2 ${note === undefined && "h-12 w-full bg-accent animate-pulse rounded-md"}`}>
+                <CardHeader
+                    className={`flex flex-row justify-between items-center space-y-0 px-2 pt-2 pb-2 md:px-4 md:pt-2 md:pb-2 xl:px-2 xl:pt-2 ${note === undefined && "h-12 w-full bg-accent animate-pulse rounded-md"}`}>
                     {
                         note && (
                             <div className="w-full" onClick={() => {
@@ -123,7 +129,8 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                                     cancelDecrypt()
                                 }
                             }}>
-                                <CardTitle className={`w-full text-sm lg:text-base xl:text-base ${note && "cursor-pointer"} flex flex-row items-center gap-1`}>
+                                <CardTitle
+                                    className={`w-full text-sm lg:text-base xl:text-base ${note && "cursor-pointer"} flex flex-row items-center gap-1`}>
                                     {
                                         note.salt && note.iv ? (
                                             <Lock className="size-3 cursor-pointer"/>
@@ -131,18 +138,23 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                                     }
                                     {note.title}
                                 </CardTitle>
-                                <p className="text-xs lg:text-sm text-gray-500">
-                                    {note.project_title}
-                                </p>
+                                {
+                                    projectTitle ? (
+                                        <p className="text-xs lg:text-sm text-gray-500">
+                                            {projectTitle}
+                                        </p>
+                                    ) : null
+                                }
                             </div>
                         )
                     }
-                    <div className={`${!note && "hidden"} flex flex-row items-center duration-200 ${isOpen ? "opacity-100" : "lg:opacity-0"} ${note && "lg:group-hover/Note:opacity-100 cursor-pointer"}`}>
+                    <div
+                        className={`${!note && "hidden"} flex flex-row items-center duration-200 ${isOpen ? "opacity-100" : "lg:opacity-0"} ${note && "lg:group-hover/Note:opacity-100 cursor-pointer"}`}>
                         {
                             note && isOpen ? (
-                                <ChevronUp className={`w-4 h-4`} onClick={() => setIsOpen(note ? !isOpen : false)} />
+                                <ChevronUp className={`w-4 h-4`} onClick={() => setIsOpen(note ? !isOpen : false)}/>
                             ) : (
-                                <ChevronDown className={`w-4 h-4`} onClick={() => setIsOpen(note ? !isOpen : false)} />
+                                <ChevronDown className={`w-4 h-4`} onClick={() => setIsOpen(note ? !isOpen : false)}/>
                             )
                         }
                     </div>
@@ -166,10 +178,11 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                                                     }}
                                                     onKeyDown={handleKeyPress}
                                                 />
-                                                {decryptError && <p className="text-red-500 text-sm">Incorrect password.</p>}
+                                                {decryptError &&
+                                                    <p className="text-red-500 text-sm">Incorrect password.</p>}
                                             </>
                                         ) : (
-                                            <p >{decryptedContent}</p>
+                                            <p>{decryptedContent}</p>
                                         )
                                     ) : (
                                         <p>{note.content}</p>
@@ -179,13 +192,13 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                             <CardFooter className="flex flex-row justify-end space-x-2">
                                 {
                                     note.salt && note.iv && decryptedContent && (
-                                        <Lock className="w-4 h-4 cursor-pointer" onClick={cancelDecrypt} />
+                                        <Lock className="w-4 h-4 cursor-pointer" onClick={cancelDecrypt}/>
                                     )
                                 }
-                                <Trash className="w-4 h-4 cursor-pointer text-red-500" onClick={handleDelete} />
+                                <Trash className="w-4 h-4 cursor-pointer text-red-500" onClick={handleDelete}/>
                                 {
                                     isCopied ? (
-                                        <ClipboardCheck className="w-4 h-4 cursor-pointer" />
+                                        <ClipboardCheck className="w-4 h-4 cursor-pointer"/>
                                     ) : ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
                                         <ClipboardPlus className="w-4 h-4 cursor-pointer" onClick={() => {
                                             navigator.clipboard.writeText(note.salt && note.iv && decryptedContent ? decryptedContent : note.content)
@@ -194,12 +207,24 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                                             setTimeout(() => {
                                                 setIsCopied(false)
                                             }, 2000)
-                                        }} />
+                                        }}/>
                                     )
                                 }
                                 {
                                     ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
-                                        <NoteModal note={note} password={password} />
+                                        <PenIcon
+                                            className={cn(
+                                                "min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer",
+                                                className)
+                                            }
+                                            onClick={() => {
+                                                noteModal.setNote({
+                                                    note: note,
+                                                    password: password
+                                                })
+                                                noteModal.openModal()
+                                            }}
+                                        />
                                     )
                                 }
                             </CardFooter>
@@ -212,7 +237,8 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                     <DialogHeader>
                         <DialogTitle>Delete Note</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete this note?<br /><br />You will be able to find it back in your Trash (Settings &gt; Trash &gt; Notes).
+                            Are you sure you want to delete this note?<br/><br/>You will be able to find it back in your
+                            Trash (Settings &gt; Trash &gt; Notes).
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

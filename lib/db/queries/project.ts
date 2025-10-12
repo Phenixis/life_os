@@ -2,19 +2,23 @@
 
 import * as lib from "./lib"
 
+const table = lib.Schema.Project.table
+type New = lib.Schema.Project.Insert
+type Existing = lib.Schema.Project.Select
+
 // # Project
 
 // ## Create
 
 export async function createProject(userId: string, title: string, description?: string) {
     const result = await lib.db
-        .insert(lib.Schema.Project.table)
+        .insert(table)
         .values({
             title: title,
             description: description,
             user_id: userId,
-        } as lib.Schema.Project.Insert)
-        .returning({ id: lib.Schema.Project.table.title })
+        } as New)
+        .returning({id: table.id})
 
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')
@@ -24,28 +28,28 @@ export async function createProject(userId: string, title: string, description?:
 
 // ## Read
 
-export async function searchProjects(userId: string, title: string, limit = 50) {
+export async function searchProjects(userId: string, title: string, limit = 50): Promise<Existing[]> {
     return await lib.db
         .select()
-        .from(lib.Schema.Project.table)
+        .from(table)
         .where(lib.and(
-            lib.sql`LOWER(${lib.Schema.Project.table.title}) LIKE LOWER(${`%${title}%`})`,
-            lib.isNull(lib.Schema.Project.table.deleted_at),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
+            lib.sql`LOWER(${table.title}) LIKE LOWER(${`%${title}%`})`,
+            lib.isNull(table.deleted_at),
+            lib.eq(table.user_id, userId),
         ))
-        .orderBy(lib.asc(lib.Schema.Project.table.title))
-        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as lib.Schema.Project.Select[]
+        .orderBy(lib.asc(table.title))
+        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as Existing[]
 }
 
-export async function getProject(userId: string, title: string) {
+export async function getProjectById(userId: string, id: number): Promise<Existing> {
     const dbresult = await lib.db
         .select()
-        .from(lib.Schema.Project.table)
+        .from(table)
         .where(lib.and(
-            lib.eq(lib.Schema.Project.table.title, title),
-            lib.isNull(lib.Schema.Project.table.deleted_at),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
-        )) as lib.Schema.Project.Select[]
+            lib.eq(table.id, id),
+            lib.isNull(table.deleted_at),
+            lib.eq(table.user_id, userId),
+        )) as Existing[]
 
     if (!dbresult) {
         throw new Error("Project not found")
@@ -54,115 +58,63 @@ export async function getProject(userId: string, title: string) {
     return dbresult[0];
 }
 
-export async function getProjects(userId: string, limit = 50, completed?: boolean, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted: boolean = false) {
+export async function getProjectByTitle(userId: string, title: string): Promise<Existing> {
     const dbresult = await lib.db
-        .select({
-            title: lib.Schema.Project.table.title,
-            description: lib.Schema.Project.table.description,
-            completed: lib.Schema.Project.table.completed,
-            created_at: lib.Schema.Project.table.created_at,
-            updated_at: lib.Schema.Project.table.updated_at,
-            deleted_at: lib.Schema.Project.table.deleted_at,
-        })
-        .from(lib.Schema.Project.table)
-        .leftJoin(lib.Schema.Task.Task.table, lib.eq(lib.Schema.Project.table.title, lib.Schema.Task.Task.table.project_title))
-        .where(lib.and(
-            lib.isNull(lib.Schema.Project.table.deleted_at),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
-            completed !== undefined ? lib.eq(lib.Schema.Project.table.completed, completed) : lib.sql`1 = 1`,
-            taskDeleted !== undefined ? (taskDeleted ? lib.isNotNull(lib.Schema.Task.Task.table.deleted_at) : lib.isNull(lib.Schema.Task.Task.table.deleted_at)) : lib.sql`1 = 1`,
-            taskCompleted !== undefined ? (taskCompleted ? lib.isNotNull(lib.Schema.Task.Task.table.completed_at) : lib.isNull(lib.Schema.Task.Task.table.completed_at)) : lib.sql`1 = 1`,
-            taskDueDate ? lib.lte(lib.Schema.Task.Task.table.due, taskDueDate) : lib.sql`1 = 1`,
-        ))
-        .groupBy(lib.Schema.Project.table.title)
-        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as lib.Schema.Project.Select[]
-
-    const tasksWithoutProject = await lib.db
         .select()
-        .from(lib.Schema.Task.Task.table)
-        .where(
-            lib.and(
-                lib.isNull(lib.Schema.Task.Task.table.project_title),
-                lib.isNull(lib.Schema.Task.Task.table.deleted_at),
-                taskDueDate ? lib.lte(lib.Schema.Task.Task.table.due, taskDueDate) : lib.sql`1 = 1`,
-                taskCompleted !== undefined
-                    ? taskCompleted
-                        ? lib.isNotNull(lib.Schema.Task.Task.table.completed_at)
-                        : lib.isNull(lib.Schema.Task.Task.table.completed_at)
-                    : lib.sql`1 = 1`,
-            )
-        );
+        .from(table)
+        .where(lib.and(
+            lib.eq(table.title, title),
+            lib.isNull(table.deleted_at),
+            lib.eq(table.user_id, userId),
+        )) as Existing[]
 
-    if (tasksWithoutProject.length > 0) {
-        dbresult.push(
-            {
-                title: "No project",
-                description: null,
-                completed: false,
-                created_at: new Date(0),
-                updated_at: new Date(0),
-                deleted_at: null,
-                user_id: userId,
-            }
-        );
+    if (!dbresult) {
+        throw new Error("Project not found")
     }
 
-    return dbresult;
+    return dbresult[0];
 }
 
-export async function getCompletedProjects(userId: string, limit = 50, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted: boolean = false) {
-    return getProjects(userId, limit, true, taskDeleted, taskDueDate, taskCompleted);
+export async function getProjects(userId: string, limit = 50): Promise<Existing[]> {
+    return await lib.db
+        .select()
+        .from(table)
+        .where(lib.and(
+            lib.isNull(table.deleted_at),
+            lib.eq(table.user_id, userId),
+        ))
+        .groupBy(table.id)
+        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as Existing[]
 }
 
-export async function getUncompletedProjects(userId: string, limit = 50, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted: boolean = false) {
-    return getProjects(userId, limit, false, taskDeleted, taskDueDate, taskCompleted);
-}
-
-export async function getProjectsWithNotes(
-    userId: string,
-    limit = 50,
-    noteLimit?: number,
-    noteOrderBy?: keyof lib.Schema.Note.Note.Select,
-    noteOrderingDirection?: "asc" | "desc",
-    noteProjectTitle?: string,
-) {
-    // First get projects with notes
-    const projectsWithNotes = await lib.db
-        .select({
-            title: lib.Schema.Project.table.title,
-            description: lib.Schema.Project.table.description,
-            completed: lib.Schema.Project.table.completed,
-            created_at: lib.Schema.Project.table.created_at,
-            updated_at: lib.Schema.Project.table.updated_at,
-            deleted_at: lib.Schema.Project.table.deleted_at,
-            user_id: lib.Schema.Project.table.user_id,
+export async function getProjectsWithTasks(userId: string, completed?: boolean, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted?: boolean): Promise<Existing[]> {
+    const projectsIds = (await lib.db
+        .selectDistinct({
+            id: lib.Schema.Task.Task.table.project_id,
         })
-        .from(lib.Schema.Project.table)
-        .innerJoin(lib.Schema.Note.Note.table, lib.eq(lib.Schema.Project.table.title, lib.Schema.Note.Note.table.project_title))
+        .from(lib.Schema.Task.Task.table)
         .where(lib.and(
-            lib.isNull(lib.Schema.Project.table.deleted_at),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
-            lib.isNull(lib.Schema.Note.Note.table.deleted_at),
-            noteProjectTitle && noteProjectTitle !== "No project" ? lib.eq(lib.Schema.Note.Note.table.project_title, noteProjectTitle) : lib.sql`1 = 1`,
-        ))
-        .groupBy(lib.Schema.Project.table.title)
-        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as lib.Schema.Project.Select[]
+            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+            completed ? lib.isNotNull(lib.Schema.Task.Task.table.completed_at) : completed === false ? lib.isNull(lib.Schema.Task.Task.table.completed_at) : lib.sql`1 = 1`,
+            taskDeleted ? lib.isNotNull(lib.Schema.Task.Task.table.deleted_at) : taskDeleted === false ? lib.isNull(lib.Schema.Task.Task.table.deleted_at) : lib.sql`1 = 1`,
+            taskCompleted ? lib.isNotNull(lib.Schema.Task.Task.table.completed_at) : taskCompleted === false ? lib.isNull(lib.Schema.Task.Task.table.completed_at) : lib.sql`1 = 1`,
+            taskDueDate ? lib.lte(lib.Schema.Task.Task.table.due, taskDueDate) : lib.sql`1 = 1`,
+        ))).map(row => row.id)
 
-    // Check if there are any notes without a project
-    const hasNotesWithoutProject = await lib.db
-        .select({ count: lib.sql<number>`count(*)` })
-        .from(lib.Schema.Note.Note.table)
+    if (projectsIds.length === 0) {
+        return []
+    }
+
+    const projects: Existing[] = await lib.db
+        .select()
+        .from(table)
         .where(lib.and(
-            lib.isNull(lib.Schema.Note.Note.table.project_title),
-            lib.isNull(lib.Schema.Note.Note.table.deleted_at),
-            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+            lib.inArray(table.id, projectsIds.filter(id => id !== null)),
         ))
-        .then(result => result[0].count > 0)
 
-    // If there are notes without a project lib.and we're not filtering by a specific project
-    // or if we're specifically looking for notes without a project
-    if (hasNotesWithoutProject && (!noteProjectTitle || noteProjectTitle === "No project")) {
-        projectsWithNotes.push({
+    if (projectsIds.includes(null)) {
+        projects.push({
+            id: -1,
             title: "No project",
             description: null,
             completed: false,
@@ -173,24 +125,71 @@ export async function getProjectsWithNotes(
         })
     }
 
-    return projectsWithNotes
+    return projects;
+}
+
+export async function getCompletedProjectsWithTasks(userId: string, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted: boolean = false) {
+    return getProjectsWithTasks(userId, true, taskDeleted, taskDueDate, taskCompleted);
+}
+
+export async function getUncompletedProjectsWithTasks(userId: string, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted: boolean = false) {
+    return getProjectsWithTasks(userId, false, taskDeleted, taskDueDate, taskCompleted);
+}
+
+export async function getProjectsWithNotes(
+    userId: string,
+) {
+    const projectsIds = (await lib.db
+        .selectDistinct({
+            id: lib.Schema.Note.Note.table.project_id,
+        })
+        .from(lib.Schema.Note.Note.table)
+        .where(lib.and(
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+        ))).map(row => row.id)
+
+    if (projectsIds.length === 0) {
+        return []
+    }
+
+    const projects: Existing[] = await lib.db
+        .select()
+        .from(table)
+        .where(lib.and(
+            lib.inArray(table.id, projectsIds.filter(id => id !== null)),
+        ))
+
+    if (projectsIds.includes(null)) {
+        projects.push({
+            id: -1,
+            title: "No project",
+            description: null,
+            completed: false,
+            created_at: new Date(0),
+            updated_at: new Date(0),
+            deleted_at: null,
+            user_id: userId,
+        })
+    }
+
+    return projects;
 }
 
 // ## Update
 
 export async function updateProject(userId: string, title: string, new_title?: string, description?: string) {
     const result = await lib.db
-        .update(lib.Schema.Project.table)
+        .update(table)
         .set({
             title: new_title ? new_title : title,
             description: description,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Project.table.title, title),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
+            lib.eq(table.title, title),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ title: lib.Schema.Project.table.title })
+        .returning({title: table.title})
 
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')
@@ -204,16 +203,16 @@ export async function updateProject(userId: string, title: string, new_title?: s
 
 export async function completeProject(userId: string, title: string) {
     const result = await lib.db
-        .update(lib.Schema.Project.table)
+        .update(table)
         .set({
             completed: true,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Project.table.title, title),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
+            lib.eq(table.title, title),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ title: lib.Schema.Project.table.title })
+        .returning({title: table.title})
 
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')
@@ -227,16 +226,16 @@ export async function completeProject(userId: string, title: string) {
 
 export async function uncompleteProject(userId: string, title: string) {
     const result = await lib.db
-        .update(lib.Schema.Project.table)
+        .update(table)
         .set({
             completed: false,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Project.table.title, title),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
+            lib.eq(table.title, title),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ title: lib.Schema.Project.table.title })
+        .returning({title: table.title})
 
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')
@@ -251,16 +250,16 @@ export async function uncompleteProject(userId: string, title: string) {
 // ## Delete
 
 export async function deleteProject(userId: string, title: string) {
-    const result = await lib.db.update(lib.Schema.Project.table)
+    const result = await lib.db.update(table)
         .set({
             deleted_at: lib.sql`CURRENT_TIMESTAMP`,
             updated_at: lib.sql`CURRENT_TIMESTAMP`
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Project.table.title, title),
-            lib.eq(lib.Schema.Project.table.user_id, userId),
+            lib.eq(table.title, title),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ title: lib.Schema.Project.table.title })
+        .returning({title: table.title})
 
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')

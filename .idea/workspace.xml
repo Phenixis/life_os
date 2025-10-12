@@ -4,17 +4,35 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e3517ae-b7fc-4690-bcfe-422aef80c67c" name="Changes" comment="fix: remove useless console.log">
-      <change afterPath="$PROJECT_DIR$/components/big/filtering/projects-multiple-selects.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/components/big/filtering/radio-buttons.tsx" afterDir="false" />
+    <list default="true" id="6e3517ae-b7fc-4690-bcfe-422aef80c67c" name="Changes" comment="fix: clean up formatting inconsistencies, fix imports, and enhance state dependency management">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/big/calendar/calendar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/calendar/calendar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/big/help.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/help.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(api)/api/note/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/(api)/api/note/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(api)/api/project/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/(api)/api/project/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(api)/api/task/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/(api)/api/task/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(door)/login/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(door)/login/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/filtering/projects-multiple-selects.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/filtering/projects-multiple-selects.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/modal-manager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/modal-manager.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/notes/note-display.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/notes/note-display.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/big/notes/note-modal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/notes/note-modal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/big/notes/notes-card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/notes/notes-card.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/projects/search-projects-input.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/projects/search-projects-input.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/tasks/task-display.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/tasks/task-display.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/big/tasks/task-modal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/tasks/task-modal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/big/tasks/tasks-card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/tasks/tasks-card.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/ui/dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/contexts/modal-commands-context.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/contexts/modal-commands-context.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hooks/use-notes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hooks/use-notes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hooks/use-number-of-tasks.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hooks/use-number-of-tasks.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hooks/use-projects.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hooks/use-projects.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hooks/use-tasks.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hooks/use-tasks.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/db/migrations/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/lib/db/migrations/meta/_journal.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/db/queries/note.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/db/queries/note.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/db/queries/project.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/db/queries/project.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/db/queries/task/task.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/db/queries/task/task.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/db/schema/note/note.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/db/schema/note/note.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/db/schema/project.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/db/schema/project.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/db/schema/task/task.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/db/schema/task/task.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -125,6 +143,10 @@
       <workItem from="1759852090674" duration="4872000" />
       <workItem from="1759906697678" duration="605000" />
       <workItem from="1759915396272" duration="763000" />
+      <workItem from="1759993274387" duration="602000" />
+      <workItem from="1760025428465" duration="1067000" />
+      <workItem from="1760079100746" duration="593000" />
+      <workItem from="1760255492759" duration="42351000" />
     </task>
     <task id="LOCAL-00001" summary="refactor: improved dark mode and create workout tools">
       <option name="closed" value="true" />
@@ -182,7 +204,31 @@
       <option name="project" value="LOCAL" />
       <updated>1759915812358</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="refactor: improve Tooltip and TaskModal components for better usability and structure">
+      <option name="closed" value="true" />
+      <created>1759956274326</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1759956274326</updated>
+    </task>
+    <task id="LOCAL-00009" summary="fix: simplify TasksCard and NotesCard component by removing redundant imports and code duplication">
+      <option name="closed" value="true" />
+      <created>1759956355206</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1759956355206</updated>
+    </task>
+    <task id="LOCAL-00010" summary="fix: clean up formatting inconsistencies, fix imports, and enhance state dependency management">
+      <option name="closed" value="true" />
+      <created>1759956400598</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1759956400598</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -215,6 +261,11 @@
     <MESSAGE value="feat: move the user file and set up the subscription wall" />
     <MESSAGE value="fix: integrate personalized dark mode handling into Toaster component" />
     <MESSAGE value="fix: remove useless console.log" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: remove useless console.log" />
+    <MESSAGE value="refactor: improve Tooltip and TaskModal components for better usability and structure" />
+    <MESSAGE value="refactor: simplify TasksCard and NotesCard component by removing redundant imports and code duplication" />
+    <MESSAGE value="fix: simplify TasksCard and NotesCard component by removing redundant imports and code duplication" />
+    <MESSAGE value="fix: clean up formatting inconsistencies, fix imports, and enhance state dependency management in multiple components" />
+    <MESSAGE value="fix: clean up formatting inconsistencies, fix imports, and enhance state dependency management" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: clean up formatting inconsistencies, fix imports, and enhance state dependency management" />
   </component>
 </project>

@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
-import { verifyRequest } from "@/lib/auth/api"
-import { getNotes, createNote, updateNote, deleteNote } from "@/lib/db/queries/note"
+import {NextRequest, NextResponse} from "next/server"
+import {verifyRequest} from "@/lib/auth/api"
+import {NoteQueries, ProjectQueries} from "@/lib/db/queries"
+import {isEmpty} from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
-	const verification = await verifyRequest(request)
-	if ('error' in verification) return verification.error
+    const verification = await verifyRequest(request)
+    if ('error' in verification) return verification.error
 
     const searchParams = request.nextUrl.searchParams
     const title = searchParams.get("title") || undefined
@@ -15,55 +16,83 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get("page") ? Number.parseInt(searchParams.get("page") as string) : undefined
 
     try {
-        const result = await getNotes(verification.userId, title, projectTitle, limit, page, projectTitles, excludedProjectTitles)
+        const result = await NoteQueries.getNotes(verification.userId, title, projectTitle, limit, page, projectTitles, excludedProjectTitles)
         return NextResponse.json(result)
     } catch (error) {
         console.error("Error fetching notes:", error)
-        return NextResponse.json({ error: "Failed to fetch notes" }, { status: 500 })
+        return NextResponse.json({error: "Failed to fetch notes"}, {status: 500})
     }
 }
 
 export async function POST(request: NextRequest) {
     const verification = await verifyRequest(request)
     if ('error' in verification) return verification.error
-    
-    const { title, content, project_title, salt, iv } = await request.json()
-
     try {
-        const note = await createNote(verification.userId, title, content, project_title != "" ? project_title : undefined, salt, iv)
+
+        const {noteData, project} = await request.json()
+
+        if (isEmpty(noteData.title) || isEmpty(noteData.content)) {
+            return NextResponse.json({error: "Missing required fields"}, {status: 400})
+        }
+
+        let projectId = project.id >= 0 ? project.id : undefined
+        if (projectId === undefined) {
+            const foundProject = await ProjectQueries.getProjectByTitle(verification.userId, project.title)
+            if (foundProject) {
+                projectId = foundProject.id
+            } else {
+                projectId = await ProjectQueries.createProject(verification.userId, project.title)
+            }
+        }
+
+        const note = await NoteQueries.createNote(verification.userId, noteData.title, noteData.content, projectId, noteData.salt, noteData.iv)
         return NextResponse.json(note)
     } catch (error) {
         console.error("Error creating note:", error)
-        return NextResponse.json({ error: "Failed to create note" }, { status: 500 })
+        return NextResponse.json({error: "Failed to create note"}, {status: 500})
     }
 }
 
 export async function PUT(request: NextRequest) {
     const verification = await verifyRequest(request)
     if ('error' in verification) return verification.error
-    
-    const { id, title, content, project_title, salt, iv } = await request.json()
 
     try {
-        const note = await updateNote(verification.userId, id, title, content, project_title != "" ? project_title : null, salt, iv)
+        const {noteData, project} = await request.json()
+
+        if (isEmpty(noteData.id) || isEmpty(noteData.title) || isEmpty(noteData.content)) {
+            return NextResponse.json({error: "Missing required fields"}, {status: 400})
+        }
+
+        let projectId = project.id >= 0 ? project.id : undefined
+        if (projectId === undefined) {
+            const foundProject = await ProjectQueries.getProjectByTitle(verification.userId, project.title)
+            if (foundProject) {
+                projectId = foundProject.id
+            } else {
+                projectId = await ProjectQueries.createProject(verification.userId, project.title)
+            }
+        }
+
+        const note = await NoteQueries.updateNote(verification.userId, noteData.id, noteData.title, noteData.content, projectId, noteData.salt, noteData.iv)
         return NextResponse.json(note)
     } catch (error) {
         console.error("Error updating note:", error)
-        return NextResponse.json({ error: "Failed to update note" }, { status: 500 })
+        return NextResponse.json({error: "Failed to update note"}, {status: 500})
     }
 }
 
 export async function DELETE(request: NextRequest) {
     const verification = await verifyRequest(request)
     if ('error' in verification) return verification.error
-    
-    const { id } = await request.json()
+
+    const {id} = await request.json()
 
     try {
-        const note = await deleteNote(verification.userId, id)
+        const note = await NoteQueries.deleteNote(verification.userId, id)
         return NextResponse.json(note)
     } catch (error) {
         console.error("Error deleting note:", error)
-        return NextResponse.json({ error: "Failed to delete note" }, { status: 500 })
+        return NextResponse.json({error: "Failed to delete note"}, {status: 500})
     }
 }

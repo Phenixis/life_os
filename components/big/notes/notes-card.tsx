@@ -1,12 +1,11 @@
 "use client"
 
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
-import dynamic from "next/dynamic"
 import {cn} from "@/lib/utils"
 import type {Note} from "@/lib/db/schema"
-import {useCallback, useEffect, useMemo, useState, useTransition} from "react"
+import {useCallback, useEffect, useMemo, useState, useTransition, useRef} from "react"
 import {Button} from "@/components/ui/button"
-import {Filter, FolderTree} from "lucide-react"
+import {Filter, FolderTree, Plus} from "lucide-react"
 import NoteDisplay from "./note-display"
 import {useNotes} from "@/hooks/use-notes"
 import {useProjects} from "@/hooks/use-projects"
@@ -14,8 +13,8 @@ import {useRouter, useSearchParams} from "next/navigation"
 import SearchNote from "@/components/big/notes/search-note"
 import {RadioButtons} from "@/components/big/filtering/radio-buttons";
 import {ProjectsMultipleSelects} from "@/components/big/filtering/projects-multiple-selects";
-
-const NoteModal = dynamic(() => import("@/components/big/notes/note-modal"), {ssr: false})
+import {useNoteModal} from "@/contexts/modal-commands-context";
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
 // Constants for URL parameters
 export const NOTE_PARAMS = {
@@ -40,55 +39,58 @@ export type NoteUrlParams = {
     [NOTE_PARAMS.GROUP_BY_PROJECT]?: string;
 };
 
+export type notesFilters = {
+    title: string;
+    limit: number;
+    orderBy: keyof Note.Note.Select;
+    orderingDirection: "asc" | "desc";
+    selectedProjects: simplifiedProject[];
+    removedProjects: simplifiedProject[];
+    groupByProject: boolean;
+}
+
 // Add this type definition after the NoteUrlParams type
 type GroupedNotes = Record<string, { name: string; notes: Note.Note.Select[] }>;
 
-export function NotesCard({
-                              className,
-                              limit: initialLimit,
-                              orderBy: initialOrderBy = "created_at",
-                              orderingDirection: initialOrderingDirection = "desc",
-                          }: {
-    className?: string
-    limit?: number
-    orderBy?: keyof Note.Note.Select
-    orderingDirection?: "asc" | "desc"
-}) {
+export function NotesCard(
+    {
+        className,
+        limit: initialLimit,
+        orderBy: initialOrderBy = "created_at",
+        orderingDirection: initialOrderingDirection = "desc",
+    }: {
+        className?: string
+        limit?: number
+        orderBy?: keyof Note.Note.Select
+        orderingDirection?: "asc" | "desc"
+    }
+) {
     // -------------------- Imports & Hooks --------------------
     const router = useRouter()
     const searchParams = useSearchParams()
+    const noteModal = useNoteModal()
     const [isPending, startTransition] = useTransition()
 
     // -------------------- State --------------------
     const [isFilterOpen, setIsFilterOpen] = useState(false)
 
-    const [limit, setLimit] = useState<number | undefined>(
-        searchParams.has(NOTE_PARAMS.LIMIT)
-            ? Number.parseInt(searchParams.get(NOTE_PARAMS.LIMIT) || "") || initialLimit
-            : initialLimit
-    )
+    const [limit, setLimit] = useState<number | undefined>(initialLimit)
 
-    const [orderBy] = useState<keyof Note.Note.Select | undefined>((searchParams.get(NOTE_PARAMS.ORDER_BY) as keyof Note.Note.Select) || initialOrderBy)
+    const [orderBy, setOrderBy] = useState<keyof Note.Note.Select | undefined>(initialOrderBy)
 
-    const [orderingDirection] = useState<"asc" | "desc" | undefined>((searchParams.get(NOTE_PARAMS.ORDERING_DIRECTION) as "asc" | "desc") || initialOrderingDirection)
+    const [orderingDirection, setOrderingDirection] = useState<"asc" | "desc" | undefined>(initialOrderingDirection)
 
-    const [selectedProjects, setSelectedProjects] = useState<string[]>(
-        searchParams.has(NOTE_PARAMS.PROJECTS)
-            ? searchParams.get(NOTE_PARAMS.PROJECTS)?.split(",") || []
-            : []
-    )
+    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>([])
 
-    const [removedProjects, setRemovedProjects] = useState<string[]>(
-        searchParams.has(NOTE_PARAMS.REMOVED_PROJECTS)
-            ? searchParams.get(NOTE_PARAMS.REMOVED_PROJECTS)?.split(",") || []
-            : []
-    )
+    const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>([])
 
-    const [groupByProject, setGroupByProject] = useState(
-        searchParams.get(NOTE_PARAMS.GROUP_BY_PROJECT) === "true"
-    )
+    const [groupByProject, setGroupByProject] = useState<boolean>(false)
 
-    const [title, setTitle] = useState<string>(searchParams.get(NOTE_PARAMS["TITLE"]) || "")
+    const [title, setTitle] = useState<string>("")
+
+    // Add a ref to track if this is the first render
+    const isFirstRender = useRef(true);
+
     // -------------------- Data Fetching --------------------
     const {projects, isLoading: projectsLoading} = useProjects({
         completed: false,
@@ -99,25 +101,39 @@ export function NotesCard({
     const {data: notesData, isLoading} = useNotes({
         title,
         limit,
-        projectTitles: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
-        excludedProjectTitles: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
+        projects: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
+        excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
     })
 
     // -------------------- Effects --------------------
     useEffect(() => {
-        // Only update if we have actual project data
-        if (projects && projects.length > 0) {
-            // Update selected projects based on the current projects
-            setSelectedProjects((prev) =>
-                prev.filter((title) => projects.some((project) => project.title === title))
-            );
+        window.localStorage.setItem("notes_filters", JSON.stringify({
+            limit,
+            orderBy,
+            orderingDirection,
+            selectedProjects,
+            removedProjects,
+            groupByProject,
+        } as notesFilters))
+    }, [groupByProject, limit, orderBy, orderingDirection, removedProjects, selectedProjects])
 
-            // Update removed projects based on the current projects
-            setRemovedProjects((prev) =>
-                prev.filter((title) => !projects.some((project) => project.title === title))
-            );
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
         }
-    }, [projects]);
+
+        const savedFilters = JSON.parse(window.localStorage.getItem("notes_filters") || "{}") as notesFilters;
+
+        if (savedFilters) {
+            setLimit(savedFilters.limit)
+            setOrderBy(savedFilters.orderBy)
+            setOrderingDirection(savedFilters.orderingDirection)
+            setSelectedProjects(savedFilters.selectedProjects)
+            setRemovedProjects(savedFilters.removedProjects)
+            setGroupByProject(savedFilters.groupByProject)
+        }
+    }, [])
 
     // -------------------- Callbacks --------------------
     const updateUrlParams = useCallback(() => {
@@ -145,22 +161,20 @@ export function NotesCard({
      *
      * @param projectTitle - The title of the project to toggle
      */
-    const toggleProject = useCallback((projectTitle: string) => {
+    const toggleProject = useCallback((project: simplifiedProject) => {
         startTransition(() => {
-            if (selectedProjects.includes(projectTitle)) {
-                // State 1 -> 2: From "only this project" to "exclude this project" 
-                setSelectedProjects(prev => prev.filter(title => title !== projectTitle));
-                setRemovedProjects(prev => [...prev, projectTitle]);
-            } else if (removedProjects.includes(projectTitle)) {
-                // State 2 -> 3: From "exclude this project" to neutral state
-                setRemovedProjects(prev => prev.filter(title => title !== projectTitle));
-            } else {
-                // State 3 -> 1: From neutral to "only this project"
-                // If this is the first project being selected, clear excluded projects
-                if (selectedProjects.length === 0) {
-                    setRemovedProjects(prev => prev.filter(title => title !== projectTitle));
+            if (selectedProjects.filter(title => title.id === project.id).length > 0) {
+                if (selectedProjects.length === 1) {
+                    setRemovedProjects(prev => [...prev, project]);
                 }
-                setSelectedProjects(prev => [...prev, projectTitle]);
+                setSelectedProjects(prev => prev.filter(title => title.id !== project.id));
+            } else if (removedProjects.filter(title => title.id === project.id).length > 0) {
+                setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
+            } else {
+                if (selectedProjects.length === 0) {
+                    setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
+                }
+                setSelectedProjects(prev => [...prev, project]);
             }
         });
     }, [selectedProjects, removedProjects])
@@ -171,8 +185,8 @@ export function NotesCard({
 
         return notesData.notes.slice(0, limit).reduce(
             (acc: GroupedNotes, note: Note.Note.Select) => {
-                const projectId = note.project_title || "no-project"
-                const projectName = projects?.find((p) => p.title === note.project_title)?.title || "No Project"
+                const projectId = note.project_id || -1
+                const projectName = projects?.find((p) => p.id === note.project_id)?.title || "No Project"
 
                 if (!acc[projectId]) {
                     acc[projectId] = {name: projectName, notes: []}
@@ -205,7 +219,16 @@ export function NotesCard({
                         >
                             <Filter className="h-4 w-4"/>
                         </Button>
-                        <NoteModal/>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className={
+                                "whitespace-nowrap transition-transform duration-300 border-none"
+                            }
+                            onClick={() => noteModal.openModal()}
+                        >
+                            <Plus size={24}/>
+                        </Button>
                     </div>
                 </div>
                 <div className={`${!isFilterOpen && "hidden"} flex flex-col gap-2`}>
@@ -236,7 +259,12 @@ export function NotesCard({
                         {groupByProject && (
                             <div className="w-full flex flex-col space-y-2">
                                 <ProjectsMultipleSelects
-                                    projects={projects.map((project) => project.title)}
+                                    projects={projects.map((project) => {
+                                        return {
+                                            title: project.title,
+                                            id: project.id
+                                        }
+                                    })}
                                     selectedProjects={selectedProjects}
                                     removedProjects={removedProjects}
                                     onChange={toggleProject}

@@ -2,14 +2,15 @@
 
 import { NotesAndData } from "@/lib/db/queries/note"
 import { useFilteredData } from "./use-filtered-data"
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
 interface UseNotesParams {
     title?: string
     projectTitle?: string
     limit?: number
     page?: number
-    projectTitles?: string[]
-    excludedProjectTitles?: string[]
+    projects?: simplifiedProject[]
+    excludedProjects?: simplifiedProject[]
 }
 
 export function useNotes(params: UseNotesParams = {}) {
@@ -18,8 +19,8 @@ export function useNotes(params: UseNotesParams = {}) {
         projectTitle,
         limit,
         page,
-        projectTitles,
-        excludedProjectTitles
+        projects,
+        excludedProjects
     } = params
 
     const { data, isLoading, isError, mutate } = useFilteredData<NotesAndData>({
@@ -29,8 +30,8 @@ export function useNotes(params: UseNotesParams = {}) {
             projectTitle,
             limit: limit ? limit + 1 : undefined,
             page,
-            projectTitles: projectTitles?.join(","),
-            excludedProjectTitles: excludedProjectTitles?.join(",")
+            projectTitles: projects?.join(","),
+            excludedProjectTitles: excludedProjects?.join(",")
         },
     })
 

@@ -1,7 +1,7 @@
 "use client"
 
-import React, { createContext, useContext, ReactNode, useState } from 'react'
-import { Note, Habit } from '@/lib/db/schema'
+import React, {createContext, ReactNode, useContext, useState} from 'react'
+import {Note, Task} from '@/lib/db/schema'
 
 // Define the context interface
 interface ModalCommandsContextType {
@@ -9,18 +9,24 @@ interface ModalCommandsContextType {
         isOpen: boolean
         openModal: () => void
         closeModal: () => void
+        task?: Task.Task.TaskWithRelations
+        setTask: (task?: Task.Task.TaskWithRelations) => void
     }
     noteModal: {
         isOpen: boolean
-        openModal: (note?: Note.Note.Select, password?: string) => void
+        openModal: () => void
         closeModal: () => void
-        note?: Note.Note.Select
-        password?: string
+        setNote: (noteModalData: { note?: Note.Note.Select | null, password?: string | null }) => void,
+        note?: Note.Note.Select | null,
+        password?: string | null
     }
+
     dailyMoodModal: {
         isOpen: boolean
         openModal: (date?: Date) => void
-        closeModal: () => void
+        closeModal
+            :
+            () => void
         date?: Date
     }
 }
@@ -29,14 +35,15 @@ interface ModalCommandsContextType {
 const ModalCommandsContext = createContext<ModalCommandsContextType | undefined>(undefined)
 
 // Create the provider component
-export function ModalCommandsProvider({ children }: { children: ReactNode }) {
+export function ModalCommandsProvider({children}: { children: ReactNode }) {
     // Task modal state
     const [taskModalOpen, setTaskModalOpen] = useState(false)
-    
+    const [taskModalData, setTaskModalData] = useState<Task.Task.TaskWithRelations | undefined>(undefined)
+
     // Note modal state
     const [noteModalOpen, setNoteModalOpen] = useState(false)
-    const [noteModalData, setNoteModalData] = useState<{ note?: Note.Note.Select; password?: string }>({})
-    
+    const [noteModalData, setNoteModalData] = useState<{ note?: Note.Note.Select | null; password?: string | null }>({})
+
     // Daily mood modal state
     const [dailyMoodModalOpen, setDailyMoodModalOpen] = useState(false)
     const [dailyMoodModalDate, setDailyMoodModalDate] = useState<Date>()
@@ -44,20 +51,31 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
     const value: ModalCommandsContextType = {
         taskModal: {
             isOpen: taskModalOpen,
-            openModal: () => setTaskModalOpen(true),
-            closeModal: () => setTaskModalOpen(false),
+            openModal: () => {
+                setTaskModalOpen(true)
+            },
+            closeModal: () => {
+                setTaskModalOpen(false)
+                setTaskModalData(undefined)
+            },
+            task: taskModalData,
+            setTask: setTaskModalData
         },
         noteModal: {
             isOpen: noteModalOpen,
-            openModal: (note?: Note.Note.Select, password?: string) => {
-                setNoteModalData({ note, password })
+            openModal: () => {
                 setNoteModalOpen(true)
             },
             closeModal: () => {
+                setNoteModalData({
+                    note: null,
+                    password: null,
+                })
                 setNoteModalOpen(false)
-                setNoteModalData({})
             },
-            ...noteModalData,
+            setNote: setNoteModalData,
+            note: noteModalData.note,
+            password: noteModalData.password,
         },
         dailyMoodModal: {
             isOpen: dailyMoodModalOpen,

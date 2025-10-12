@@ -3,10 +3,11 @@
 import { TaskCount } from "@/components/ui/calendar"
 import type { Task } from "@/lib/db/schema"
 import { useFilteredData } from "./use-filtered-data"
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
 interface UseNumberOfTasksParams {
-    projectTitles?: string[]
-    excludedProjectTitles?: string[]
+    projects?: simplifiedProject[]
+    excludedProjects?: simplifiedProject[]
     dueAfter?: Date
     dueBefore?: Date
     enabled?: boolean
@@ -15,8 +16,8 @@ interface UseNumberOfTasksParams {
 // hooks/use-number-of-tasks.ts
 export function useNumberOfTasks(params: UseNumberOfTasksParams = {}) {
     const {
-        projectTitles,
-        excludedProjectTitles,
+        projects,
+        excludedProjects,
         dueAfter,
         dueBefore,
         enabled = true
@@ -25,8 +26,8 @@ export function useNumberOfTasks(params: UseNumberOfTasksParams = {}) {
     const { data, isLoading, isError, mutate } = useFilteredData<Task.Task.Select[]>({
         endpoint: "/api/task/count",
         params: {
-            projectTitles: projectTitles?.join(","),
-            excludedProjectTitles: excludedProjectTitles?.join(","),
+            projectTitles: projects?.map(p => p.title).join(","),
+            excludedProjectTitles: excludedProjects?.map(p => p.title).join(","),
             dueAfter: dueAfter ? dueAfter.toISOString() : undefined,
             dueBefore: dueBefore ? dueBefore.toISOString() : undefined,
         },

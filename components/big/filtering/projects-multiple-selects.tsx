@@ -1,4 +1,5 @@
 import {cn} from "@/lib/utils";
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
 
 export function ProjectsMultipleSelects(
@@ -9,10 +10,10 @@ export function ProjectsMultipleSelects(
         onChange,
         loading = false,
     }: {
-        projects: string[],
-        selectedProjects: string[],
-        removedProjects: string[],
-        onChange: (projects: string) => void,
+        projects: simplifiedProject[],
+        selectedProjects: simplifiedProject[],
+        removedProjects: simplifiedProject[],
+        onChange: (projects: simplifiedProject) => void,
         loading: boolean,
     }
 ) {
@@ -29,29 +30,37 @@ export function ProjectsMultipleSelects(
                     if (!selectedProjects.includes(a) && selectedProjects.includes(b)) return 1;
                     if (removedProjects.includes(a) && !removedProjects.includes(b)) return -1;
                     if (!removedProjects.includes(a) && removedProjects.includes(b)) return 1;
-                    return a.localeCompare(b);
-                }).map((project) =>
-                    <div key={"task_" + project}
-                         className="flex items-center space-x-2 flex-shrink-0">
-                        <input
-                            type="checkbox"
-                            className="hidden"
-                            id={`task_project-${project}`}
-                            // Show checked only when project is selected
-                            checked={selectedProjects.includes(project)}
-                            onChange={() => onChange(project)}
-                        />
-                        <label
-                            htmlFor={`task_project-${project}`}
-                            className={cn(
-                                "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border border-transparent",
-                                (selectedProjects.includes(project) || removedProjects.includes(project)) && "border-border bg-primary/10",
-                                removedProjects.includes(project) && "line-through text-muted-foreground"
-                            )}
-                        >
-                            {project}
-                        </label>
-                    </div>
+                    return a.title.localeCompare(b.title);
+                }).map((project) => {
+                        const isSelected = selectedProjects.filter(p => p.id === project.id).length > 0;
+                        const isRemoved = removedProjects.filter(p => p.id === project.id).length > 0;
+
+                        return (
+                            <div
+                                key={"project-" + project.id}
+                                className="flex items-center space-x-2 flex-shrink-0"
+                                onClick={() => onChange(project)}
+                            >
+                                <input
+                                    type="checkbox"
+                                    className="hidden"
+                                    id={`project-${project.id}`}
+                                    // Show checked only when project is selected
+                                    defaultChecked={isSelected}
+                                />
+                                <label
+                                    htmlFor={`project-${project}`}
+                                    className={cn(
+                                        "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border border-transparent",
+                                        (isSelected || isRemoved) && "border-border bg-primary/10",
+                                        isRemoved && "line-through text-muted-foreground"
+                                    )}
+                                >
+                                    {project.title}
+                                </label>
+                            </div>
+                        )
+                    }
                 )
             ) : (
                 <div

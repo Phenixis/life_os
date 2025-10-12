@@ -1,14 +1,13 @@
 "use client"
 
-import type React from "react"
-import {useEffect, useRef, useState} from "react"
+import React, {useCallback, useEffect, useRef, useState} from "react"
 
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog"
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import {Button} from "@/components/ui/button"
 import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
 import type {Project, Task} from "@/lib/db/schema"
-import {ChevronDown, CircleHelp, Minus, PenIcon, Plus, PlusIcon} from "lucide-react"
+import {ChevronDown, CircleHelp, Minus, Plus} from "lucide-react"
 import {useSWRConfig} from "swr"
 import {Calendar, TaskCount} from "@/components/ui/calendar"
 import {calculateUrgency} from "@/lib/utils/task"
@@ -17,7 +16,6 @@ import {useDebouncedCallback} from "use-debounce"
 import {useSearchTasks} from "@/hooks/use-search-tasks"
 import {useImportanceAndDuration} from "@/hooks/use-importance-and-duration"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {cn} from "@/lib/utils"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -30,38 +28,21 @@ import {
 } from "@/components/ui/alert-dialog"
 import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
 import Tooltip from "../tooltip"
-import {useSearchParams} from "next/navigation"
 import {useUser} from "@/hooks/use-user"
 import {toast} from "sonner"
-import {TASK_PARAMS} from "./tasks-card"
+import {simplifiedProject, tasksFilters} from "./tasks-card"
 import SearchProjectsInput from "../projects/search-projects-input"
 import Help from "../help"
 import {Checkbox} from "@/components/ui/checkbox";
+import {useTaskModal} from "@/contexts/modal-commands-context";
 
-export default function TaskModal({
-                                      className,
-                                      task,
-                                      isOpen,
-                                      onOpenChange,
-                                      children,
-                                  }: {
-    className?: string
-    task?: Task.Task.TaskWithRelations
-    isOpen?: boolean
-    onOpenChange?: (open: boolean) => void
-    children?: React.ReactNode
-}) {
+export default function TaskModal() {
     const user = useUser().user;
-    const searchParams = useSearchParams()
+    const {isOpen, task, openModal, closeModal} = useTaskModal();
 
     // State management for the dialog
     const mode = task ? "edit" : "create"
     const [keepCreating, setKeepCreating] = useState(false)
-    const [internalOpen, setInternalOpen] = useState(false)
-
-    // Use external control if provided, otherwise use internal state
-    const open = isOpen !== undefined ? isOpen : internalOpen
-    const setOpen = onOpenChange || setInternalOpen
 
     // State management for form fields
     const [dueDate, setDueDate] = useState<Date>(() => {
@@ -72,7 +53,13 @@ export default function TaskModal({
     const [showCalendar, setShowCalendar] = useState(false)
     const calendarRef = useRef<HTMLDivElement>(null)
 
-    const [project, setProject] = useState<string>(task && task.project_title ? task.project_title : "")
+    const [project, setProject] = useState<simplifiedProject>(task && task.project ? {
+        title: task.project.title,
+        id: task.project.id
+    } : {
+        title: "",
+        id: -1
+    })
 
     const [toDoAfter, setToDoAfter] = useState<number>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].id : -1)
     const [toDoAfterInputValue, setToDoAfterInputValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
@@ -101,13 +88,13 @@ export default function TaskModal({
     // Track if a submission is in progress (to prevent duplicates)
     const isSubmittingRef = useRef(false)
 
-    const resetForm = () => {
+    const resetForm = useCallback(() => {
         setDueDate(() => {
             const initialDate = task ? new Date(task.due) : new Date()
             initialDate.setHours(0, 0, 0, 0)
             return initialDate
         })
-        setProject("")
+        setProject({title: "", id: -1})
         setToDoAfter(-1)
         setToDoAfterInputValue("")
         setToDoAfterDebounceValue("")
@@ -122,22 +109,22 @@ export default function TaskModal({
         if (durationRef.current) {
             durationRef.current = "0"
         }
-    }
+    }, [task])
 
     useEffect(() => {
-        if (open) {
-            if (project === "") {
-                if (task && task.project_title) {
-                    setProject(task.project_title)
-                } else {
-                    const projectFromSearchParams = searchParams.get(TASK_PARAMS.PROJECTS) ? searchParams.get(TASK_PARAMS.PROJECTS)?.split(",") : []
-                    setProject(projectFromSearchParams && projectFromSearchParams.length === 1 ? projectFromSearchParams[0] : "")
-                }
+        if (isOpen) {
+            if (mode === "create") {
+                const projectFromSearchParams = (JSON.parse(window.localStorage.getItem("tasks_filters") || "{}") as tasksFilters | null)?.selectedProjects
+
+                setProject(projectFromSearchParams && projectFromSearchParams.length === 1 ? projectFromSearchParams[0] : {
+                    title: "",
+                    id: -1
+                })
             }
         } else {
             resetForm()
         }
-    }, [open, searchParams, task, project])
+    }, [isOpen])
 
     // Close calendar when clicking outside
     useEffect(() => {
@@ -157,10 +144,10 @@ export default function TaskModal({
 
     // Reset form state when dialog opens
     useEffect(() => {
-        if (open) {
+        if (isOpen) {
             setFormChanged(false)
         }
-    }, [open])
+    }, [isOpen])
 
     // Optimized function to handle submission
     const handleSubmit = async (e: React.FormEvent) => {
@@ -185,19 +172,21 @@ export default function TaskModal({
             const score = importance * urgency - duration
             const todoData = {
                 id: mode === "edit" ? id : -1,
-                title,
-                importance,
-                urgency,
-                duration,
-                score,
+                user_id: user?.id,
+                title: title,
+                importance: importance,
+                urgency: urgency,
+                duration: duration,
+                score: score,
                 due: dueDate,
-                project_title: project,
+                project_id: project.id,
                 created_at: mode === "create" ? new Date() : task?.created_at,
                 updated_at: new Date(),
                 deleted_at: task?.deleted_at || null,
                 completed_at: task?.completed_at || null,
                 project: {
-                    title: project,
+                    id: project.id,
+                    title: project.title,
                     completed: false,
                     created_at: new Date(),
                     updated_at: new Date(),
@@ -218,7 +207,7 @@ export default function TaskModal({
             } as Task.Task.TaskWithRelations
 
             if (!keepCreating) {
-                setOpen(false)
+                closeModal()
             } else {
                 resetForm();
             }
@@ -335,22 +324,27 @@ export default function TaskModal({
                         updatedData = [todoData, ...currentData]
                     }
 
+                    const savedFilters = (JSON.parse(window.localStorage.getItem("tasks_filters") || "{}") as tasksFilters | null)
+
                     const filteredData: Task.Task.TaskWithRelations[] = updatedData.filter((item: Task.Task.TaskWithRelations) => {
-                        const dueBeforeFromSearchParams = searchParams.get(TASK_PARAMS.DUE_BEFORE)
-                        const projectsFromSearchParams = searchParams.get(TASK_PARAMS.PROJECTS) ? searchParams.get(TASK_PARAMS.PROJECTS)?.split(",") : []
-                        const completedFromSearchParams = searchParams.get(TASK_PARAMS.COMPLETED)
-                        if (completedFromSearchParams && completedFromSearchParams === "false") {
-                            if (item.completed_at) return false
+                        const dueBeforeFromSearchParams = savedFilters?.dueBeforeDate
+                        const projectsFromSearchParams = savedFilters?.selectedProjects ?? []
+                        const completedFromSearchParams = savedFilters?.completed
+
+                        if (completedFromSearchParams !== undefined && item.completed_at !== null && !completedFromSearchParams) {
+                            return false
                         }
+
                         if (dueBeforeFromSearchParams && item.due > new Date(dueBeforeFromSearchParams)) return false
+
                         if (projectsFromSearchParams && projectsFromSearchParams.length > 0) {
-                            return projectsFromSearchParams.some((project: string) => item.project_title === project)
+                            return projectsFromSearchParams.some((project: simplifiedProject) => item.project?.title === project.title)
                         }
                         return true
                     })
 
-                    const orderByFromSearchParams = searchParams.get(TASK_PARAMS.ORDER_BY) as keyof Task.Task.TaskWithRelations
-                    const orderingDirectionFromSearchParams = searchParams.get(TASK_PARAMS.ORDERING_DIRECTION) === "asc" ? 1 : -1
+                    const orderByFromSearchParams = savedFilters?.orderBy
+                    const orderingDirectionFromSearchParams = savedFilters?.orderingDirection ? 1 : -1
                     const sortedData: Task.Task.TaskWithRelations[] = filteredData.sort(
                         (a: Task.Task.TaskWithRelations, b: Task.Task.TaskWithRelations) => {
                             if (orderByFromSearchParams) {
@@ -367,8 +361,8 @@ export default function TaskModal({
                             return orderingDirectionFromSearchParams * (b.score - a.score || (a.title || "").localeCompare(b.title || ""))
                         }
                     )
-                    const limitFromSearchParams = searchParams.get(TASK_PARAMS.LIMIT)
-                    return limitFromSearchParams ? sortedData.slice(0, parseInt(limitFromSearchParams)) : sortedData
+                    const limitFromSearchParams = savedFilters?.limit
+                    return limitFromSearchParams ? sortedData.slice(0, limitFromSearchParams) : sortedData
                 },
                 {revalidate: false},
             )
@@ -385,7 +379,7 @@ export default function TaskModal({
                     importance,
                     dueDate: dueDate.toISOString(),
                     duration,
-                    projectTitle: project,
+                    project: project,
                     toDoAfterId: toDoAfter,
                 }),
             })
@@ -425,7 +419,7 @@ export default function TaskModal({
     // Keyboard shortcut handler to submit with Ctrl+Enter
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === "Enter" && open) {
+            if (event.ctrlKey && event.key === "Enter" && isOpen) {
                 const form = document.getElementById("task-form") as HTMLFormElement
                 if (form) {
                     form.requestSubmit()
@@ -437,12 +431,12 @@ export default function TaskModal({
         return () => {
             document.removeEventListener("keydown", handleKeyPress)
         }
-    }, [open])
+    }, [isOpen])
 
     // Reset submission state when modal opens/closes
     useEffect(() => {
         isSubmittingRef.current = false
-    }, [open])
+    }, [isOpen])
 
     const handleDateChange = (date: Date | undefined) => {
         if (date) {
@@ -463,12 +457,12 @@ export default function TaskModal({
     const handleCloseAttempt = () => {
         if (formChanged) {
             // Store the close function for later use
-            closeDialogRef.current = () => setOpen(false)
+            closeDialogRef.current = () => closeModal()
             // Show confirmation dialog
             setShowConfirmDialog(true)
         } else {
             // No changes, close immediately
-            setOpen(false)
+            closeModal()
         }
     }
 
@@ -485,37 +479,17 @@ export default function TaskModal({
     return (
         <>
             <Dialog
-                open={open}
+                open={isOpen}
                 onOpenChange={(newOpenState) => {
-                    if (open && !newOpenState) {
+                    if (isOpen && !newOpenState) {
                         // Attempting to close
                         handleCloseAttempt()
                     } else {
                         // Opening the dialog
-                        setOpen(newOpenState)
+                        openModal()
                     }
                 }}
             >
-                {children ? (
-                    <DialogTrigger asChild>
-                        {children}
-                    </DialogTrigger>
-                ) : (
-                    <DialogTrigger className={cn(mode === "edit" && "h-fit", className)} asChild>
-                        {mode === "edit" ? (
-                            <PenIcon className="min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer"/>
-                        ) : (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                tooltip="Create a new task"
-                                className="h-10 px-2 flex items-center border-none"
-                            >
-                                <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]"/>
-                            </Button>
-                        )}
-                    </DialogTrigger>
-                )}
                 <DialogContent
                     className=""
                     aria-describedby={undefined}
@@ -682,10 +656,10 @@ export default function TaskModal({
                                 <SearchProjectsInput
                                     project={project}
                                     setProject={setProject}
-                                    defaultValue={project}
+                                    defaultValue={project.title}
                                     className="w-full"
                                     label="Project"
-                                    enabled={open}
+                                    enabled={isOpen}
                                 />
                             </div>
                             <Collapsible className="w-full" open={showAdvancedOptions}
@@ -714,7 +688,7 @@ export default function TaskModal({
                                                     setToDoAfterInputValue(e.target.value)
                                                     handleToDoAfterChange(e.target.value)
                                                     setFormChanged(
-                                                        (mode === "edit" && task && e.target.value !== task.project_title) || e.target.value !== ""
+                                                        (mode === "edit" && task && e.target.value !== task.project?.title) || e.target.value !== ""
                                                     )
                                                 }}
                                             />

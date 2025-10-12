@@ -23,47 +23,68 @@ export async function getNotes(
     const [{ count }] = await lib.db
         .select({ count: lib.sql<number>`count(*)` })
         .from(lib.Schema.Note.Note.table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Note.Note.table.project_id, lib.Schema.Project.table.id))
         .where(
             lib.and(
                 lib.isNull(lib.Schema.Note.Note.table.deleted_at),
                 lib.eq(lib.Schema.Note.Note.table.user_id, userId),
                 title ? lib.sql`LOWER(${lib.Schema.Note.Note.table.title}) LIKE LOWER(${'%' + title + '%'})` : undefined,
                 projectTitle ? (lib.and(
-                    lib.isNotNull(lib.Schema.Note.Note.table.project_title),
-                    lib.sql`LOWER(${lib.Schema.Note.Note.table.project_title}) LIKE LOWER(${'%' + projectTitle + '%'})`,
+                    lib.isNotNull(lib.Schema.Note.Note.table.project_id),
+                    lib.sql`LOWER(${lib.Schema.Project.table.title}) LIKE LOWER(${'%' + projectTitle + '%'})`,
                 )) : undefined,
-                projectTitles && projectTitles.length > 0 ? lib.inArray(lib.Schema.Note.Note.table.project_title, projectTitles) : undefined,
-                excludedProjectTitles && excludedProjectTitles.length > 0 ? lib.not(lib.inArray(lib.Schema.Note.Note.table.project_title, excludedProjectTitles)) : undefined
+                projectTitles && projectTitles.length > 0 ? lib.or(
+                    lib.inArray(lib.Schema.Project.table.title, projectTitles.filter(p => p !== "No project")),
+                    projectTitles.includes("No project") ? lib.isNull(lib.Schema.Note.Note.table.project_id) : undefined
+                ) : undefined,
+                excludedProjectTitles && excludedProjectTitles.length > 0 ? lib.and(
+                    lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles.filter(p => p !== "No project"))),
+                    excludedProjectTitles.includes("No project") ? lib.isNotNull(lib.Schema.Note.Note.table.project_id) : lib.sql`1 = 1`
+                ) : undefined
             )
         )
 
     // Get paginated notes
-    const notes = await lib.db.select().from(lib.Schema.Note.Note.table).where(
+    const notes = await lib.db.select({
+        id: lib.Schema.Note.Note.table.id,
+        user_id: lib.Schema.Note.Note.table.user_id,
+        project_id: lib.Schema.Note.Note.table.project_id,
+        title: lib.Schema.Note.Note.table.title,
+        content: lib.Schema.Note.Note.table.content,
+        salt: lib.Schema.Note.Note.table.salt,
+        iv: lib.Schema.Note.Note.table.iv,
+        created_at: lib.Schema.Note.Note.table.created_at,
+        updated_at: lib.Schema.Note.Note.table.updated_at,
+        deleted_at: lib.Schema.Note.Note.table.deleted_at,
+        project_title: lib.Schema.Project.table.title,
+    }).from(lib.Schema.Note.Note.table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Note.Note.table.project_id, lib.Schema.Project.table.id))
+        .where(
         lib.and(
             lib.isNull(lib.Schema.Note.Note.table.deleted_at),
             lib.eq(lib.Schema.Note.Note.table.user_id, userId),
             title ? lib.sql`LOWER(${lib.Schema.Note.Note.table.title}) LIKE LOWER(${'%' + title + '%'})` : undefined,
             projectTitle ? (lib.and(
-                lib.isNotNull(lib.Schema.Note.Note.table.project_title),
-                lib.sql`LOWER(${lib.Schema.Note.Note.table.project_title}) LIKE LOWER(${'%' + projectTitle + '%'})`
+                lib.isNotNull(lib.Schema.Note.Note.table.project_id),
+                lib.sql`LOWER(${lib.Schema.Project.table.title}) LIKE LOWER(${'%' + projectTitle + '%'})`
             )) : undefined,
             projectTitles && projectTitles.length > 0 ? (
                 projectTitles.includes("No project")
                     ?   lib.or(
-                        lib.inArray(lib.Schema.Note.Note.table.project_title, projectTitles.filter(p => p !== "No project")),
-                        lib.isNull(lib.Schema.Note.Note.table.project_title)
+                        lib.inArray(lib.Schema.Project.table.title, projectTitles.filter(p => p !== "No project")),
+                        lib.isNull(lib.Schema.Note.Note.table.project_id)
                     )
-                    : lib.inArray(lib.Schema.Note.Note.table.project_title, projectTitles)
+                    : lib.inArray(lib.Schema.Project.table.title, projectTitles)
             ) : undefined,
             excludedProjectTitles && excludedProjectTitles.length > 0 ? (
                 excludedProjectTitles.includes("No project")
                     ? lib.and(
-                        lib.not(lib.inArray(lib.Schema.Note.Note.table.project_title, excludedProjectTitles.filter(p => p !== "No project"))),
-                        lib.isNotNull(lib.Schema.Note.Note.table.project_title)
+                        lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles.filter(p => p !== "No project"))),
+                        lib.isNotNull(lib.Schema.Note.Note.table.project_id)
                     )
                     : lib.or(
-                        lib.not(lib.inArray(lib.Schema.Note.Note.table.project_title, excludedProjectTitles)),
-                        lib.isNull(lib.Schema.Note.Note.table.project_title)
+                        lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles)),
+                        lib.isNull(lib.Schema.Note.Note.table.project_id)
                     )
             ) : undefined
         )
@@ -81,24 +102,46 @@ export async function getNotes(
     } as NotesAndData
 }
 
-export async function createNote(userId: string, title: string, content: string, projectTitle?: string, salt?: string, iv?: string) {
+export async function createNote(userId: string, title: string, content: string, projectId?: number, salt?: string, iv?: string) {
+
     const note = await lib.db.insert(lib.Schema.Note.Note.table).values({
         user_id: userId,
         title,
         content,
-        project_title: projectTitle,
+        project_id: projectId,
         salt,
         iv
-    })
+    }).returning({ id: lib.Schema.Note.Note.table.id })
 
-    return note
+    if (note[0].id) {
+        lib.revalidatePath("/my", "layout");
+    }
+
+    return note[0].id
 }
 
 export async function updateNote(userId: string, id: number, title: string, content: string, projectTitle?: string, salt?: string, iv?: string) {
+    let projectIdToSet: number | null | undefined = undefined;
+    if (projectTitle !== undefined) {
+        if (projectTitle === "" || projectTitle === "No project") {
+            projectIdToSet = null;
+        } else {
+            const proj = await lib.db
+                .select({ id: lib.Schema.Project.table.id })
+                .from(lib.Schema.Project.table)
+                .where(lib.and(
+                    lib.eq(lib.Schema.Project.table.user_id, userId),
+                    lib.eq(lib.Schema.Project.table.title, projectTitle)
+                ))
+                .limit(1);
+            projectIdToSet = proj.length > 0 ? proj[0].id : null;
+        }
+    }
+
     const note = await lib.db.update(lib.Schema.Note.Note.table).set({
         title,
         content,
-        project_title: projectTitle,
+        project_id: projectIdToSet as any,
         salt,
         iv
     }).where(lib.and(lib.eq(lib.Schema.Note.Note.table.id, id), lib.eq(lib.Schema.Note.Note.table.user_id, userId)))

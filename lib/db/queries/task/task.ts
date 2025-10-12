@@ -1,6 +1,6 @@
 "use server"
 
-import { calculateUrgency } from "@/lib/utils/task";
+import {calculateUrgency} from "@/lib/utils/task";
 import * as lib from "../lib";
 
 import * as RecurrencyQueries from "./recurrency"
@@ -8,32 +8,25 @@ import * as RecurrencyQueries from "./recurrency"
 const taskToDoAfterAlias = lib.alias(lib.Schema.Task.ToDoAfter.table, 'taskToDoAfter');
 const taskToDoBeforeAlias = lib.alias(lib.Schema.Task.ToDoAfter.table, 'taskToDoBefore');
 
+const table = lib.Schema.Task.Task.table;
+type New = lib.Schema.Task.Task.Insert
+type Existing = lib.Schema.Task.Task.Select
 // # TASK
 
 // ## Create
 export async function createTask(
-    title: string,
-    importance: number,
-    dueDate: Date,
-    duration: number,
-    project?: string,
-    userId?: string,
+    values: New,
 ) {
-    const urgency = calculateUrgency(dueDate)
+    const urgency = calculateUrgency(values.due)
 
     const result = await lib.db
-        .insert(lib.Schema.Task.Task.table)
+        .insert(table)
         .values({
-            title: title,
-            importance: importance,
+            ...values,
             urgency: urgency,
-            duration: duration,
-            score: importance * urgency - duration,
-            due: dueDate,
-            project_title: project,
-            user_id: userId,
-        } as lib.Schema.Task.Task.Insert)
-        .returning({ id: lib.Schema.Task.Task.table.id })
+            score: (values.importance * urgency) - values.duration
+        })
+        .returning({id: table.id})
 
     const taskId = result[0].id
 
@@ -43,38 +36,40 @@ export async function createTask(
     return taskId
 }
 
-export async function duplicateTask(id: number, newValues: Partial<lib.Schema.Task.Task.Insert> = {}) {
+export async function duplicateTask(id: number, newValues: Partial<Existing> = {}) {
     const task = await getTaskById(id);
     if (!task) return null;
 
-    return createTask(
-        newValues.title ? newValues.title : task.title,
-        newValues.importance ? newValues.importance : task.importance,
-        newValues.due ? newValues.due : task.due,
-        newValues.duration ? newValues.duration : task.duration,
-        newValues.project_title ? newValues.project_title : task.project_title ? task.project_title : undefined,
-        newValues.user_id ? newValues.user_id : task.user_id
-    );
+    return createTask({
+        title: newValues.title ?? task.title,
+        importance: newValues.importance ?? task.importance,
+        duration: newValues.duration ?? task.duration,
+        due: newValues.due ?? task.due,
+        score: newValues.score ?? task.score,
+        project_id: newValues.project_id ?? task.project_id,
+        user_id: task.user_id
+    } as New);
 }
 
 // ## Read
 export async function getTaskById(id: number, recursive: boolean = false) {
     const dbresult = await lib.db
         .select({
-            id: lib.Schema.Task.Task.table.id,
-            title: lib.Schema.Task.Task.table.title,
-            importance: lib.Schema.Task.Task.table.importance,
-            duration: lib.Schema.Task.Task.table.duration,
-            urgency: lib.Schema.Task.Task.table.urgency,
-            score: lib.Schema.Task.Task.table.score,
-            due: lib.Schema.Task.Task.table.due,
-            project_title: lib.Schema.Task.Task.table.project_title,
-            completed_at: lib.Schema.Task.Task.table.completed_at,
-            created_at: lib.Schema.Task.Task.table.created_at,
-            updated_at: lib.Schema.Task.Task.table.updated_at,
-            deleted_at: lib.Schema.Task.Task.table.deleted_at,
-            user_id: lib.Schema.Task.Task.table.user_id,
+            id: table.id,
+            title: table.title,
+            importance: table.importance,
+            duration: table.duration,
+            urgency: table.urgency,
+            score: table.score,
+            due: table.due,
+            project_id: table.id,
+            completed_at: table.completed_at,
+            created_at: table.created_at,
+            updated_at: table.updated_at,
+            deleted_at: table.deleted_at,
+            user_id: table.user_id,
             project: {
+                id: lib.Schema.Project.table.id,
                 title: lib.Schema.Project.table.title,
                 description: lib.Schema.Project.table.description,
                 completed: lib.Schema.Project.table.completed,
@@ -108,14 +103,14 @@ export async function getTaskById(id: number, recursive: boolean = false) {
                 deleted_at: taskToDoBeforeAlias.deleted_at,
             },
         })
-        .from(lib.Schema.Task.Task.table)
-        .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Task.Task.table.project_title, lib.Schema.Project.table.title))
-        .leftJoin(lib.Schema.Task.Importance.table, lib.eq(lib.Schema.Task.Task.table.importance, lib.Schema.Task.Importance.table.level))
-        .leftJoin(lib.Schema.Task.Duration.table, lib.eq(lib.Schema.Task.Task.table.duration, lib.Schema.Task.Duration.table.level))
-        .leftJoin(taskToDoAfterAlias, lib.eq(lib.Schema.Task.Task.table.id, taskToDoAfterAlias.task_id)) // tasks to do after this task
-        .leftJoin(taskToDoBeforeAlias, lib.eq(lib.Schema.Task.Task.table.id, taskToDoBeforeAlias.after_task_id)) // tasks to do before this task
+        .from(table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
+        .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
+        .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
+        .leftJoin(taskToDoAfterAlias, lib.eq(table.id, taskToDoAfterAlias.task_id)) // tasks to do after this task
+        .leftJoin(taskToDoBeforeAlias, lib.eq(table.id, taskToDoBeforeAlias.after_task_id)) // tasks to do before this task
         .where(lib.and(
-            lib.eq(lib.Schema.Task.Task.table.id, id),
+            lib.eq(table.id, id),
         ))
 
     if (recursive) {
@@ -161,45 +156,46 @@ export async function getTaskById(id: number, recursive: boolean = false) {
 export async function getNumberOfTasks(userId: string, projectTitles?: string[], excludedProjectTitles?: string[], dueAfter?: Date, dueBefore?: Date) {
     const dbresult = await lib.db
         .select({
-            completed_count: lib.sql<number>`COUNT(CASE WHEN ${lib.Schema.Task.Task.table.completed_at} IS NOT NULL THEN 1 END)`.as("completed_count"),
-            uncompleted_count: lib.sql<number>`COUNT(CASE WHEN ${lib.Schema.Task.Task.table.completed_at} IS NULL THEN 1 END)`.as("uncompleted_count"),
-            due: lib.Schema.Task.Task.table.due,
+            completed_count: lib.sql<number>`SUM(CASE WHEN ${table.completed_at} IS NOT NULL THEN 1 ELSE 0 END)`.as("completed_count"),
+            uncompleted_count: lib.sql<number>`SUM(CASE WHEN ${table.completed_at} IS NULL THEN 1 ELSE 0 END)`.as("uncompleted_count"),
+            due: table.due,
         })
-        .from(lib.Schema.Task.Task.table)
+        .from(table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
         .where(lib.and(
-            lib.isNull(lib.Schema.Task.Task.table.deleted_at),
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+            lib.isNull(table.deleted_at),
+            lib.eq(table.user_id, userId),
             projectTitles
                 ? lib.or(
-                    lib.inArray(lib.Schema.Task.Task.table.project_title, projectTitles),
-                    lib.sql`${lib.isNull(lib.Schema.Task.Task.table.project_title)} and ${projectTitles.includes("No project")}`,
+                    lib.inArray(lib.Schema.Project.table.title, projectTitles),
+                    lib.sql`${lib.isNull(table.project_id)} and ${projectTitles.includes("No project")}`,
                 )
                 : lib.sql`1 = 1`,
             excludedProjectTitles && excludedProjectTitles.length > 0
                 ? lib.and(
                     lib.or(
-                        lib.isNull(lib.Schema.Task.Task.table.project_title),
+                        lib.isNull(table.project_id),
                         lib.not(lib.inArray(
-                            lib.Schema.Task.Task.table.project_title,
+                            lib.Schema.Project.table.title,
                             excludedProjectTitles.filter(p => p !== "No project")
                         ))
                     ),
                     excludedProjectTitles.includes("No project")
-                        ? lib.isNotNull(lib.Schema.Task.Task.table.project_title)
+                        ? lib.isNotNull(table.project_id)
                         : lib.sql`1 = 1`
                 )
                 : lib.sql`1 = 1`,
-            dueAfter ? lib.gte(lib.Schema.Task.Task.table.due, dueAfter) : lib.sql`1 = 1`,
-            dueBefore ? lib.lte(lib.Schema.Task.Task.table.due, dueBefore) : lib.sql`1 = 1`
+            dueAfter ? lib.gte(table.due, dueAfter) : lib.sql`1 = 1`,
+            dueBefore ? lib.lte(table.due, dueBefore) : lib.sql`1 = 1`
         ))
-        .groupBy(lib.Schema.Task.Task.table.due)
+        .groupBy(table.due)
 
     return dbresult;
 }
 
 export async function getTasks(
     userId: string,
-    orderBy: keyof lib.Schema.Task.Task.Select = "score",
+    orderBy: keyof Existing = "score",
     orderingDirection?: "asc" | "desc",
     limit = 50,
     projectTitles?: string[],
@@ -213,31 +209,20 @@ export async function getTasks(
     // Step 1: First query to get distinct tasks with limit applied
     const distinctTasks = await lib.db
         .select({
-            id: lib.Schema.Task.Task.table.id,
-            title: lib.Schema.Task.Task.table.title,
-            importance: lib.Schema.Task.Task.table.importance,
-            urgency: lib.Schema.Task.Task.table.urgency,
-            duration: lib.Schema.Task.Task.table.duration,
-            due: lib.Schema.Task.Task.table.due,
-            score: lib.Schema.Task.Task.table.score,
-            completed_at: lib.Schema.Task.Task.table.completed_at,
-            created_at: lib.Schema.Task.Task.table.created_at,
-            updated_at: lib.Schema.Task.Task.table.updated_at,
-            deleted_at: lib.Schema.Task.Task.table.deleted_at,
-            project_title: lib.Schema.Task.Task.table.project_title,
-            user_id: lib.Schema.Task.Task.table.user_id,
+            id: table.id,
         })
-        .from(lib.Schema.Task.Task.table)
+        .from(table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
         .where(
             lib.and(
-                lib.isNull(lib.Schema.Task.Task.table.deleted_at),
+                lib.isNull(table.deleted_at),
                 // Filter by user ID if provided
-                lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+                lib.eq(table.user_id, userId),
                 // Include specific projects if provided
                 projectTitles
                     ? lib.or(
-                        lib.inArray(lib.Schema.Task.Task.table.project_title, projectTitles),
-                        lib.sql`${lib.isNull(lib.Schema.Task.Task.table.project_title)} and ${projectTitles.includes("No project")}`,
+                        lib.inArray(lib.Schema.Project.table.title, projectTitles),
+                        lib.sql`${lib.isNull(table.project_id)} and ${projectTitles.includes("No project")}`,
                     )
                     : lib.sql`1 = 1`,
                 // Exclude specific projects if provided
@@ -245,32 +230,32 @@ export async function getTasks(
                     ? lib.and(
                         // For tasks with project titles
                         lib.or(
-                            lib.isNull(lib.Schema.Task.Task.table.project_title),
+                            lib.isNull(table.project_id),
                             lib.not(lib.inArray(
-                                lib.Schema.Task.Task.table.project_title,
+                                lib.Schema.Project.table.title,
                                 excludedProjectTitles.filter(p => p !== "No project")
                             ))
                         ),
-                        // For tasks with null project title ("No project")
+                        // For tasks with null project ("No project")
                         excludedProjectTitles.includes("No project")
-                            ? lib.isNotNull(lib.Schema.Task.Task.table.project_title)
+                            ? lib.isNotNull(table.project_id)
                             : lib.sql`1 = 1`
                     )
                     : lib.sql`1 = 1`,
-                dueBefore ? lib.lte(lib.Schema.Task.Task.table.due, dueBefore) : lib.sql`1 = 1`,
-                dueAfter ? lib.gte(lib.Schema.Task.Task.table.due, dueAfter) : lib.sql`1 = 1`,
+                dueBefore ? lib.lte(table.due, dueBefore) : lib.sql`1 = 1`,
+                dueAfter ? lib.gte(table.due, dueAfter) : lib.sql`1 = 1`,
                 completed !== undefined
                     ? completed
-                        ? lib.isNotNull(lib.Schema.Task.Task.table.completed_at)
-                        : lib.isNull(lib.Schema.Task.Task.table.completed_at)
+                        ? lib.isNotNull(table.completed_at)
+                        : lib.isNull(table.completed_at)
                     : lib.sql`1 = 1`,
-                completed_after ? lib.gte(lib.Schema.Task.Task.table.completed_at, completed_after) : lib.sql`1 = 1`,
-                completed_before ? lib.lte(lib.Schema.Task.Task.table.completed_at, completed_before) : lib.sql`1 = 1`,
+                completed_after ? lib.gte(table.completed_at, completed_after) : lib.sql`1 = 1`,
+                completed_before ? lib.lte(table.completed_at, completed_before) : lib.sql`1 = 1`,
             ),
         )
         .orderBy(
-            orderingDirection === "asc" ? lib.asc(lib.Schema.Task.Task.table[orderBy]) : lib.desc(lib.Schema.Task.Task.table[orderBy]),
-            orderingDirection === "asc" ? lib.asc(lib.Schema.Task.Task.table.title) : lib.desc(lib.Schema.Task.Task.table.title),
+            orderingDirection === "asc" ? lib.asc(table[orderBy]) : lib.desc(table[orderBy]),
+            orderingDirection === "asc" ? lib.asc(table.title) : lib.desc(table.title),
         )
         .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit)
 
@@ -282,20 +267,21 @@ export async function getTasks(
     // Step 2: Now fetch all related data for these specific tasks
     const rows = await lib.db
         .select({
-            id: lib.Schema.Task.Task.table.id,
-            title: lib.Schema.Task.Task.table.title,
-            importance: lib.Schema.Task.Task.table.importance,
-            urgency: lib.Schema.Task.Task.table.urgency,
-            duration: lib.Schema.Task.Task.table.duration,
-            due: lib.Schema.Task.Task.table.due,
-            score: lib.Schema.Task.Task.table.score,
-            completed_at: lib.Schema.Task.Task.table.completed_at,
-            created_at: lib.Schema.Task.Task.table.created_at,
-            updated_at: lib.Schema.Task.Task.table.updated_at,
-            deleted_at: lib.Schema.Task.Task.table.deleted_at,
-            project_title: lib.Schema.Task.Task.table.project_title,
-            user_id: lib.Schema.Task.Task.table.user_id,
+            id: table.id,
+            title: table.title,
+            importance: table.importance,
+            urgency: table.urgency,
+            duration: table.duration,
+            due: table.due,
+            score: table.score,
+            completed_at: table.completed_at,
+            created_at: table.created_at,
+            updated_at: table.updated_at,
+            deleted_at: table.deleted_at,
+            project_id: table.id,
+            user_id: table.user_id,
             project: {
+                id: lib.Schema.Project.table.id,
                 title: lib.Schema.Project.table.title,
                 description: lib.Schema.Project.table.description,
                 completed: lib.Schema.Project.table.completed,
@@ -329,13 +315,13 @@ export async function getTasks(
                 deleted_at: taskToDoBeforeAlias.deleted_at,
             },
         })
-        .from(lib.Schema.Task.Task.table)
-        .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Task.Task.table.project_title, lib.Schema.Project.table.title))
-        .leftJoin(lib.Schema.Task.Importance.table, lib.eq(lib.Schema.Task.Task.table.importance, lib.Schema.Task.Importance.table.level))
-        .leftJoin(lib.Schema.Task.Duration.table, lib.eq(lib.Schema.Task.Task.table.duration, lib.Schema.Task.Duration.table.level))
-        .leftJoin(taskToDoAfterAlias, lib.eq(lib.Schema.Task.Task.table.id, taskToDoAfterAlias.task_id))
-        .leftJoin(taskToDoBeforeAlias, lib.eq(lib.Schema.Task.Task.table.id, taskToDoBeforeAlias.after_task_id))
-        .where(lib.inArray(lib.Schema.Task.Task.table.id, taskIds))
+        .from(table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
+        .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
+        .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
+        .leftJoin(taskToDoAfterAlias, lib.eq(table.id, taskToDoAfterAlias.task_id))
+        .leftJoin(taskToDoBeforeAlias, lib.eq(table.id, taskToDoBeforeAlias.after_task_id))
+        .where(lib.inArray(table.id, taskIds))
 
     const groupedTasks: Record<string, lib.Schema.Task.Task.TaskWithRelations> = {}
 
@@ -390,28 +376,28 @@ export async function getTasks(
     return result as lib.Schema.Task.Task.TaskWithRelations[]
 }
 
-export async function getCompletedTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "completed_at", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
+export async function getCompletedTasks(userId: string, orderBy: keyof Existing = "completed_at", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
     return getTasks(userId, orderBy, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, true);
 }
 
-export async function getUncompletedTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "score", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
+export async function getUncompletedTasks(userId: string, orderBy: keyof Existing = "score", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
     return getTasks(userId, orderBy, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, false);
 }
 
 export async function searchTasksByTitle(userId: string, title: string, limit = 50) {
     return await lib.db
         .select()
-        .from(lib.Schema.Task.Task.table)
+        .from(table)
         .where(lib.and(
-            lib.sql`LOWER(${lib.Schema.Task.Task.table.title}) LIKE LOWER(${`%${title}%`})`,
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
-            lib.isNull(lib.Schema.Task.Task.table.deleted_at),
-            lib.isNull(lib.Schema.Task.Task.table.completed_at),
+            lib.sql`LOWER(${table.title}) LIKE LOWER(${`%${title}%`})`,
+            lib.eq(table.user_id, userId),
+            lib.isNull(table.deleted_at),
+            lib.isNull(table.completed_at),
         ))
-        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as lib.Schema.Task.Task.Select[]
+        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as Existing[]
 }
 
-export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "score", orderingDirection?: "asc" | "desc") {
+export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: string, orderBy: keyof Existing = "score", orderingDirection?: "asc" | "desc") {
     const today = new Date()
     const threeDaysFromNow = new Date(today)
     threeDaysFromNow.setDate(today.getDate() + 3)
@@ -419,7 +405,7 @@ export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: 
     return getTasks(userId, orderBy, orderingDirection, -1, undefined, undefined, threeDaysFromNow, undefined, false);
 }
 
-export async function getTasksCompletedTheDayBefore(userId: string, orderBy: keyof lib.Schema.Task.Task.Select = "completed_at", orderingDirection: "asc" | "desc" = "asc") {
+export async function getTasksCompletedTheDayBefore(userId: string, orderBy: keyof Existing = "completed_at", orderingDirection: "asc" | "desc" = "asc") {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const yesterday = new Date(today)
@@ -429,26 +415,26 @@ export async function getTasksCompletedTheDayBefore(userId: string, orderBy: key
 }
 
 // ## Update
-export async function updateTask(userId: string, id: number, title: string, importance: number, dueDate: Date, duration: number, projectTitle?: string) {
-    const urgency = calculateUrgency(dueDate)
+export async function updateTask(id: number, values: Partial<Existing>) {
+    const old_task = await getTaskById(id)
+    if (!old_task) {
+        return null
+    }
+    const urgency = values.due ? calculateUrgency(values.due) : old_task.urgency
+    const importance = values.importance ?? old_task.importance
+    const duration = values.duration ?? old_task.duration
 
     const result = await lib.db
-        .update(lib.Schema.Task.Task.table)
+        .update(table)
         .set({
-            title: title,
-            importance: importance,
+            ...values,
             urgency: urgency,
-            duration: duration,
-            due: dueDate,
             score: importance * urgency - duration,
-            project_title: projectTitle,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Task.Task.table.id, id),
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+            lib.eq(table.id, id),
         ))
-        .returning({ id: lib.Schema.Task.Task.table.id })
 
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
@@ -457,29 +443,30 @@ export async function updateTask(userId: string, id: number, title: string, impo
         return null
     }
 
-    return result[0].id
+    return id
 }
 
 export async function updateTaskUrgency(userId: string, id: number) {
     const todoData = await getTaskById(id)
-    if (!todoData) {
+
+    if (!todoData || todoData.completed_at !== null || todoData.deleted_at !== null) {
         return null
     }
 
     const urgency = calculateUrgency(todoData.due)
 
     const result = await lib.db
-        .update(lib.Schema.Task.Task.table)
+        .update(table)
         .set({
             urgency: urgency,
             score: todoData.importance * urgency - todoData.duration,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Task.Task.table.id, id),
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+            lib.eq(table.id, id),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ id: lib.Schema.Task.Task.table.id })
+        .returning({id: table.id})
 
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
@@ -491,30 +478,30 @@ export async function updateTaskUrgency(userId: string, id: number) {
     return result[0].id
 }
 
-export async function markTaskAsDone(userId: string, id: number) : Promise<{
+export async function markTaskAsDone(userId: string, id: number): Promise<{
     done_task_id: number,
     new_task_id?: number
 }> {
     const result = await lib.db
-        .update(lib.Schema.Task.Task.table)
+        .update(table)
         .set({
             completed_at: lib.sql`CURRENT_TIMESTAMP`,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Task.Task.table.id, id),
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+            lib.eq(table.id, id),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ id: lib.Schema.Task.Task.table.id })
+        .returning({id: table.id})
 
-    RecurrencyQueries.IncrementCurrentCount(id);
+    await RecurrencyQueries.IncrementCurrentCount(id);
 
     const nextDue = await RecurrencyQueries.CalculateNextDue(id);
 
     let new_task_id: number | undefined = undefined;
 
     if (nextDue) {
-        const local_new_task_id = await duplicateTask(id, { due: nextDue });
+        const local_new_task_id = await duplicateTask(id, {due: nextDue});
         if (local_new_task_id) {
             new_task_id = local_new_task_id;
         }
@@ -531,16 +518,16 @@ export async function markTaskAsDone(userId: string, id: number) : Promise<{
 
 export async function markTaskAsUndone(userId: string, id: number) {
     const result = await lib.db
-        .update(lib.Schema.Task.Task.table)
+        .update(table)
         .set({
             completed_at: null,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
-            lib.eq(lib.Schema.Task.Task.table.id, id),
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+            lib.eq(table.id, id),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ id: lib.Schema.Task.Task.table.id })
+        .returning({id: table.id})
 
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
@@ -555,13 +542,13 @@ export async function toggleTask(userId: string, id: number, currentState: boole
 // ## Delete
 export async function deleteTaskById(userId: string, id: number) {
 
-    const result = await lib.db.update(lib.Schema.Task.Task.table)
-        .set({ deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP` })
+    const result = await lib.db.update(table)
+        .set({deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP`})
         .where(lib.and(
-            lib.eq(lib.Schema.Task.Task.table.id, id),
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+            lib.eq(table.id, id),
+            lib.eq(table.user_id, userId),
         ))
-        .returning({ id: lib.Schema.Task.Task.table.id })
+        .returning({id: table.id})
 
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
@@ -594,7 +581,7 @@ export async function createTaskToDoAfter(
     const result = await lib.db
         .insert(lib.Schema.Task.ToDoAfter.table)
         .values(newTaskToDoAfter)
-        .returning({ id: lib.Schema.Task.ToDoAfter.table.id })
+        .returning({id: lib.Schema.Task.ToDoAfter.table.id})
 
     return result[0].id
 }
@@ -665,7 +652,7 @@ export async function updateTaskToDoAfter(
         .update(lib.Schema.Task.ToDoAfter.table)
         .set(updatedTaskToDoAfter)
         .where(lib.eq(lib.Schema.Task.ToDoAfter.table.id, typeof idOrTaskToDoAfter === "number" ? idOrTaskToDoAfter : idOrTaskToDoAfter.id!))
-        .returning({ id: lib.Schema.Task.ToDoAfter.table.id })
+        .returning({id: lib.Schema.Task.ToDoAfter.table.id})
 
     return result[0].id
 }
@@ -675,9 +662,9 @@ export async function updateTaskToDoAfter(
 export async function deleteTaskToDoAfterById(id: number) {
     const result = await lib.db
         .update(lib.Schema.Task.ToDoAfter.table)
-        .set({ deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP` })
+        .set({deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP`})
         .where(lib.eq(lib.Schema.Task.ToDoAfter.table.id, id))
-        .returning({ id: lib.Schema.Task.ToDoAfter.table.id })
+        .returning({id: lib.Schema.Task.ToDoAfter.table.id})
 
     if (result && result.length > 0) {
         return result[0].id
@@ -689,9 +676,9 @@ export async function deleteTaskToDoAfterById(id: number) {
 export async function deleteTaskToDoAfterByTodoId(task_id: number) {
     const result = await lib.db
         .update(lib.Schema.Task.ToDoAfter.table)
-        .set({ deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP` })
+        .set({deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP`})
         .where(lib.eq(lib.Schema.Task.ToDoAfter.table.task_id, task_id))
-        .returning({ id: lib.Schema.Task.ToDoAfter.table.id })
+        .returning({id: lib.Schema.Task.ToDoAfter.table.id})
 
     if (result && result.length > 0) {
         return result[0].id
@@ -703,9 +690,9 @@ export async function deleteTaskToDoAfterByTodoId(task_id: number) {
 export async function deleteTaskToDoAfterByAfterId(after_task_id: number) {
     const result = await lib.db
         .update(lib.Schema.Task.ToDoAfter.table)
-        .set({ deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP` })
+        .set({deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP`})
         .where(lib.eq(lib.Schema.Task.ToDoAfter.table.after_task_id, after_task_id))
-        .returning({ id: lib.Schema.Task.ToDoAfter.table.id })
+        .returning({id: lib.Schema.Task.ToDoAfter.table.id})
 
     if (result && result.length > 0) {
         return result[0].id

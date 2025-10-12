@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
             // Group tasksDone by projects
             const groupedTasksDone = tasksDone.reduce((acc: Record<string, typeof tasksDone>, task) => {
-                const project = task.project_title || "No Project";
+                const project = task.project?.title || "No Project";
                 if (!acc[project]) {
                     acc[project] = [];
                 }
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
             // Group tasksToDo by projects within each relative day
             const groupedByProjects = Object.entries(groupedByDays).reduce((acc: Record<string, Record<string, typeof sortedTasksToDo>>, [day, tasksToDo]) => {
                 acc[day] = tasksToDo.reduce((projectAcc: Record<string, typeof sortedTasksToDo>, task) => {
-                    const project = task.project_title || "No Project";
+                    const project = task.project?.title || "No Project";
                     if (!projectAcc[project]) {
                         projectAcc[project] = [];
                     }

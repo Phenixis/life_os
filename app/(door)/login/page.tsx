@@ -130,6 +130,7 @@ export default function Login() {
                         onChange={(value) => setIdentifier(value)}
                         pattern={REGEXP_ONLY_DIGITS}
                         ref={identifierRef}
+                        autoFocus
                     >
                         <InputOTPGroup>
                             <InputOTPSlot index={0} />

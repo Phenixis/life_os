@@ -87,8 +87,8 @@ export default function NotesPage() {
                             />
                             <div className="w-full lg:w-1/3">
                                 <SearchProjectsInput
-                                    project={projectTitle}
-                                    setProject={setProjectTitle}
+                                    project={{ title: projectTitle, id: -1 }}
+                                    setProject={(project) => setProjectTitle(project.title)}
                                     defaultValue={projectTitle}
                                     label="Search notes by project title"
                                 />

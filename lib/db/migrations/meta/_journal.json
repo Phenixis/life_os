@@ -274,6 +274,20 @@
       "when": 1759085662570,
       "tag": "0038_easy_domino",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1760257030802,
+      "tag": "0039_charming_wasp",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1760308078830,
+      "tag": "0040_broken_carmella_unuscione",
+      "breakpoints": true
     }
   ]
 }

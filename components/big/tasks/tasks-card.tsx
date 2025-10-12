@@ -2,25 +2,20 @@
 
 import {RadioButtons} from "@/components/big/filtering/radio-buttons";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
-import dynamic from "next/dynamic"
 import {cn} from "@/lib/utils"
 import type {Task} from "@/lib/db/schema"
 import {useCallback, useEffect, useMemo, useRef, useState, useTransition} from "react"
 import {Button} from "@/components/ui/button"
-import {Calendar, Filter, FolderTree, Square, SquareMinus} from "lucide-react"
+import {Calendar, Filter, FolderTree, PlusIcon, Square, SquareMinus} from "lucide-react"
 import TaskDisplay from "./task-display"
 import {useTasks} from "@/hooks/use-tasks"
 import {useProjects} from "@/hooks/use-projects"
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
 import {Calendar as CalendarComponent} from "@/components/ui/calendar"
 import {format} from "date-fns"
-import {useRouter, useSearchParams} from "next/navigation"
-import {updateTaskFilterCookieFromClient} from "./task-actions"
-import type {TaskFilterCookie} from "@/lib/flags"
 import {useNumberOfTasks} from "@/hooks/use-number-of-tasks"
 import {ProjectsMultipleSelects} from "@/components/big/filtering/projects-multiple-selects";
-
-const TaskModal = dynamic(() => import("@/components/big/tasks/task-modal"), {ssr: false})
+import {useTaskModal} from "@/contexts/modal-commands-context";
 
 // Constants for URL parameters
 export const TASK_PARAMS = {
@@ -46,102 +41,76 @@ export type TaskUrlParams = {
     [TASK_PARAMS.GROUP_BY_PROJECT]?: string;
 };
 
-export function TasksCard({
-                              className,
-                              initialCompleted = false,
-                              limit: initialLimit,
-                              orderBy: initialOrderBy = "score",
-                              orderingDirection: initialOrderingDirection = "desc",
-                              withProject = true,
-                              initialTaskFilterCookie,
-                          }: {
-    className?: string
-    initialCompleted?: boolean
-    limit?: number
-    orderBy?: keyof Task.Task.Select
-    orderingDirection?: "asc" | "desc"
-    withProject?: boolean
-    initialTaskFilterCookie?: TaskFilterCookie
-}) {
+export type simplifiedProject = { title: string, id: number };
+
+export type tasksFilters = {
+    completed: boolean;
+    limit: number;
+    orderBy: keyof Task.Task.Select;
+    orderingDirection: "asc" | "desc";
+    selectedProjects: simplifiedProject[];
+    removedProjects: simplifiedProject[];
+    dueBeforeDate: string;
+    groupByProject: boolean;
+}
+
+export function TasksCard(
+    {
+        className,
+        initialCompleted = false,
+        limit: initialLimit = 5,
+        orderBy: initialOrderBy = "score",
+        orderingDirection: initialOrderingDirection = "desc",
+        withProject = true
+    }: {
+        className?: string
+        initialCompleted?: boolean
+        limit?: number
+        orderBy?: keyof Task.Task.Select
+        orderingDirection?: "asc" | "desc"
+        withProject?: boolean
+    }
+) {
+    const taskModal = useTaskModal()
     // -------------------- Imports & Hooks --------------------
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(0, 0, 0, 0)
+    const today = useMemo(() => new Date(), [])
+    const tomorrow = useMemo(() => {
+        const date = new Date()
+        date.setDate(date.getDate() + 1)
+        return date
+    }, [])
+
     const [isPending, startTransition] = useTransition()
 
     // -------------------- State --------------------
-    const [isFilterOpen, setIsFilterOpen] = useState(false)
+    const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false)
 
-    // Priority: URL params > Cookie > Props
-    const [completed, setCompleted] = useState<boolean | undefined>(
-        searchParams.has(TASK_PARAMS.COMPLETED)
-            ? searchParams.get(TASK_PARAMS.COMPLETED) === "true"
-                ? true
-                : searchParams.get(TASK_PARAMS.COMPLETED) === "false"
-                    ? false
-                    : undefined
-            : initialTaskFilterCookie?.completed !== undefined
-                ? initialTaskFilterCookie.completed
-                : initialCompleted
-    )
+    const [completed, setCompleted] = useState<boolean | undefined>(initialCompleted)
 
-    const [limit, setLimit] = useState<number | undefined>(
-        searchParams.has(TASK_PARAMS.LIMIT)
-            ? Number.parseInt(searchParams.get(TASK_PARAMS.LIMIT) || "") || initialLimit
-            : initialTaskFilterCookie?.limit !== undefined
-                ? initialTaskFilterCookie.limit
-                : initialLimit
-    )
+    const [limit, setLimit] = useState<number>(initialLimit)
 
-    const [orderBy] = useState<keyof Task.Task.Select | undefined>(
-        (searchParams.get(TASK_PARAMS.ORDER_BY) as keyof Task.Task.Select) ||
-        initialTaskFilterCookie?.orderBy ||
-        initialOrderBy
-    )
+    const [orderBy, setOrderBy] = useState<keyof Task.Task.Select>(initialOrderBy)
 
-    const [orderingDirection] = useState<"asc" | "desc" | undefined>(
-        (searchParams.get(TASK_PARAMS.ORDERING_DIRECTION) as "asc" | "desc") ||
-        initialTaskFilterCookie?.orderingDirection ||
-        initialOrderingDirection
-    )
+    const [orderingDirection, setOrderingDirection] = useState<"asc" | "desc">(initialOrderingDirection)
 
-    const [selectedProjects, setSelectedProjects] = useState<string[]>(
-        searchParams.has(TASK_PARAMS.PROJECTS)
-            ? searchParams.get(TASK_PARAMS.PROJECTS)?.split(",") || []
-            : initialTaskFilterCookie?.projects || []
-    )
+    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>([])
 
-    const [removedProjects, setRemovedProjects] = useState<string[]>(
-        searchParams.has(TASK_PARAMS.REMOVED_PROJECTS)
-            ? searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)?.split(",") || []
-            : initialTaskFilterCookie?.removedProjects || []
-    )
+    const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>([])
 
-    const [dueBeforeDate, setDueBeforeDate] = useState<Date | undefined>(
-        searchParams.has(TASK_PARAMS.DUE_BEFORE)
-            ? new Date(searchParams.get(TASK_PARAMS.DUE_BEFORE) || "")
-            : initialTaskFilterCookie?.dueBeforeDate
-                ? new Date(initialTaskFilterCookie.dueBeforeDate)
-                : undefined
-    )
+    const [dueBeforeDate, setDueBeforeDate] = useState<Date | undefined>(undefined)
 
-    const [groupByProject, setGroupByProject] = useState(
-        searchParams.get(TASK_PARAMS.GROUP_BY_PROJECT) === "true" ||
-        (searchParams.get(TASK_PARAMS.GROUP_BY_PROJECT) !== "false" &&
-            initialTaskFilterCookie?.groupByProject === true)
-    )
+    const [groupByProject, setGroupByProject] = useState<boolean>(false)
 
     const [tasksCompleted, setTasksCompleted] = useState(0)
+
     const [tasksUncompleted, setTasksUncompleted] = useState(0)
+
     const [tasksTotal, setTasksTotal] = useState(0)
+
     const [progression, setProgression] = useState(0)
 
     // Add a ref to track if this is the first render
-    const isFirstRender = useRef(true);
+    const isSavedFiltersBeenUser = useRef(false);
 
     // -------------------- Data Fetching --------------------
     const {projects, isLoading: projectsLoading} = useProjects({
@@ -157,15 +126,15 @@ export function TasksCard({
         limit,
         orderingDirection,
         withProject,
-        projectTitles: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
-        excludedProjectTitles: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
+        projects: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
+        excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
         dueBefore: dueBeforeDate,
     })
 
     // Memoize the numberOfTasks parameters to prevent unnecessary re-renders
     const numberOfTasksParams = useMemo(() => ({
-        projectTitles: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
-        excludedProjectTitles: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
+        projects: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
+        excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
         dueAfter: today,
         dueBefore: dueBeforeDate !== undefined ? dueBeforeDate : tomorrow,
     }), [groupByProject, selectedProjects, removedProjects, dueBeforeDate, today, tomorrow])
@@ -197,74 +166,53 @@ export function TasksCard({
             setTasksTotal(totalCount)
             setProgression(Math.round((completedCount / totalCount) * 100))
         }
-    }, [numberOfTasks])
+    }, [dueBeforeDate, numberOfTasks, tomorrow])
 
-    // Clean up project selections when projects data changes
+    // Update localStorage when filters change
     useEffect(() => {
-        // Only update if we have actual project data and it's not the first render
-        if (projects && projects.length > 0) {
-            // Skip the first render to avoid resetting on initial load
-            if (isFirstRender.current) {
-                isFirstRender.current = false;
-                return;
-            }
-
-            // Get all project titles from the current projects data
-            const currentProjectTitles = new Set(projects.map(project => project.title));
-
-            // Filter selected projects to only include those that exist
-            setSelectedProjects((prev) => {
-                const filtered = prev.filter((title) => currentProjectTitles.has(title));
-                return filtered.length !== prev.length ? filtered : prev;
-            });
-
-            // Filter removed projects to only include those that exist
-            setRemovedProjects((prev) => {
-                const filtered = prev.filter((title) => currentProjectTitles.has(title));
-                return filtered.length !== prev.length ? filtered : prev;
-            });
+        if (!isSavedFiltersBeenUser.current) {
+            return;
         }
-    }, [projects]); // Only depend on projects to avoid infinite loops
 
-    // Update cookie when filters change
-    useEffect(() => {
-        const updateCookie = async () => {
-            await updateTaskFilterCookieFromClient({
-                completed,
-                limit,
-                orderBy,
-                orderingDirection,
-                projects: selectedProjects,
-                removedProjects,
-                dueBeforeDate: dueBeforeDate?.toISOString(),
-                groupByProject
-            });
-        };
-
-        updateCookie();
+        window.localStorage.setItem("tasks_filters", JSON.stringify({
+            completed,
+            limit,
+            orderBy,
+            orderingDirection,
+            selectedProjects,
+            removedProjects,
+            dueBeforeDate: dueBeforeDate?.toISOString(),
+            groupByProject
+        } as tasksFilters))
     }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject]);
 
-    // -------------------- Callbacks --------------------
-
     useEffect(() => {
-        // Debounce URL updates to prevent excessive navigation
-        const timeoutId = setTimeout(() => {
-            const params = new URLSearchParams()
+        const raw = window.localStorage.getItem("tasks_filters")
+        if (raw) {
+            try {
+                const savedFilters = JSON.parse(raw) as Partial<tasksFilters>
 
-            if (completed !== undefined) params.set(TASK_PARAMS.COMPLETED, completed.toString())
-            if (limit) params.set(TASK_PARAMS.LIMIT, limit.toString())
-            if (orderBy) params.set(TASK_PARAMS.ORDER_BY, orderBy as string)
-            if (orderingDirection) params.set(TASK_PARAMS.ORDERING_DIRECTION, orderingDirection)
-            if (selectedProjects.length > 0) params.set(TASK_PARAMS.PROJECTS, selectedProjects.join(","))
-            if (removedProjects.length > 0) params.set(TASK_PARAMS.REMOVED_PROJECTS, removedProjects.join(","))
-            if (dueBeforeDate) params.set(TASK_PARAMS.DUE_BEFORE, dueBeforeDate.toISOString())
-            if (groupByProject) params.set(TASK_PARAMS.GROUP_BY_PROJECT, "true")
+                if (typeof savedFilters.completed === "boolean") setCompleted(savedFilters.completed)
+                if (typeof savedFilters.limit === "number" && Number.isFinite(savedFilters.limit)) setLimit(savedFilters.limit)
+                if (typeof savedFilters.orderBy === "string") setOrderBy(savedFilters.orderBy as keyof Task.Task.Select)
+                if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") setOrderingDirection(savedFilters.orderingDirection)
+                if (Array.isArray(savedFilters.selectedProjects)) setSelectedProjects(savedFilters.selectedProjects)
+                if (Array.isArray(savedFilters.removedProjects)) setRemovedProjects(savedFilters.removedProjects)
+                if (typeof savedFilters.dueBeforeDate === "string") {
+                    const d = new Date(savedFilters.dueBeforeDate)
+                    if (!isNaN(d.getTime())) setDueBeforeDate(d)
+                }
+                if (typeof savedFilters.groupByProject === "boolean") setGroupByProject(savedFilters.groupByProject)
+            } catch (e) {
+                // ignore malformed JSON
+                console.error("Error parsing saved filters:", e)
+            }
+        }
 
-            router.push(`?${params.toString()}`, {scroll: false})
-        }, 200)
+        isSavedFiltersBeenUser.current = true;
+    }, [])
 
-        return () => clearTimeout(timeoutId)
-    }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject, router])
+    // -------------------- Callbacks --------------------
 
     const cycleCompletedFilter = useCallback(() => {
         startTransition(() => {
@@ -282,20 +230,20 @@ export function TasksCard({
      *
      * @param projectTitle - The title of the project to toggle
      */
-    const toggleProject = useCallback((projectTitle: string) => {
+    const toggleProject = useCallback((project: simplifiedProject) => {
         startTransition(() => {
-            if (selectedProjects.includes(projectTitle)) {
+            if (selectedProjects.filter(title => title.id === project.id).length > 0) {
                 if (selectedProjects.length === 1) {
-                    setRemovedProjects(prev => [...prev, projectTitle]);
+                    setRemovedProjects(prev => [...prev, project]);
                 }
-                setSelectedProjects(prev => prev.filter(title => title !== projectTitle));
-            } else if (removedProjects.includes(projectTitle)) {
-                setRemovedProjects(prev => prev.filter(title => title !== projectTitle));
+                setSelectedProjects(prev => prev.filter(title => title.id !== project.id));
+            } else if (removedProjects.filter(title => title.id === project.id).length > 0) {
+                setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
             } else {
                 if (selectedProjects.length === 0) {
-                    setRemovedProjects(prev => prev.filter(title => title !== projectTitle));
+                    setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
                 }
-                setSelectedProjects(prev => [...prev, projectTitle]);
+                setSelectedProjects(prev => [...prev, project]);
             }
         });
     }, [selectedProjects, removedProjects])
@@ -306,8 +254,8 @@ export function TasksCard({
 
         return tasks.slice(0, limit).reduce(
             (acc, task) => {
-                const projectId = task.project_title || "no-project"
-                const projectName = projects?.find((p) => p.title === task.project_title)?.title || "No Project"
+                const projectId = task.project_id || "-1"
+                const projectName = projects?.find((p) => p.id === task.project_id)?.title || "No Project"
 
                 if (!acc[projectId]) {
                     acc[projectId] = {name: projectName, tasks: []}
@@ -362,7 +310,18 @@ export function TasksCard({
                         >
                             <Filter className="h-4 w-4"/>
                         </Button>
-                        <TaskModal/>
+                        {/*<TaskModal />*/}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            tooltip="Create a new task"
+                            className="h-10 px-2 flex items-center border-none"
+                            onClick={() => {
+                                taskModal.openModal()
+                            }}
+                        >
+                            <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]"/>
+                        </Button>
                     </div>
                 </div>
                 <div className={`${!isFilterOpen && "hidden"} flex flex-col gap-2`}>
@@ -429,7 +388,12 @@ export function TasksCard({
                         {groupByProject && (
                             <div className="w-full flex flex-col space-y-2">
                                 <ProjectsMultipleSelects
-                                    projects={projects.map((project) => project.title)}
+                                    projects={projects.map((project) => {
+                                        return {
+                                            title: project.title,
+                                            id: project.id
+                                        }
+                                    })}
                                     selectedProjects={selectedProjects}
                                     removedProjects={removedProjects}
                                     onChange={toggleProject}
@@ -455,7 +419,7 @@ export function TasksCard({
                             tasks
                         }]) => (
                             <div key={projectId} className="mb-2">
-                                <h3 className="font-medium text-sm rounded-md">{tasks.length > 0 ? tasks[0].project_title : name}</h3>
+                                <h3 className="font-medium text-sm rounded-md">{tasks.length > 0 ? tasks[0].project?.title : name}</h3>
                                 <div className="">
                                     {tasks.map(
                                         (
@@ -467,7 +431,6 @@ export function TasksCard({
                                                 orderedBy={orderBy}
                                                 currentLimit={limit}
                                                 currentDueBefore={dueBeforeDate}
-                                                currentProjects={selectedProjects}
                                             />
                                         ),
                                     )}
@@ -482,8 +445,12 @@ export function TasksCard({
                                 (
                                     task: Task.Task.TaskWithRelations
                                 ) => (
-                                    <TaskDisplay key={task.id} task={task} orderedBy={orderBy} currentLimit={limit}
-                                                 currentDueBefore={dueBeforeDate} currentProjects={selectedProjects}/>
+                                    <TaskDisplay
+                                        key={task.id}
+                                        task={task}
+                                        orderedBy={orderBy}
+                                        currentLimit={limit}
+                                        currentDueBefore={dueBeforeDate}/>
                                 ),
                             )
                     )

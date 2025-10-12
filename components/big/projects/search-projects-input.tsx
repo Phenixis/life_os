@@ -5,31 +5,33 @@ import {Label} from "@/components/ui/label"
 import {Input} from "@/components/ui/input"
 import {cn} from "@/lib/utils"
 
-export default function SearchProjectsInput({
-                                                project,
-                                                setProject,
-                                                defaultValue,
-                                                className,
-                                                label,
-                                                enabled = true,
-                                            }: {
-    project: string
-    setProject: (project: string) => void
-    defaultValue: string
-    className?: string
-    label?: string
-    enabled?: boolean
-}) {
+export default function SearchProjectsInput(
+    {
+        project,
+        setProject,
+        defaultValue,
+        className,
+        label,
+        enabled = true,
+    }: {
+        project: { title: string, id: number }
+        setProject: (project: { title: string, id: number }) => void
+        defaultValue: string
+        className?: string
+        label?: string
+        enabled?: boolean
+    }
+) {
     const [projectInputValue, setProjectInputValue] = useState<string>(defaultValue)
     const {projects, isLoading, isError} = useSearchProject({
-            query: project,
+            query: project.title,
             limit: 5,
             enabled: enabled
         }
     )
     const [showProjectSuggestions, setShowProjectSuggestions] = useState(false)
 
-    const handleProjectChange = useDebouncedCallback((value: string) => {
+    const handleProjectChange = useDebouncedCallback((value: { title: string, id: number }) => {
         setProject(value)
     }, 200)
 
@@ -52,7 +54,15 @@ export default function SearchProjectsInput({
                 }}
                 onChange={(e) => {
                     setProjectInputValue(e.target.value)
-                    handleProjectChange(e.target.value)
+                    if (projects && projects.length > 0) {
+                        projects.forEach(proj => {
+                            if (proj.title === e.target.value) {
+                                handleProjectChange({title: proj.title, id: proj.id})
+                            }
+                        })
+                    } else {
+                        handleProjectChange({title: e.target.value, id: -1})
+                    }
                 }}
             />
             {showProjectSuggestions && projectInputValue && (
@@ -72,8 +82,8 @@ export default function SearchProjectsInput({
                                     className={`cursor-pointer px-3 py-2 text-sm lg:hover:bg-accent ${projectInputValue === proj.title ? "bg-primary/10" : ""}`}
                                     onMouseDown={(e) => e.preventDefault()} // Prevent blur on click
                                     onClick={() => {
-                                        const selectedProject = proj.title
-                                        setProjectInputValue(selectedProject)
+                                        const selectedProject = {title: proj.title, id: proj.id}
+                                        setProjectInputValue(selectedProject.title)
                                         setProject(selectedProject)
                                         setShowProjectSuggestions(false)
                                     }}

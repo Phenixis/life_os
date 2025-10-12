@@ -1,9 +1,6 @@
-import {
-    ProjectQueries
-} from '@/lib/db/queries';
-import type { Note } from '@/lib/db/schema';
-import { type NextRequest, NextResponse } from 'next/server';
-import { verifyRequest } from '@/lib/auth/api';
+import {ProjectQueries} from '@/lib/db/queries';
+import {type NextRequest, NextResponse} from 'next/server';
+import {verifyRequest} from '@/lib/auth/api';
 
 // GET - Récupérer les projets
 export async function GET(request: NextRequest) {
@@ -19,24 +16,19 @@ export async function GET(request: NextRequest) {
     const taskDueDate = searchParams.get('taskDueDate') ? new Date(searchParams.get('taskDueDate') as string) : undefined;
     const taskDeleted = searchParams.get('taskDeleted') == "true";
     const withNotes = searchParams.get('withNotes') == "true";
-    const noteLimit = searchParams.get('noteLimit') ? Number.parseInt(searchParams.get('noteLimit') as string) : undefined;
-    const noteOrderBy = searchParams.get('noteOrderBy') as keyof Note.Note.Select | undefined;
-    const noteOrderingDirection = searchParams.get('noteOrderingDirection') as "asc" | "desc" | undefined;
-    const noteProjectTitle = searchParams.get('noteProjectTitle') || undefined;
+    // const noteLimit = searchParams.get('noteLimit') ? Number.parseInt(searchParams.get('noteLimit') as string) : undefined;
+    // const noteOrderBy = searchParams.get('noteOrderBy') as keyof Note.Note.Select | undefined;
+    // const noteOrderingDirection = searchParams.get('noteOrderingDirection') as "asc" | "desc" | undefined;
+    // const noteProjectTitle = searchParams.get('noteProjectTitle') || undefined;
 
     const projects = projectTitle ?
-        await ProjectQueries.getProject(verification.userId, projectTitle) :
+        await ProjectQueries.getProjectByTitle(verification.userId, projectTitle) :
         withNotes ? await ProjectQueries.getProjectsWithNotes(
-            verification.userId,
-            limit,
-            noteLimit,
-            noteOrderBy,
-            noteOrderingDirection,
-            noteProjectTitle
-        ) :
-        completed == "true" ? await ProjectQueries.getCompletedProjects(verification.userId, limit, taskCompleted, taskDueDate, taskDeleted) :
-            completed == "false" ? await ProjectQueries.getUncompletedProjects(verification.userId, limit, taskCompleted, taskDueDate, taskDeleted) :
-                await ProjectQueries.getProjects(verification.userId, limit);
+                verification.userId,
+            ) :
+            completed == "true" ? await ProjectQueries.getCompletedProjectsWithTasks(verification.userId, taskCompleted, taskDueDate, taskDeleted) :
+                completed == "false" ? await ProjectQueries.getUncompletedProjectsWithTasks(verification.userId, taskCompleted, taskDueDate, taskDeleted) :
+                    await ProjectQueries.getProjects(verification.userId, limit);
 
     return NextResponse.json(projects);
 }
@@ -48,18 +40,18 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { title, description } = body;
+        const {title, description} = body;
 
         // Validation
         if (!title) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+            return NextResponse.json({error: 'Missing required fields'}, {status: 400});
         }
 
         const projectId = await ProjectQueries.createProject(verification.userId, title, description);
 
-        return NextResponse.json({ id: projectId }, { status: 201 });
+        return NextResponse.json({id: projectId}, {status: 201});
     } catch (error) {
         console.error('Error creating project:', error);
-        return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
+        return NextResponse.json({error: 'Failed to create project'}, {status: 500});
     }
 }

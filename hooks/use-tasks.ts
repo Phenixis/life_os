@@ -2,6 +2,7 @@
 
 import { Task } from "@/lib/db/schema"
 import { useFilteredData } from "./use-filtered-data"
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
 interface UseTasksParams {
   completed?: boolean
@@ -9,8 +10,8 @@ interface UseTasksParams {
   limit?: number
   orderingDirection?: "asc" | "desc"
   withProject?: boolean
-  projectTitles?: string[]
-  excludedProjectTitles?: string[]
+  projects?: simplifiedProject[]
+  excludedProjects?: simplifiedProject[]
   dueBefore?: Date
   dueAfter?: Date
 }
@@ -23,8 +24,8 @@ export function useTasks(params: UseTasksParams = {}) {
     limit,
     orderingDirection,
     withProject,
-    projectTitles,
-    excludedProjectTitles,
+    projects,
+    excludedProjects,
     dueBefore,
     dueAfter,
   } = params
@@ -37,8 +38,8 @@ export function useTasks(params: UseTasksParams = {}) {
       limit: limit ? limit + 1 : undefined,
       orderingDirection,
       withProject: withProject ? "true" : "false",
-      projectTitles: projectTitles?.join(","),
-      excludedProjectTitles: excludedProjectTitles?.join(","),
+      projectTitles: projects?.join(","),
+      excludedProjectTitles: excludedProjects?.join(","),
       dueBefore: dueBefore ? dueBefore.toISOString() : undefined,
       dueAfter: dueAfter ? dueAfter.toISOString() : undefined,
     },

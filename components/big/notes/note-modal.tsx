@@ -1,61 +1,57 @@
 "use client"
 
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog"
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import {Button} from "@/components/ui/button"
-import {Plus, PenIcon, ChevronDown} from "lucide-react"
+import {ChevronDown} from "lucide-react"
 import {useUser} from "@/hooks/use-user"
 import {Note} from "@/lib/db/schema"
-import {useState, useRef, useEffect} from "react"
-import {cn} from "@/lib/utils"
+import {useEffect, useRef, useState} from "react"
 import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
 import {Textarea} from "@/components/ui/textarea"
 import {useSWRConfig} from "swr"
 import {toast} from "sonner"
-import {encryptNote, decryptNote} from "@/lib/utils/crypt"
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+import {decryptNote, encryptNote} from "@/lib/utils/crypt"
+import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
 import {useDebouncedCallback} from "use-debounce"
 import SearchProjectsInput from "@/components/big/projects/search-projects-input"
 import {NotesAndData} from "@/lib/db/queries/note"
 import {updateUserDraftNote} from "@/lib/db/queries/user/user"
+import {useNoteModal} from "@/contexts/modal-commands-context";
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
+import {useProjects} from "@/hooks/use-projects";
 
-export default function NoteModal({
-                                      className,
-                                      note,
-                                      password,
-                                      children,
-                                      isOpen,
-                                      onOpenChange,
-                                  }: {
-    className?: string
-    note?: Note.Note.Select
-    password?: string
-    children?: React.ReactNode
-    isOpen?: boolean
-    onOpenChange?: (open: boolean) => void
-}) {
+export default function NoteModal() {
     const user = useUser().user;
-    const mode = note ? "edit" : "create"
+
+    const {
+        isOpen,
+        openModal,
+        closeModal,
+        note,
+        password
+    } = useNoteModal()
+    const mode = (note !== undefined && note !== null) ? "edit" : "create"
     const {mutate} = useSWRConfig()
+    const {projects: allProjects} = useProjects({})
 
     // State - use external control if provided
-    const [internalOpen, setInternalOpen] = useState(false)
-    const open = isOpen !== undefined ? isOpen : internalOpen
-    const setOpen = onOpenChange || setInternalOpen
     const [formChanged, setFormChanged] = useState(false)
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
     const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
     const [passwordValue, setPasswordValue] = useState<string>(password || "")
 
-    const [noteTitle, setNoteTitle] = useState<string>(note ? (note.title ? note.title : "") : user?.note_draft_title || "")
-    const [inputNoteTitle, setInputNoteTitle] = useState<string>(note ? (note.title ? note.title : "") : user?.note_draft_title || "")
-    const [noteContent, setNoteContent] = useState<string>(note ? (note.content ? note.content : "") : user?.note_draft_content || "")
-    const [inputNoteContent, setInputNoteContent] = useState<string>(note ? (note.content ? note.content : "") : user?.note_draft_content || "")
-    const [project, setProject] = useState<string>(note ? (note.project_title ? note.project_title : "") : user?.note_draft_project_title || "")
+    const [noteTitle, setNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
+    const [inputNoteTitle, setInputNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
+    const [noteContent, setNoteContent] = useState<string>(note ? note.content : (user?.note_draft_content || ""))
+    const [inputNoteContent, setInputNoteContent] = useState<string>(note ? note.content : (user?.note_draft_content || ""))
+    const [project, setProject] = useState<simplifiedProject>(
+        note && note.project_id
+            ? { title: "", id: note.project_id }
+            : user?.note_draft_project_title
+                ? { title: user.note_draft_project_title, id: -1 }
+                : { title: "", id: -1 }
+    )
 
     const updateNoteTitle = useDebouncedCallback((value: string) => {
         setNoteTitle(value)
@@ -72,7 +68,7 @@ export default function NoteModal({
             userId: user?.id,
             note_title: noteTitle,
             note_content: noteContent,
-            note_project_title: project,
+            note_project_title: project.title,
         }).then(() => {
             }
         ).catch((error) => {
@@ -88,18 +84,67 @@ export default function NoteModal({
         updateNoteContent(inputNoteContent)
     }, [inputNoteContent, updateNoteContent])
 
+    // Sync form state when modal opens or when incoming note/user draft changes
+    useEffect(() => {
+        if (!isOpen) return
+
+        if (mode === "edit" && note) {
+            const safeTitle = note.title || ""
+            const safeContent = note.content || ""
+            setInputNoteTitle(safeTitle)
+            setNoteTitle(safeTitle)
+            setInputNoteContent(safeContent)
+            setNoteContent(safeContent)
+            setProject(
+                note.project_id
+                    ? { title: allProjects.find(p => p.id === note.project_id)?.title || "", id: note.project_id }
+                    : { title: "", id: -1 }
+            )
+            setPasswordValue(password || "")
+            setDecryptedContent(null)
+        } else if (mode === "create") {
+            const draftTitle = user?.note_draft_title || ""
+            const draftContent = user?.note_draft_content || ""
+            setInputNoteTitle(draftTitle)
+            setNoteTitle(draftTitle)
+            setInputNoteContent(draftContent)
+            setNoteContent(draftContent)
+            setProject(user?.note_draft_project_title ? { title: user.note_draft_project_title, id: -1 } : { title: "", id: -1 })
+            setPasswordValue(password || "")
+            setDecryptedContent(null)
+        }
+    }, [isOpen, mode, note?.id, note?.title, note?.content, note?.project_id, user?.note_draft_title, user?.note_draft_content, user?.note_draft_project_title, password, allProjects])
 
     useEffect(() => {
-        updateUserDraftNoteDebounced()
-    }, [noteContent, noteTitle, project, updateUserDraftNoteDebounced])
+        if (mode === "create") {
+            updateUserDraftNoteDebounced()
+        }
+    }, [mode, updateUserDraftNoteDebounced])
 
     useEffect(() => {
+        const originalContent = (mode === "edit" && passwordValue && decryptedContent !== null)
+            ? decryptedContent
+            : (note?.content || "")
         setFormChanged(
-            mode === "edit" ?
-                inputNoteTitle.trim() !== note?.title.trim() || inputNoteContent.trim() !== note?.content.trim() || project.trim() !== (note?.project_title ? note.project_title.trim() : "") || passwordValue.trim() !== password?.trim() :
-                inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
+            mode === "edit"
+                ? inputNoteTitle.trim() !== (note?.title || "").trim()
+                    || inputNoteContent.trim() !== originalContent.trim()
+                    || project.id !== (note?.project_id ? note.project_id : -1)
+                    || passwordValue.trim() !== (password || "").trim()
+                : inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
         )
-    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_title, password])
+    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, password, decryptedContent])
+
+    // Keep project title in sync when projects list loads/changes
+    useEffect(() => {
+        if (project.id > 0) {
+            const found = allProjects.find(p => p.id === project.id)
+            if (found && project.title !== found.title) {
+                setProject({ title: found.title, id: project.id })
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allProjects, project.id])
 
     // Refs
     const isSubmittingRef = useRef(false)
@@ -110,7 +155,10 @@ export default function NoteModal({
         setInputNoteTitle("")
         setNoteContent("")
         setInputNoteContent("")
-        setProject("")
+        setProject({
+            title: "",
+            id: -1,
+        })
         setPasswordValue("")
         setDecryptedContent(null)
         setFormChanged(false)
@@ -125,6 +173,11 @@ export default function NoteModal({
         }).catch((error: unknown) => {
             console.error("Error resetting draft note:", error)
         })
+    }
+
+    const close = () => {
+        resetForm()
+        closeModal()
     }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -146,11 +199,11 @@ export default function NoteModal({
                 const encrypted = await encryptNote(noteContent, passwordValue)
 
                 noteData = {
-                    id: mode === "edit" ? note?.id : -1,
-                    user_id: user?.id,
+                    id: mode === "edit" && note?.id ? note.id : -1,
+                    user_id: user ? user.id : "00000000",
                     title: noteTitle,
                     content: encrypted.ciphertext,
-                    project_title: project,
+                    project_id: project.id,
                     salt: encrypted.salt,
                     iv: encrypted.iv,
                     created_at: mode === "create" ? new Date() : note?.created_at,
@@ -158,18 +211,17 @@ export default function NoteModal({
                 } as Note.Note.Select
             } else {
                 noteData = {
-                    id: mode === "edit" ? note?.id : -1,
-                    user_id: user?.id,
+                    id: mode === "edit" && note?.id ? note.id : -1,
+                    user_id: user ? user.id : "00000000",
                     title: noteTitle,
                     content: noteContent,
-                    project_title: project,
+                    project_id: project.id,
                     created_at: mode === "create" ? new Date() : note?.created_at,
                     updated_at: new Date(),
                 } as Note.Note.Select
             }
 
-            resetForm()
-            setOpen(false)
+            close()
 
             mutate(
                 (key: unknown) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")),
@@ -206,7 +258,10 @@ export default function NoteModal({
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${user?.api_key}`
                 },
-                body: JSON.stringify(noteData),
+                body: JSON.stringify({
+                    noteData,
+                    project
+                }),
             })
 
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
@@ -235,28 +290,25 @@ export default function NoteModal({
         }
     }, 200)
 
-    // Decrypt content when dialog opens
+    // Decrypt content when dialog opens or when password/note changes
     useEffect(() => {
-        debouncedDecrypt(password || "")
-    }, [debouncedDecrypt, password])
+        const pwd = passwordValue || password || ""
+        if (!pwd) return
+        debouncedDecrypt(pwd)
+    }, [debouncedDecrypt, passwordValue, password, note?.id, note?.content, note?.salt, note?.iv, isOpen])
 
     // Effects
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {children ? children : (
-                    mode === "create" ? (
-                        <Button variant="outline" size="icon"
-                                className={cn("whitespace-nowrap transition-transform duration-300 border-none", className)}>
-                            <Plus size={24}/>
-                        </Button>
-                    ) : (
-                        <PenIcon
-                            className={cn("min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer", className)}/>
-                    )
-                )}
-            </DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={(newOpenState) => {
+            if (isOpen && !newOpenState) {
+                // Attempting to close
+                close()
+            } else {
+                // Opening the dialog
+                openModal()
+            }
+        }}>
             <DialogContent
                 aria-describedby={undefined}
                 maxHeight="max-h-115"
@@ -275,7 +327,7 @@ export default function NoteModal({
                                 type="text"
                                 id="title"
                                 name="title"
-                                defaultValue={noteTitle}
+                                value={inputNoteTitle}
                                 autoFocus
                                 onChange={(e) => {
                                     setInputNoteTitle(e.target.value)
@@ -289,7 +341,7 @@ export default function NoteModal({
                                 id="content"
                                 name="content"
                                 className="text-xs lg:text-sm"
-                                defaultValue={decryptedContent || noteContent}
+                                value={inputNoteContent}
                                 onChange={(e) => {
                                     setInputNoteContent(e.target.value)
                                 }}
@@ -298,7 +350,7 @@ export default function NoteModal({
                         <SearchProjectsInput
                             project={project}
                             setProject={setProject}
-                            defaultValue={project}
+                            defaultValue={project.title}
                         />
                         <Collapsible className="w-full" open={showAdvancedOptions}
                                      onOpenChange={setShowAdvancedOptions}>
