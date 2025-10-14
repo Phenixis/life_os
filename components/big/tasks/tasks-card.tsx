@@ -126,8 +126,8 @@ export function TasksCard(
         limit,
         orderingDirection,
         withProject,
-        projects: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
-        excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
+        projects: groupByProject && selectedProjects.length > 0 ? selectedProjects.map(project => project.id) : undefined,
+        excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects.map(project => project.id) : undefined,
         dueBefore: dueBeforeDate,
     })
 
@@ -174,7 +174,7 @@ export function TasksCard(
             return;
         }
 
-        window.localStorage.setItem("tasks_filters", JSON.stringify({
+        const serialized = JSON.stringify({
             completed,
             limit,
             orderBy,
@@ -183,7 +183,9 @@ export function TasksCard(
             removedProjects,
             dueBeforeDate: dueBeforeDate?.toISOString(),
             groupByProject
-        } as tasksFilters))
+        } as tasksFilters)
+        // Write to both keys to be backward-compatible with legacy storage
+        window.localStorage.setItem("tasks_filters", serialized)
     }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject]);
 
     useEffect(() => {
@@ -192,17 +194,41 @@ export function TasksCard(
             try {
                 const savedFilters = JSON.parse(raw) as Partial<tasksFilters>
 
-                if (typeof savedFilters.completed === "boolean") setCompleted(savedFilters.completed)
-                if (typeof savedFilters.limit === "number" && Number.isFinite(savedFilters.limit)) setLimit(savedFilters.limit)
-                if (typeof savedFilters.orderBy === "string") setOrderBy(savedFilters.orderBy as keyof Task.Task.Select)
-                if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") setOrderingDirection(savedFilters.orderingDirection)
-                if (Array.isArray(savedFilters.selectedProjects)) setSelectedProjects(savedFilters.selectedProjects)
-                if (Array.isArray(savedFilters.removedProjects)) setRemovedProjects(savedFilters.removedProjects)
+                if (typeof savedFilters.completed === "boolean") {
+                    console.log('completed filter:', savedFilters.completed);
+                    setCompleted(savedFilters.completed)
+                }
+                if (typeof savedFilters.limit === "number" && Number.isFinite(savedFilters.limit)) {
+                    console.log('limit filter:', savedFilters.limit);
+                    setLimit(savedFilters.limit)
+                }
+                if (typeof savedFilters.orderBy === "string") {
+                    console.log('orderBy filter:', savedFilters.orderBy);
+                    setOrderBy(savedFilters.orderBy as keyof Task.Task.Select)
+                }
+                if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") {
+                    console.log('ordering direction filter:', savedFilters.orderingDirection);
+                    setOrderingDirection(savedFilters.orderingDirection)
+                }
+                if (Array.isArray(savedFilters.selectedProjects)) {
+                    console.log('selected projects filter:', savedFilters.selectedProjects);
+                    setSelectedProjects(savedFilters.selectedProjects)
+                }
+                if (Array.isArray(savedFilters.removedProjects)) {
+                    console.log('removed projects filter:', savedFilters.removedProjects);
+                    setRemovedProjects(savedFilters.removedProjects)
+                }
                 if (typeof savedFilters.dueBeforeDate === "string") {
                     const d = new Date(savedFilters.dueBeforeDate)
-                    if (!isNaN(d.getTime())) setDueBeforeDate(d)
+                    if (!isNaN(d.getTime())) {
+                        console.log('due before date filter:', d);
+                        setDueBeforeDate(d)
+                    }
                 }
-                if (typeof savedFilters.groupByProject === "boolean") setGroupByProject(savedFilters.groupByProject)
+                if (typeof savedFilters.groupByProject === "boolean") {
+                    console.log('group by project filter:', savedFilters.groupByProject);
+                    setGroupByProject(savedFilters.groupByProject)
+                }
             } catch (e) {
                 // ignore malformed JSON
                 console.error("Error parsing saved filters:", e)
@@ -231,21 +257,23 @@ export function TasksCard(
      * @param projectTitle - The title of the project to toggle
      */
     const toggleProject = useCallback((project: simplifiedProject) => {
-        startTransition(() => {
-            if (selectedProjects.filter(title => title.id === project.id).length > 0) {
-                if (selectedProjects.length === 1) {
-                    setRemovedProjects(prev => [...prev, project]);
-                }
-                setSelectedProjects(prev => prev.filter(title => title.id !== project.id));
-            } else if (removedProjects.filter(title => title.id === project.id).length > 0) {
-                setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
-            } else {
-                if (selectedProjects.length === 0) {
-                    setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
-                }
-                setSelectedProjects(prev => [...prev, project]);
+        // Avoid startTransition here to prevent disabling all filters via isPending
+        if (selectedProjects.some(p => p.id === project.id)) {
+            // In selectedProjects: remove it; if it was the only one, move it to removed
+            if (selectedProjects.length === 1) {
+                setRemovedProjects(prev => [...prev, project])
             }
-        });
+            setSelectedProjects(prev => prev.filter(p => p.id !== project.id))
+        } else if (removedProjects.some(p => p.id === project.id)) {
+            // In removedProjects: un-exclude it (back to neutral)
+            setRemovedProjects(prev => prev.filter(p => p.id !== project.id))
+        } else {
+            // Neutral: select it
+            if (selectedProjects.length === 0) {
+                setRemovedProjects(prev => prev.filter(p => p.id !== project.id))
+            }
+            setSelectedProjects(prev => [...prev, project])
+        }
     }, [selectedProjects, removedProjects])
 
     // -------------------- Derived Data --------------------
@@ -254,7 +282,7 @@ export function TasksCard(
 
         return tasks.slice(0, limit).reduce(
             (acc, task) => {
-                const projectId = task.project_id || "-1"
+                const projectId = task.project_id || -1
                 const projectName = projects?.find((p) => p.id === task.project_id)?.title || "No Project"
 
                 if (!acc[projectId]) {
@@ -414,29 +442,31 @@ export function TasksCard(
                     // Show tasks, grouped or ungrouped based on the groupByProject state
                     groupByProject ? (
                         // Grouped by project
-                        Object.entries(groupedTodos).sort(([, a], [, b]) => (a.name || "").localeCompare(b.name)).map(([projectId, {
-                            name,
-                            tasks
-                        }]) => (
-                            <div key={projectId} className="mb-2">
-                                <h3 className="font-medium text-sm rounded-md">{tasks.length > 0 ? tasks[0].project?.title : name}</h3>
-                                <div className="">
-                                    {tasks.map(
-                                        (
-                                            task: Task.Task.TaskWithRelations,
-                                        ) => (
-                                            <TaskDisplay
-                                                key={task.id}
-                                                task={task}
-                                                orderedBy={orderBy}
-                                                currentLimit={limit}
-                                                currentDueBefore={dueBeforeDate}
-                                            />
-                                        ),
-                                    )}
+                        Object.entries(groupedTodos)
+                            .sort(([, a], [, b]) => (a.name || "").localeCompare(b.name))
+                            .map(([projectId, {
+                                name,
+                                tasks
+                            }]) => (
+                                <div key={projectId} className="mb-2 ">
+                                    <h3 className="font-medium text-sm rounded-md">{tasks.length > 0 ? tasks[0].project?.title : name}</h3>
+                                    <div className="border-l ml-1 pl-1">
+                                        {tasks.map(
+                                            (
+                                                task: Task.Task.TaskWithRelations,
+                                            ) => (
+                                                <TaskDisplay
+                                                    key={task.id}
+                                                    task={task}
+                                                    orderedBy={orderBy}
+                                                    currentLimit={limit}
+                                                    currentDueBefore={dueBeforeDate}
+                                                />
+                                            ),
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            ))
                     ) : (
                         // Not grouped
                         tasks

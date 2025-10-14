@@ -198,8 +198,8 @@ export async function getTasks(
     orderBy: keyof Existing = "score",
     orderingDirection?: "asc" | "desc",
     limit = 50,
-    projectTitles?: string[],
-    excludedProjectTitles?: string[],
+    projectIds?: number[],
+    excludedProjectIds?: number[],
     dueBefore?: Date,
     dueAfter?: Date,
     completed?: boolean,
@@ -219,25 +219,25 @@ export async function getTasks(
                 // Filter by user ID if provided
                 lib.eq(table.user_id, userId),
                 // Include specific projects if provided
-                projectTitles
+                projectIds
                     ? lib.or(
-                        lib.inArray(lib.Schema.Project.table.title, projectTitles),
-                        lib.sql`${lib.isNull(table.project_id)} and ${projectTitles.includes("No project")}`,
+                        lib.inArray(lib.Schema.Project.table.id, projectIds),
+                        lib.sql`${lib.isNull(table.project_id)} and ${projectIds.includes(-1)}`,
                     )
                     : lib.sql`1 = 1`,
                 // Exclude specific projects if provided
-                excludedProjectTitles && excludedProjectTitles.length > 0
+                excludedProjectIds && excludedProjectIds.length > 0
                     ? lib.and(
                         // For tasks with project titles
                         lib.or(
                             lib.isNull(table.project_id),
                             lib.not(lib.inArray(
-                                lib.Schema.Project.table.title,
-                                excludedProjectTitles.filter(p => p !== "No project")
+                                lib.Schema.Project.table.id,
+                                excludedProjectIds.filter(p => p !== -1)
                             ))
                         ),
                         // For tasks with null project ("No project")
-                        excludedProjectTitles.includes("No project")
+                        excludedProjectIds.includes(-1)
                             ? lib.isNotNull(table.project_id)
                             : lib.sql`1 = 1`
                     )
@@ -278,7 +278,7 @@ export async function getTasks(
             created_at: table.created_at,
             updated_at: table.updated_at,
             deleted_at: table.deleted_at,
-            project_id: table.id,
+            project_id: table.project_id,
             user_id: table.user_id,
             project: {
                 id: lib.Schema.Project.table.id,
@@ -376,12 +376,12 @@ export async function getTasks(
     return result as lib.Schema.Task.Task.TaskWithRelations[]
 }
 
-export async function getCompletedTasks(userId: string, orderBy: keyof Existing = "completed_at", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
-    return getTasks(userId, orderBy, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, true);
+export async function getCompletedTasks(userId: string, orderBy: keyof Existing = "completed_at", orderingDirection?: "asc" | "desc", limit = 50, projectIds?: number[], excludedProjectIds?: number[], dueBefore?: Date, dueAfter?: Date) {
+    return getTasks(userId, orderBy, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter, true);
 }
 
-export async function getUncompletedTasks(userId: string, orderBy: keyof Existing = "score", orderingDirection?: "asc" | "desc", limit = 50, projectTitles?: string[], excludedProjectTitles?: string[], dueBefore?: Date, dueAfter?: Date) {
-    return getTasks(userId, orderBy, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, false);
+export async function getUncompletedTasks(userId: string, orderBy: keyof Existing = "score", orderingDirection?: "asc" | "desc", limit = 50, projectIds?: number[], excludedProjectIds?: number[], dueBefore?: Date, dueAfter?: Date) {
+    return getTasks(userId, orderBy, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter, false);
 }
 
 export async function searchTasksByTitle(userId: string, title: string, limit = 50) {

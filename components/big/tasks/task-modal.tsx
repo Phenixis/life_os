@@ -114,7 +114,8 @@ export default function TaskModal() {
     useEffect(() => {
         if (isOpen) {
             if (mode === "create") {
-                const projectFromSearchParams = (JSON.parse(window.localStorage.getItem("tasks_filters") || "{}") as tasksFilters | null)?.selectedProjects
+                const raw = window.localStorage.getItem("tasks_filters")
+                const projectFromSearchParams = (JSON.parse(raw || "{}") as tasksFilters | null)?.selectedProjects
 
                 setProject(projectFromSearchParams && projectFromSearchParams.length === 1 ? projectFromSearchParams[0] : {
                     title: "",
@@ -324,7 +325,8 @@ export default function TaskModal() {
                         updatedData = [todoData, ...currentData]
                     }
 
-                    const savedFilters = (JSON.parse(window.localStorage.getItem("tasks_filters") || "{}") as tasksFilters | null)
+                    const raw = window.localStorage.getItem("tasks_filters")
+                    const savedFilters = (JSON.parse(raw || "{}") as tasksFilters | null)
 
                     const filteredData: Task.Task.TaskWithRelations[] = updatedData.filter((item: Task.Task.TaskWithRelations) => {
                         const dueBeforeFromSearchParams = savedFilters?.dueBeforeDate

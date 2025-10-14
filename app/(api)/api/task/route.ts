@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
     const orderBy = searchParams.get("orderBy") as keyof Task.Task.Select | null
     const limitParam = searchParams.get("limit")
     const orderingDirection = searchParams.get("orderingDirection") as "asc" | "desc" | undefined
-    const projectTitles = searchParams.get("projectTitles")
-        ? searchParams.get("projectTitles")?.split(",")
+    const projectIds = searchParams.get("projectIds")
+        ? searchParams.get("projectIds")?.split(",").map(Number)
         : undefined
-    const excludedProjectTitles = searchParams.get("excludedProjectTitles")
-        ? searchParams.get("excludedProjectTitles")?.split(",")
+    const excludedProjectIds = searchParams.get("excludedProjectIds")
+        ? searchParams.get("excludedProjectIds")?.split(",").map(Number)
         : undefined
     const dueBefore = searchParams.get("dueBefore")
         ? new Date(searchParams.get("dueBefore") as string)
@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
     try {
         const tasks =
             completed === true
-                ? await TaskQueries.Task.getCompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter)
+                ? await TaskQueries.Task.getCompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter)
                 : completed === false
-                    ? await TaskQueries.Task.getUncompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter)
-                    : await TaskQueries.Task.getTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectTitles, excludedProjectTitles, dueBefore, dueAfter, completed)
+                    ? await TaskQueries.Task.getUncompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter)
+                    : await TaskQueries.Task.getTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter, completed)
 
         return NextResponse.json(tasks)
     } catch (error) {

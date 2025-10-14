@@ -10,8 +10,8 @@ interface UseTasksParams {
   limit?: number
   orderingDirection?: "asc" | "desc"
   withProject?: boolean
-  projects?: simplifiedProject[]
-  excludedProjects?: simplifiedProject[]
+  projects?: number[]
+  excludedProjects?: number[]
   dueBefore?: Date
   dueAfter?: Date
 }
@@ -38,8 +38,8 @@ export function useTasks(params: UseTasksParams = {}) {
       limit: limit ? limit + 1 : undefined,
       orderingDirection,
       withProject: withProject ? "true" : "false",
-      projectTitles: projects?.join(","),
-      excludedProjectTitles: excludedProjects?.join(","),
+      projectIds: projects?.join(","),
+      excludedProjectIds: excludedProjects?.join(","),
       dueBefore: dueBefore ? dueBefore.toISOString() : undefined,
       dueAfter: dueAfter ? dueAfter.toISOString() : undefined,
     },

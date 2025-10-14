@@ -1,6 +1,9 @@
 import {cn} from "@/lib/utils";
 import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
+function isInList(list: simplifiedProject[], project: simplifiedProject) {
+    return list.some(p => p.id === project.id);
+}
 
 export function ProjectsMultipleSelects(
     {
@@ -26,10 +29,10 @@ export function ProjectsMultipleSelects(
                     projects...</div>
             ) : projects?.length > 0 ? (
                 projects.sort((a, b) => {
-                    if (selectedProjects.includes(a) && !selectedProjects.includes(b)) return -1;
-                    if (!selectedProjects.includes(a) && selectedProjects.includes(b)) return 1;
-                    if (removedProjects.includes(a) && !removedProjects.includes(b)) return -1;
-                    if (!removedProjects.includes(a) && removedProjects.includes(b)) return 1;
+                    if (isInList(selectedProjects, a) && !isInList(selectedProjects, b)) return -1;
+                    if (!isInList(selectedProjects, a) && isInList(selectedProjects, b)) return 1;
+                    if (isInList(removedProjects, a) && !isInList(removedProjects, b)) return -1;
+                    if (!isInList(removedProjects, a) && isInList(removedProjects, b)) return 1;
                     return a.title.localeCompare(b.title);
                 }).map((project) => {
                         const isSelected = selectedProjects.filter(p => p.id === project.id).length > 0;
