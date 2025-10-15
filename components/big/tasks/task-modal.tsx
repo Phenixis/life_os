@@ -40,6 +40,10 @@ export default function TaskModal() {
     const user = useUser().user;
     const {isOpen, task, openModal, closeModal} = useTaskModal();
 
+    console.log(task)
+    console.log(task?.project)
+    console.log(task && task.project ? "valid" : "invalid")
+
     // State management for the dialog
     const mode = task ? "edit" : "create"
     const [keepCreating, setKeepCreating] = useState(false)
@@ -54,6 +58,21 @@ export default function TaskModal() {
     const calendarRef = useRef<HTMLDivElement>(null)
 
     const [project, setProject] = useState<simplifiedProject>(task && task.project ? {
+        title: task.project.title,
+        id: task.project.id
+    } : {
+        title: "",
+        id: -1
+    })
+
+    // Keep project state in sync when the task prop arrives/changes (e.g., when opening in edit mode)
+    useEffect(() => {
+        if (task && task.project) {
+            setProject({ title: task.project.title, id: task.project.id })
+        }
+    }, [task])
+
+    console.log("Project is", project, "but should be", task && task.project ? {
         title: task.project.title,
         id: task.project.id
     } : {
