@@ -105,7 +105,7 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const {id, title, importance, dueDate: initialDueDate, duration, projectTitle, toDoAfterId} = body
+        const {id, title, importance, dueDate: initialDueDate, duration, project, toDoAfterId} = body
 
         // Validation
         if (!id || !title || importance === undefined || initialDueDate === undefined || duration === undefined) {
@@ -114,10 +114,14 @@ export async function PUT(request: NextRequest) {
 
         let dueDate = initialDueDate
 
-        const project = projectTitle && projectTitle != "" ? (await ProjectQueries.getProjectByTitle(verification.userId, projectTitle)) : undefined
-        let projectId = project ? project.id : undefined
-        if (!project) {
-            projectId = await ProjectQueries.createProject(verification.userId, projectTitle)
+        let projectId = project.id >= 0 ? project.id : undefined
+        if (projectId === undefined) {
+            const foundProject = await ProjectQueries.getProjectByTitle(verification.userId, project.title)
+            if (foundProject) {
+                projectId = foundProject.id
+            } else {
+                projectId = await ProjectQueries.createProject(verification.userId, project.title)
+            }
         }
 
         // Validate toDoAfterId if provided
@@ -191,17 +195,16 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({error: "Missing required fields"}, {status: 400})
         }
 
-        let taskId
+        let taskId: number | { done_task_id: number, new_task_id?: number }
         if (completed === true) {
             taskId = await TaskQueries.Task.markTaskAsDone(verification.userId, Number(id))
         } else if (completed === false) {
             taskId = await TaskQueries.Task.markTaskAsUndone(verification.userId, Number(id))
         } else {
-            // Si completed est un booléen indiquant l'état actuel, on utilise toggleTask
             taskId = await TaskQueries.Task.toggleTask(verification.userId, Number(id), completed)
         }
 
-        const task = await TaskQueries.Task.getTaskById(Number(taskId))
+        const task = await TaskQueries.Task.getTaskById(typeof taskId === "number" ? taskId : taskId.done_task_id)
 
         if (task) {
             // Si le task a une relation toDoAfter, on la supprime
