@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e3517ae-b7fc-4690-bcfe-422aef80c67c" name="Changes" comment="feat: fix side effects of project PK from title to id">
+    <list default="true" id="6e3517ae-b7fc-4690-bcfe-422aef80c67c" name="Changes" comment="fix: problems in update and completion">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(api)/api/task/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/(api)/api/task/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/big/tasks/task-modal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/tasks/task-modal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(back-office)/my/tools/movie-tracker/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(back-office)/my/tools/movie-tracker/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/big/movie-tracker/movie-search.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/big/movie-tracker/movie-search.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,29 +43,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "dev",
-    "js.debugger.nextJs.config.created.client": "true",
-    "js.debugger.nextJs.config.created.server": "true",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/MaximeDuhamel/Perso/life_os/app/(back-office)/my/tools/workout/past-workout",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "pnpm",
-    "npm.Next.js: server-side.executor": "Run",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Users\\MaximeDuhamel\\Perso\\life_os\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
+    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/MaximeDuhamel/Perso/life_os/app/(back-office)/my/tools/workout/past-workout&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
+    &quot;npm.Next.js: server-side.executor&quot;: &quot;Run&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\MaximeDuhamel\\Perso\\life_os\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\MaximeDuhamel\Perso\life_os\app\(back-office)\my\tools\workout\past-workout" />
@@ -126,7 +126,9 @@
       <workItem from="1760339007978" duration="103000" />
       <workItem from="1760424939248" duration="3227000" />
       <workItem from="1760508774200" duration="160000" />
-      <workItem from="1760555350609" duration="4105000" />
+      <workItem from="1760555350609" duration="4259000" />
+      <workItem from="1760597671224" duration="612000" />
+      <workItem from="1760599540894" duration="856000" />
     </task>
     <task id="LOCAL-00001" summary="refactor: improved dark mode and create workout tools">
       <option name="closed" value="true" />
@@ -232,7 +234,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760428107708</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="fix: problems in update and completion">
+      <option name="closed" value="true" />
+      <created>1760560953448</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1760560953448</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -272,6 +282,7 @@
     <MESSAGE value="fix: clean up formatting inconsistencies, fix imports, and enhance state dependency management" />
     <MESSAGE value="feat: project PK from title to id" />
     <MESSAGE value="feat: fix side effects of project PK from title to id" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: fix side effects of project PK from title to id" />
+    <MESSAGE value="fix: problems in update and completion" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: problems in update and completion" />
   </component>
 </project>

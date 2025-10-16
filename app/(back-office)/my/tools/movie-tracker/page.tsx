@@ -26,9 +26,9 @@ export default function MovieTrackerPage() {
     const pathname = usePathname();
     
     // Simple approach: directly use searchParams for active tab
-    const currentTab = searchParams.get('tab') || 'movies';
-    const validTabs = ['movies', 'watchlist', 'discover'];
-    const activeTab = validTabs.includes(currentTab) ? currentTab : 'movies';
+    const currentTab = searchParams.get('tab') || 'watchlist';
+    const validTabs = ['watchlist', 'movies', 'discover'];
+    const activeTab = validTabs.includes(currentTab) ? currentTab : 'watchlist';
 
     // Tab change handler - clear params and only keep relevant ones for the new tab
     const handleTabChange = (newTab: string) => {
