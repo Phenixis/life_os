@@ -42,6 +42,14 @@ export async function POST(request: NextRequest) {
 
         const subscription = activeSubscription[0]
 
+        // Check if trying to change to the same price
+        if (subscription.stripe_price_id === priceId) {
+            return NextResponse.json(
+                { error: "You are already subscribed to this plan" },
+                { status: 400 }
+            )
+        }
+
         // Get the current subscription from Stripe
         const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id)
         
