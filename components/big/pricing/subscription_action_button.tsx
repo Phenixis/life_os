@@ -7,6 +7,23 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useUser } from '@/hooks/use-user';
 
+/**
+ * SubscriptionActionButton Component
+ * 
+ * Displays a button to change subscription plans or cancel subscription.
+ * Used in the subscription settings page when a user has an active subscription.
+ * 
+ * Features:
+ * - Handles both upgrades and downgrades to paid plans
+ * - Handles "downgrade to free" via subscription cancellation
+ * - Shows loading state during API calls
+ * - Displays success/error toasts
+ * - Refreshes page after successful change
+ * 
+ * @param priceId - Stripe price ID of the target plan
+ * @param planName - Display name of the target plan
+ * @param isFree - Whether the target plan is the free plan
+ */
 export function SubscriptionActionButton({ 
     priceId, 
     planName,

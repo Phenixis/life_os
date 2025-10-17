@@ -5,6 +5,24 @@ import { db } from "@/lib/db/drizzle"
 import { eq, and } from "drizzle-orm"
 import * as Schema from "@/lib/db/schema"
 
+/**
+ * Change Subscription Plan Endpoint
+ * 
+ * This endpoint handles both upgrades and downgrades of subscription plans.
+ * 
+ * Flow:
+ * 1. User clicks "Change to [Plan Name]" button on subscription page
+ * 2. Client sends POST request with new priceId
+ * 3. Server verifies user authentication via API key
+ * 4. Server retrieves active subscription from database
+ * 5. Server validates user isn't already on the requested plan
+ * 6. Server updates subscription in Stripe with new price
+ * 7. Stripe applies proration (refund/charge difference)
+ * 8. Server updates database with new product/price IDs
+ * 9. Stripe webhook (customer.subscription.updated) confirms the change
+ * 
+ * Note: For downgrading to free plan, use the cancel-subscription endpoint instead.
+ */
 export async function POST(request: NextRequest) {
     try {
         const { error, userId } = await verifyRequest(request)
