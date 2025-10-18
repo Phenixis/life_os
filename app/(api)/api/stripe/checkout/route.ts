@@ -72,8 +72,8 @@ export async function GET(request: NextRequest) {
         .where(eq(User.User.table.id, userId));
     }
 
-    // Update subscription details
-    handleSubscriptionChange(userId, subscription);
+    // Create or update subscription details
+    await handleSubscriptionChange(userId, subscription);
 
     await setSession({
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
