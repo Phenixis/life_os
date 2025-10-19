@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import {
     getUser
 } from '@/lib/db/queries/user/user';
-import { GetActive, Update } from '@/lib/db/queries/user/subscription';
+import { GetActive, Update, Create } from '@/lib/db/queries/user/subscription';
 import { User } from '@/lib/db/schema';
 
 const stripeApiKey = process.env.STRIPE_API_KEY;
@@ -53,10 +53,17 @@ export async function createCheckoutSession({
         mode: 'subscription',
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/stripe/checkout?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/#pricing`,
-        customer: user.stripe_customer_id || undefined,
-        customer_email: user?.email || undefined,
+        ...(user.stripe_customer_id ? { customer: user.stripe_customer_id } : { customer_email: user.email }),
         client_reference_id: user.id.toString(),
         allow_promotion_codes: true,
+        subscription_data: {
+            metadata: {
+                userId: user.id
+            }
+        },
+        metadata: {
+            userId: user.id
+        }
     });
 
     redirect(session.url!);
@@ -149,11 +156,24 @@ export async function handleSubscriptionChange(
 
     const subscriptionInDb = await GetActive(user.id);
 
+    // If no active subscription exists, create a new one
     if (subscriptionInDb === null) {
-        console.error('No active subscription found for user:', user.id);
+        console.log('Creating new subscription for user:', user.id);
+        const plan = subscription.items.data[0]?.plan;
+        await Create({
+            user_id: user.id,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+            stripe_product_id: plan?.product as string,
+            stripe_price_id: plan?.id as string,
+            status: status,
+            canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+            cancel_at_period_end: subscription.cancel_at_period_end || false
+        });
         return;
     }
 
+    // Update existing subscription
     if (status === 'active' || status === 'trialing') {
         const plan = subscription.items.data[0]?.plan;
         await Update(subscriptionInDb.id, {

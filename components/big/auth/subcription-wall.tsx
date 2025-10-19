@@ -18,9 +18,9 @@ export function SubscriptionWall(
     if (SubscriptionLevels[minRequiredSubscription] <= SubscriptionLevels[userSubscription]) return null;
 
     return (
-        <div className={"fixed z-40 bg-white/50 h-screen w-screen flex flex-col items-center justify-center gap-4"}>
+        <div className={"fixed z-40 bg-white/50 dark:bg-black/80 h-screen w-screen flex flex-col items-center justify-center gap-4"}>
             <h1 className={"text-3xl font-bold"}>
-                Whoops... It looks like you&#39;re took the wrong here.
+                Whoops... It looks like you&#39;re on the wrong path here.
             </h1>
             <p>
                 This feature is only available to users with a <span

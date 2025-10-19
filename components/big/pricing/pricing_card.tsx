@@ -5,8 +5,9 @@ import Tooltip from "../tooltip"
 import {formatPrice} from "@/lib/utils/payment"
 import {SubmitButton} from "./submit_button"
 import {checkoutAction} from '@/lib/services/payments/actions';
-import {Plan, getFeature, getEveryFeatures} from "@/app/(back-office)/my/settings/subscription/plans";
+import {getEveryFeatures, getFeature, Plan} from "@/app/(back-office)/my/settings/subscription/plans";
 import {Button} from '@/components/ui/button';
+import {SubscriptionActionButton} from './subscription_action_button';
 
 export default function PricingCard(
     {
@@ -15,12 +16,14 @@ export default function PricingCard(
         recurrency = "monthly",
         active = true,
         currentSubscription = false,
+        hasActiveSubscription = false,
     }: {
         plan: Plan,
         isPopular?: boolean,
         recurrency?: "monthly" | "yearly",
         active?: boolean,
-        currentSubscription?: boolean
+        currentSubscription?: boolean,
+        hasActiveSubscription?: boolean
     }
 ) {
 
@@ -97,13 +100,23 @@ export default function PricingCard(
                                 {
                                     currentSubscription ? (
                                         <Button variant="outline" className="w-full" disabled>
-                                            Cancel Subscription
+                                            Current Plan
                                         </Button>
+                                    ) : hasActiveSubscription ? (
+                                        <SubscriptionActionButton
+                                            priceId={plan.price ? plan.price[recurrency].priceId : ""}
+                                            planName={plan.display_name}
+                                            isFree={plan.price === undefined}
+                                        />
                                     ) : (
                                         <form action={checkoutAction}>
                                             <input type="hidden" name="priceId"
                                                    value={plan.price ? plan.price[recurrency].priceId : ""}/>
-                                            <SubmitButton isPopular={isPopular} isFree={plan.price === undefined}/>
+                                            <SubmitButton
+                                                isPopular={isPopular}
+                                                isFree={plan.price === undefined}
+                                                isActive={active}
+                                            />
                                         </form>
                                     )
                                 }

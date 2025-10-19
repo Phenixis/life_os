@@ -40,10 +40,6 @@ export default function TaskModal() {
     const user = useUser().user;
     const {isOpen, task, openModal, closeModal} = useTaskModal();
 
-    console.log(task)
-    console.log(task?.project)
-    console.log(task && task.project ? "valid" : "invalid")
-
     // State management for the dialog
     const mode = task ? "edit" : "create"
     const [keepCreating, setKeepCreating] = useState(false)

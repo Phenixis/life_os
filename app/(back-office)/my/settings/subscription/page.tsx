@@ -2,7 +2,7 @@ import PricingCard from '@/components/big/pricing/pricing_card'
 import Link from "next/link";
 import {UserQueries} from "@/lib/db/queries"
 import {redirect} from "next/navigation";
-import {free, basic, pro} from "@/app/(back-office)/my/settings/subscription/plans";
+import {basic, free, pro} from "@/app/(back-office)/my/settings/subscription/plans";
 
 interface ProfileSettingsPageProps {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
@@ -28,6 +28,7 @@ export default async function ProfileSettingsPage({searchParams}: ProfileSetting
     const currentSubscription = await UserQueries.Subscription.GetActive(user.id);
 
     const currentSubscriptionStripeProductId = currentSubscription?.stripe_product_id || "free";
+    const hasActiveSubscription = !!currentSubscription;
 
     return (
         <section className="page">
@@ -55,6 +56,7 @@ export default async function ProfileSettingsPage({searchParams}: ProfileSetting
                     plan={free}
                     recurrency={isYearly ? 'yearly' : 'monthly'}
                     currentSubscription={currentSubscriptionStripeProductId === (free.stripe_product_id || "")}
+                    hasActiveSubscription={hasActiveSubscription}
                 />
 
                 {/* Basic Plan */}
@@ -62,14 +64,16 @@ export default async function ProfileSettingsPage({searchParams}: ProfileSetting
                     plan={basic}
                     recurrency={isYearly ? 'yearly' : 'monthly'}
                     currentSubscription={currentSubscriptionStripeProductId === (basic.stripe_product_id || "")}
+                    hasActiveSubscription={hasActiveSubscription}
                 />
 
-                {/* Basic Plan */}
+                {/* Pro Plan */}
                 <PricingCard
                     plan={pro}
                     recurrency={isYearly ? 'yearly' : 'monthly'}
                     active={false}
                     currentSubscription={currentSubscriptionStripeProductId === (pro.stripe_product_id || "")}
+                    hasActiveSubscription={hasActiveSubscription}
                 />
             </div>
         </section>
