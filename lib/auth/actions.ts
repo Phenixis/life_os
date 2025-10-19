@@ -1,17 +1,17 @@
 "use server";
 
-import { ActionState } from '@/middleware';
-import { redirect } from 'next/navigation'
-import { removeSession, setSession } from '@/lib/auth/session';
-import { db } from "@/lib/db/drizzle"
-import { eq } from "drizzle-orm"
-import { verifyPassword } from "@/lib/utils/password"
-import { createUser } from "@/lib/db/queries/user/user"
-import { User } from "@/lib/db/schema"
-import { sendWelcomeEmail } from "@/components/utils/send_email"
-import { updateDarkModeCookie } from "@/lib/cookies"
-import { DarkModeCookie } from "@/lib/flags"
-import { createCheckoutSession } from '../services/payments/stripe';
+import {ActionState} from '@/middleware';
+import {redirect} from 'next/navigation'
+import {removeSession, setSession} from '@/lib/auth/session';
+import {db} from "@/lib/db/drizzle"
+import {eq} from "drizzle-orm"
+import {verifyPassword} from "@/lib/utils/password"
+import {createUser} from "@/lib/db/queries/user/user"
+import {User} from "@/lib/db/schema"
+import {sendWelcomeEmail} from "@/components/utils/send_email"
+import {updateDarkModeCookie} from "@/lib/cookies"
+import {DarkModeCookie} from "@/lib/flags"
+import {createCheckoutSession} from '../services/payments/stripe';
 
 
 export async function signUp(prevState: ActionState, formData: FormData) {
@@ -22,7 +22,7 @@ export async function signUp(prevState: ActionState, formData: FormData) {
     const priceId = formData.get('priceId') as string;
 
     if (!email || !firstName || !lastName || typeof email !== "string" || typeof firstName !== "string" || typeof lastName !== "string") {
-        return { error: "Missing required fields" }
+        return {error: "Missing required fields"}
     }
 
     let user: { user: User.User.Select, password: string }
@@ -31,14 +31,14 @@ export async function signUp(prevState: ActionState, formData: FormData) {
         user = await createUser(email, firstName, lastName)
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-        return { error: errorMessage }
+        return {error: errorMessage}
     }
 
     try {
         await sendWelcomeEmail(user.user, user.password)
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-        return { error: errorMessage }
+        return {error: errorMessage}
     }
 
     const userData = user.user
@@ -55,10 +55,10 @@ export async function signUp(prevState: ActionState, formData: FormData) {
     } as DarkModeCookie)
 
     if (redirectTo && redirectTo === 'checkout' && priceId) {
-        await createCheckoutSession({ priceId, userId: user.user.id.toString() });
+        await createCheckoutSession({priceId, userId: user.user.id.toString()});
     }
 
-    return { success: true }
+    return {success: true}
 }
 
 export async function login(prevState: ActionState, formData: FormData) {
@@ -68,7 +68,7 @@ export async function login(prevState: ActionState, formData: FormData) {
         if (formData.get("redirectTo") === 'checkout') {
             const priceId = formData.get('priceId') as string;
             console.log("Creating checkout session with priceId:", priceId);
-            return createCheckoutSession({ priceId });
+            return createCheckoutSession({priceId});
         }
     }
     return result
@@ -84,28 +84,28 @@ export async function logout() {
 
 /**
  * Verify user credentials
- * @param id User's id
- * @param password Plain text password
  * @returns The user if credentials are valid, null otherwise
+ * @param prevState
+ * @param formData
  */
 export async function verifyCredentials(prevState: ActionState, formData: FormData) {
     const id = formData.get("identifier")
     const password = formData.get("password")
 
     if (!id || !password || typeof id !== "string" || typeof password !== "string") {
-        return { error: "Missing required fields" }
+        return {error: "Missing required fields"}
     }
 
     const userInfos = await db.select().from(User.User.table).where(eq(User.User.table.id, id))
 
     if (!userInfos || userInfos.length === 0) {
-        return { error: "User not found" }
+        return {error: "User not found"}
     }
 
     const isValid = await verifyPassword(password, userInfos[0].password)
 
     if (!isValid) {
-        return { error: "Invalid credentials" }
+        return {error: "Invalid credentials"}
     }
 
     const userData = userInfos[0]
@@ -127,5 +127,5 @@ export async function verifyCredentials(prevState: ActionState, formData: FormDa
     } as DarkModeCookie)
 
     const redirectTo = formData.get("redirectTo");
-    return { success: true, redirectTo: redirectTo ? redirectTo.toString() : '/my' };
+    return {success: true, redirectTo: redirectTo ? redirectTo.toString() : '/my'};
 } 

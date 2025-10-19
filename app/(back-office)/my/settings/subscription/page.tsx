@@ -2,7 +2,7 @@ import PricingCard from '@/components/big/pricing/pricing_card'
 import Link from "next/link";
 import {UserQueries} from "@/lib/db/queries"
 import {redirect} from "next/navigation";
-import {free, basic, pro} from "@/app/(back-office)/my/settings/subscription/plans";
+import {basic, free, pro} from "@/app/(back-office)/my/settings/subscription/plans";
 
 interface ProfileSettingsPageProps {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>

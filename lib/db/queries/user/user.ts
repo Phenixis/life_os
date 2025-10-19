@@ -1,9 +1,12 @@
 "use server"
 
 import * as lib from "../lib"
-import { hashPassword } from "@/lib/utils/password"
-import { getClientSession } from "@/lib/auth/session"
-import { DarkModeCookie } from "@/lib/flags"
+import {hashPassword} from "@/lib/utils/password"
+import {getClientSession} from "@/lib/auth/session"
+import {DarkModeCookie} from "@/lib/flags"
+
+const table = lib.Schema.User.User.table
+type Existing = lib.Schema.User.User.Select
 
 /**
  * Generates a unique 8-digit number ID for users
@@ -20,10 +23,10 @@ export async function generateUniqueUserId(): Promise<string> {
 
         // Check if the ID already exists
         const existingUser = await lib.db.select({
-            id: lib.Schema.User.User.table.id
+            id: table.id
         })
-            .from(lib.Schema.User.User.table)
-            .where(lib.eq(lib.Schema.User.User.table.id, id));
+            .from(table)
+            .where(lib.eq(table.id, id));
 
         if (!existingUser || existingUser.length === 0) {
             return id
@@ -59,8 +62,8 @@ export async function generateUniqueApiKey(): Promise<string> {
         const apiKey = `md_${randomPart}`
 
         const existingUser = await lib.db.select({
-            api_key: lib.Schema.User.User.table.api_key
-        }).from(lib.Schema.User.User.table).where(lib.eq(lib.Schema.User.User.table.api_key, apiKey))
+            api_key: table.api_key
+        }).from(table).where(lib.eq(table.api_key, apiKey))
 
         if (!existingUser || existingUser.length === 0) {
             return apiKey
@@ -70,15 +73,17 @@ export async function generateUniqueApiKey(): Promise<string> {
 
 /**
  * Create a new user with a hashed password
- * @param userData User data including plain text password
  * @returns The created user
+ * @param email
+ * @param first_name
+ * @param last_name
  */
 export async function createUser(
     email: string,
     first_name: string,
     last_name: string,
 ) {
-    const existingUser = await lib.db.select().from(lib.Schema.User.User.table).where(lib.eq(lib.Schema.User.User.table.email, email))
+    const existingUser = await lib.db.select().from(table).where(lib.eq(table.email, email))
 
     if (existingUser && existingUser.length > 0) {
         throw new Error("User already exists")
@@ -89,7 +94,7 @@ export async function createUser(
     const apiKey = await generateUniqueApiKey()
     const id = await generateUniqueUserId()
 
-    const insertedUser = await lib.db.insert(lib.Schema.User.User.table).values({
+    const insertedUser = await lib.db.insert(table).values({
         email: email,
         first_name: first_name,
         last_name: last_name,
@@ -102,7 +107,7 @@ export async function createUser(
         throw new Error("Failed to create user")
     }
 
-    return { user: insertedUser[0], password: password }
+    return {user: insertedUser[0], password: password}
 }
 
 export async function getUserId() {
@@ -120,7 +125,7 @@ export async function getUserId() {
 
 }
 
-export async function getUser(id?: string) {
+export async function getUser(id?: string): Promise<Existing | null> {
     const userId = id || await getUserId();
 
     if (!userId) {
@@ -128,8 +133,8 @@ export async function getUser(id?: string) {
     }
 
     const user = await lib.db.select()
-        .from(lib.Schema.User.User.table)
-        .where(lib.eq(lib.Schema.User.User.table.id, userId))
+        .from(table)
+        .where(lib.eq(table.id, userId))
         .limit(1)
 
     if (!user || user.length === 0) {
@@ -141,8 +146,8 @@ export async function getUser(id?: string) {
 
 export async function getUserByEmail(email: string) {
     const user = await lib.db.select()
-        .from(lib.Schema.User.User.table)
-        .where(lib.eq(lib.Schema.User.User.table.email, email))
+        .from(table)
+        .where(lib.eq(table.email, email))
         .limit(1)
 
     return user.length > 0 ? user[0] : null
@@ -150,8 +155,8 @@ export async function getUserByEmail(email: string) {
 
 export async function getUserByApiKey(apiKey: string) {
     const user = await lib.db.select()
-        .from(lib.Schema.User.User.table)
-        .where(lib.eq(lib.Schema.User.User.table.api_key, apiKey))
+        .from(table)
+        .where(lib.eq(table.api_key, apiKey))
         .limit(1)
 
     return user.length > 0 ? user[0] : null
@@ -165,16 +170,16 @@ export async function getUserPreferences(id?: string) {
     }
 
     const user = await lib.db.select({
-        has_jarvis_asked_dark_mode: lib.Schema.User.User.table.has_jarvis_asked_dark_mode,
-        dark_mode: lib.Schema.User.User.table.dark_mode_activated,
-        auto_dark_mode: lib.Schema.User.User.table.auto_dark_mode_enabled,
-        startHour: lib.Schema.User.User.table.dark_mode_start_hour,
-        endHour: lib.Schema.User.User.table.dark_mode_end_hour,
-        startMinute: lib.Schema.User.User.table.dark_mode_start_minute,
-        endMinute: lib.Schema.User.User.table.dark_mode_end_minute,
-        override: lib.Schema.User.User.table.dark_mode_override
-    }).from(lib.Schema.User.User.table)
-        .where(lib.eq(lib.Schema.User.User.table.id, userId))
+        has_jarvis_asked_dark_mode: table.has_jarvis_asked_dark_mode,
+        dark_mode: table.dark_mode_activated,
+        auto_dark_mode: table.auto_dark_mode_enabled,
+        startHour: table.dark_mode_start_hour,
+        endHour: table.dark_mode_end_hour,
+        startMinute: table.dark_mode_start_minute,
+        endMinute: table.dark_mode_end_minute,
+        override: table.dark_mode_override
+    }).from(table)
+        .where(lib.eq(table.id, userId))
         .limit(1)
 
     if (!user || user.length === 0) {
@@ -195,12 +200,12 @@ export async function getUserDraftNote(id?: string) {
     }
 
     const draftNote = await lib.db.select({
-        note_title: lib.Schema.User.User.table.note_draft_title,
-        note_content: lib.Schema.User.User.table.note_draft_content,
-        note_project_title: lib.Schema.User.User.table.note_draft_project_title,
+        note_title: table.note_draft_title,
+        note_content: table.note_draft_content,
+        note_project_title: table.note_draft_project_title,
     })
-        .from(lib.Schema.User.User.table)
-        .where(lib.eq(lib.Schema.User.User.table.id, userId))
+        .from(table)
+        .where(lib.eq(table.id, userId))
         .limit(1)
 
     if (!draftNote || draftNote.length === 0) {
@@ -211,21 +216,21 @@ export async function getUserDraftNote(id?: string) {
 }
 
 export async function getAllUsers() {
-    const users = await lib.db.select().from(lib.Schema.User.User.table)
+    const users = await lib.db.select().from(table)
 
     return users
 }
 
 export async function updateDarkModePreferences({
-    userId,
-    darkModeCookie
-}: {
+                                                    userId,
+                                                    darkModeCookie
+                                                }: {
     userId: string
     darkModeCookie: DarkModeCookie
 }) {
     try {
         await lib.db
-            .update(lib.Schema.User.User.table)
+            .update(table)
             .set({
                 has_jarvis_asked_dark_mode: darkModeCookie.has_jarvis_asked_dark_mode,
                 dark_mode_activated: darkModeCookie.dark_mode,
@@ -236,24 +241,24 @@ export async function updateDarkModePreferences({
                 dark_mode_end_minute: darkModeCookie.endMinute,
                 dark_mode_override: darkModeCookie.override
             })
-            .where(lib.eq(lib.Schema.User.User.table.id, userId))
+            .where(lib.eq(table.id, userId))
 
         // Revalidate the flags to update the theme
         lib.revalidateTag("flags")
 
-        return { success: true }
+        return {success: true}
     } catch (error) {
         console.error("Failed to update dark mode preferences:", error)
-        return { success: false, error: "Failed to update preferences" }
+        return {success: false, error: "Failed to update preferences"}
     }
 }
 
 export async function updateUserDraftNote({
-    userId,
-    note_title,
-    note_content,
-    note_project_title
-}: {
+                                              userId,
+                                              note_title,
+                                              note_content,
+                                              note_project_title
+                                          }: {
     userId: string
     note_title: string
     note_content: string
@@ -261,27 +266,27 @@ export async function updateUserDraftNote({
 }) {
     try {
         await lib.db
-            .update(lib.Schema.User.User.table)
+            .update(table)
             .set({
                 note_draft_title: note_title,
                 note_draft_content: note_content,
                 note_draft_project_title: note_project_title
             })
-            .where(lib.eq(lib.Schema.User.User.table.id, userId))
+            .where(lib.eq(table.id, userId))
 
-        return { success: true }
+        return {success: true}
     } catch (error) {
         console.error("Failed to update draft note:", error)
-        return { success: false, error: "Failed to update draft" }
+        return {success: false, error: "Failed to update draft"}
     }
 }
 
 export async function updateUserProfile({
-    userId,
-    first_name,
-    last_name,
-    email
-}: {
+                                            userId,
+                                            first_name,
+                                            last_name,
+                                            email
+                                        }: {
     userId: string
     first_name: string
     last_name: string
@@ -289,26 +294,26 @@ export async function updateUserProfile({
 }) {
     try {
         await lib.db
-            .update(lib.Schema.User.User.table)
+            .update(table)
             .set({
                 first_name: first_name,
                 last_name: last_name,
                 email: email,
                 updated_at: new Date(),
             })
-            .where(lib.eq(lib.Schema.User.User.table.id, userId))
+            .where(lib.eq(table.id, userId))
 
-        return { success: true }
+        return {success: true}
     } catch (error) {
         console.error("Failed to update user profile:", error)
-        return { success: false, error: "Failed to update profile" }
+        return {success: false, error: "Failed to update profile"}
     }
 }
 
 export async function updateUserPassword({
-    userId,
-    newPassword
-}: {
+                                             userId,
+                                             newPassword
+                                         }: {
     userId: string
     newPassword: string
 }) {
@@ -316,17 +321,17 @@ export async function updateUserPassword({
         const hashedPassword = await hashPassword(newPassword)
 
         await lib.db
-            .update(lib.Schema.User.User.table)
+            .update(table)
             .set({
                 password: hashedPassword,
                 updated_at: new Date(),
             })
-            .where(lib.eq(lib.Schema.User.User.table.id, userId))
+            .where(lib.eq(table.id, userId))
 
-        return { success: true }
+        return {success: true}
     } catch (error) {
         console.error("Failed to update user password:", error)
-        return { success: false, error: "Failed to update password" }
+        return {success: false, error: "Failed to update password"}
     }
 }
 
@@ -339,16 +344,16 @@ export async function updateUserPassword({
 export async function updateUserStripeCustomerId(userId: string, stripeCustomerId: string) {
     try {
         await lib.db
-            .update(lib.Schema.User.User.table)
+            .update(table)
             .set({
                 stripe_customer_id: stripeCustomerId,
                 updated_at: new Date()
             })
-            .where(lib.eq(lib.Schema.User.User.table.id, userId))
+            .where(lib.eq(table.id, userId))
 
         lib.revalidateTag(`user-${userId}`)
 
-        return { success: true }
+        return {success: true}
     } catch (error) {
         console.error("Error updating user Stripe customer ID:", error)
         return {

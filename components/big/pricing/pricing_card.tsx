@@ -5,7 +5,7 @@ import Tooltip from "../tooltip"
 import {formatPrice} from "@/lib/utils/payment"
 import {SubmitButton} from "./submit_button"
 import {checkoutAction} from '@/lib/services/payments/actions';
-import {Plan, getFeature, getEveryFeatures} from "@/app/(back-office)/my/settings/subscription/plans";
+import {getEveryFeatures, getFeature, Plan} from "@/app/(back-office)/my/settings/subscription/plans";
 import {Button} from '@/components/ui/button';
 import {SubscriptionActionButton} from './subscription_action_button';
 
@@ -103,8 +103,8 @@ export default function PricingCard(
                                             Current Plan
                                         </Button>
                                     ) : hasActiveSubscription ? (
-                                        <SubscriptionActionButton 
-                                            priceId={plan.price ? plan.price[recurrency].priceId : ""} 
+                                        <SubscriptionActionButton
+                                            priceId={plan.price ? plan.price[recurrency].priceId : ""}
                                             planName={plan.display_name}
                                             isFree={plan.price === undefined}
                                         />
@@ -112,7 +112,11 @@ export default function PricingCard(
                                         <form action={checkoutAction}>
                                             <input type="hidden" name="priceId"
                                                    value={plan.price ? plan.price[recurrency].priceId : ""}/>
-                                            <SubmitButton isPopular={isPopular} isFree={plan.price === undefined}/>
+                                            <SubmitButton
+                                                isPopular={isPopular}
+                                                isFree={plan.price === undefined}
+                                                isActive={active}
+                                            />
                                         </form>
                                     )
                                 }
