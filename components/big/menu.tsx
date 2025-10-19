@@ -117,7 +117,8 @@ export default function Menu() {
                                 toast.loading("Logging out...", {
                                     id: "logout"
                                 })
-                                runCommand(() => router.push("/api/auth/logout"))
+                                setOpen(false)
+                                window.location.href = "/api/auth/logout"
                             }}
                         >
                             Log out
