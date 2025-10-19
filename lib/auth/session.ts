@@ -113,6 +113,7 @@ export async function setSession(session?: SessionData) {
 			httpOnly: true,
 			secure: true,
 			sameSite: "lax",
+			path: "/",
 		})
 
 	return encryptedSession
@@ -121,7 +122,12 @@ export async function setSession(session?: SessionData) {
 export async function removeSession() {
 	"use server"
 	// Await the cookies() function before calling delete()
-	; (await cookies()).delete("session")
+	// Specify the path to ensure the cookie is properly deleted
+	const cookieStore = await cookies()
+	cookieStore.delete({
+		name: "session",
+		path: "/",
+	})
 }
 
 export async function getUser() {
