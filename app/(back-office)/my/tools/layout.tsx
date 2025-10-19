@@ -31,11 +31,14 @@ export default async function ToolsLayout({children}: { children: React.ReactNod
 
 
     return (
-        <SidebarProvider defaultOpen={false}>
-            <ToolsLayoutContent>
-                <SubscriptionWall minRequiredSubscription={"Basic"} userSubscription={subscriptionName as keyof typeof SubscriptionLevels} />
-                {children}
-            </ToolsLayoutContent>
-        </SidebarProvider>
+        <>
+            <SubscriptionWall minRequiredSubscription={"Basic"}
+                              userSubscription={subscriptionName as keyof typeof SubscriptionLevels}/>
+            <SidebarProvider defaultOpen={false}>
+                <ToolsLayoutContent>
+                    {children}
+                </ToolsLayoutContent>
+            </SidebarProvider>
+        </>
     )
 }

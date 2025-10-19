@@ -14,7 +14,7 @@ import Link from "next/link"
 import {CircleDollarSign, Palette, Shield, User} from "lucide-react"
 import {usePathname} from "next/navigation"
 
-const settingsItems = [
+export const settingsItems = [
     {
         name: "Profile",
         href: "/my/settings/profile",
