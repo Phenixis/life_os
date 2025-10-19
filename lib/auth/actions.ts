@@ -63,7 +63,7 @@ export async function signUp(prevState: ActionState, formData: FormData) {
 
 export async function login(prevState: ActionState, formData: FormData) {
     const result = await verifyCredentials(prevState, formData)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+
     if (formData.get("redirectTo")) {
         if (formData.get("redirectTo") === 'checkout') {
             const priceId = formData.get('priceId') as string;

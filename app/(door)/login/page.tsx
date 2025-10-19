@@ -28,7 +28,6 @@ import { login } from "@/lib/auth/actions"
 
 export default function Login() {
     const searchParams = useSearchParams()
-    const [redirectTo, setRedirectTo] = useState("/my")
     const [identifier, setIdentifier] = useState("")
     const [password, setPassword] = useState("")
     const [hiddenPassword, setHiddenPassword] = useState("")
@@ -51,11 +50,6 @@ export default function Login() {
     }, { error: "" })
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search)
-        const redirectParam = params.get("redirectTo")
-        if (redirectParam) {
-            setRedirectTo(redirectParam)
-        }
         toast.dismiss("logout")
     }, [])
 
@@ -110,7 +104,6 @@ export default function Login() {
                     <CardTitle>Hello</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <input type="text" name="redirectTo" className="hidden" value={redirectTo} readOnly />
                     {
                         Array.from(searchParams.entries()).map(([key, value]) => (
                             <input
