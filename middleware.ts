@@ -73,6 +73,7 @@ export async function middleware(request: NextRequest) {
 			httpOnly: true,
 			secure: true,
 			sameSite: "lax",
+			path: "/",
 		})
 
 		return response
