@@ -12,7 +12,7 @@ export function SubmitButton(
     }: {
         isPopular: boolean,
         isFree: boolean,
-        isActive: boolean
+        isActive?: boolean
     }
 ) {
     const {pending} = useFormStatus();
