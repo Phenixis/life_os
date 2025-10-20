@@ -1,6 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
 import {MeteoQueries} from "@/lib/db/queries";
-import {type Meteo} from "@/lib/db/schema";
 import dotenv from 'dotenv';
 import {verifyRequest} from "@/lib/auth/api";
 
@@ -45,16 +44,9 @@ export async function GET(request: NextRequest) {
             await MeteoQueries.updateMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
         }
 
-        return NextResponse.json({
-            user_id: verification.userId,
-            day: day,
-            temperature: data.daily[0].feels_like.day,
-            summary: data.daily[0].summary,
-            icon: data.daily[0].weather[0].icon,
-            updated_at: new Date(),
-            latitude: lat,
-            longitude: lon,
-        } as Meteo.Select);
+        // Fetch the updated/created meteo record to get the complete data with ID
+        const updatedMeteo = await MeteoQueries.getMeteoByDay(verification.userId, day);
+        return NextResponse.json(updatedMeteo[0]);
     } else {
         return NextResponse.json(savedMeteo[0]);
     }
