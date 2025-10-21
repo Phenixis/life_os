@@ -179,7 +179,7 @@ export default function TaskModal() {
             const urgency = calculateUrgency(dueDate)
             const score = importanceValue * urgency - durationValue
             const todoData = {
-                id: mode === "edit" ? id : -1,
+                id: optimisticId,
                 user_id: user?.id,
                 title: title,
                 importance: importanceValue,
@@ -376,6 +376,9 @@ export default function TaskModal() {
                 {revalidate: false},
             )
 
+            // Show success message immediately for better UX
+            toast.success(`Task ${mode === "edit" ? "updated" : "created"} successfully`)
+
             fetch("/api/task", {
                 method: mode === "edit" ? "PUT" : "POST",
                 headers: {
@@ -398,26 +401,59 @@ export default function TaskModal() {
                     }
                     return response.json()
                 })
-                .then(() => {
+                .then((responseData: { id: number }) => {
+                    // After successful API call, replace the optimistic task with real data
+                    if (mode === "create") {
+                        mutate(
+                            (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
+                            async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
+                                if (!Array.isArray(currentData)) return currentData
+                                
+                                // Replace the optimistic task (with optimisticId) with the real task data
+                                return currentData.map((item: Task.Task.TaskWithRelations) => {
+                                    if (item.id === optimisticId) {
+                                        // Replace with real data, keeping the same position
+                                        return {
+                                            ...item,
+                                            id: responseData.id,
+                                        }
+                                    }
+                                    return item
+                                })
+                            },
+                            {revalidate: false},
+                        )
+                    }
+                    
+                    // Invalidate all task-related cache keys to ensure calendar and other components refresh
+                    mutate((key) => {
+                        if (typeof key === "string") {
+                            return key.startsWith("/api/task") ||
+                                key.startsWith("/api/number-of-tasks") ||
+                                key === "/api/task/count" ||
+                                key.startsWith("/api/task/count?")
+                        }
+                        return false
+                    })
                 })
                 .catch((error) => {
                     console.error("Erreur lors de l'opération:", error)
+                    // On error, remove the optimistic update
+                    mutate(
+                        (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
+                        async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
+                            if (!Array.isArray(currentData)) return currentData
+                            
+                            // Remove the failed optimistic task
+                            return currentData.filter((item: Task.Task.TaskWithRelations) => item.id !== optimisticId)
+                        },
+                        {revalidate: false},
+                    )
+                    toast.error(`Failed to ${mode === "edit" ? "update" : "create"} task. Try again later.`)
                 })
 
             resetForm();
             isSubmittingRef.current = false
-            toast.success(`Task ${mode === "edit" ? "updated" : "created"} successfully`)
-
-            // Invalidate all task-related cache keys to ensure calendar and other components refresh
-            mutate((key) => {
-                if (typeof key === "string") {
-                    return key.startsWith("/api/task") ||
-                        key.startsWith("/api/number-of-tasks") ||
-                        key === "/api/task/count" ||
-                        key.startsWith("/api/task/count?")
-                }
-                return false
-            })
         } catch (error) {
             toast.error(`Failed to ${mode === "edit" ? "update" : "create"} task. Try again later.`)
             console.error("Erreur lors de la soumission:", error)
