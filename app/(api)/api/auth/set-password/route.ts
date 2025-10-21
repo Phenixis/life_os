@@ -8,11 +8,17 @@ import { validatePassword } from "@/lib/utils/password"
  */
 export async function POST(request: NextRequest) {
     try {
-        const { token, password, confirmPassword } = await request.json()
+        const { token, identifier, password, confirmPassword } = await request.json()
 
         if (!token || typeof token !== 'string') {
             return NextResponse.json({
                 error: "Token is required"
+            }, { status: 400 })
+        }
+
+        if (!identifier || typeof identifier !== 'string') {
+            return NextResponse.json({
+                error: "Identifier is required"
             }, { status: 400 })
         }
 
@@ -48,6 +54,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 error: validation.reason || "Invalid or expired token"
             }, { status: 400 })
+        }
+
+        // Verify that the provided identifier matches the user associated with the token
+        if (validation.request.user_id !== identifier.trim()) {
+            return NextResponse.json({
+                error: "Invalid identifier for this reset request"
+            }, { status: 403 })
         }
 
         // Get user

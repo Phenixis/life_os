@@ -13,6 +13,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import {
+    InputOTP,
+    InputOTPGroup,
+    InputOTPSlot,
+} from "@/components/ui/input-otp"
+import {
+    REGEXP_ONLY_DIGITS
+} from "input-otp"
 import { Loader, Eye, EyeOff, Check, X } from "lucide-react"
 import { toast } from "sonner"
 
@@ -27,6 +35,7 @@ export default function SetPassword() {
     const [userEmail, setUserEmail] = useState("")
     const [validationError, setValidationError] = useState("")
 
+    const [identifier, setIdentifier] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
@@ -87,6 +96,11 @@ export default function SetPassword() {
             return
         }
 
+        if (!identifier || identifier.trim().length !== 8) {
+            toast.error("Please enter your 8-digit identifier")
+            return
+        }
+
         if (password !== confirmPassword) {
             toast.error("Passwords do not match")
             return
@@ -107,6 +121,7 @@ export default function SetPassword() {
                 },
                 body: JSON.stringify({
                     token,
+                    identifier: identifier.trim(),
                     password,
                     confirmPassword
                 })
@@ -189,6 +204,31 @@ export default function SetPassword() {
                         )}
 
                         <div className="space-y-2">
+                            <Label required>Enter your identifier</Label>
+                            <InputOTP
+                                maxLength={8}
+                                value={identifier}
+                                onChange={(value) => setIdentifier(value)}
+                                pattern={REGEXP_ONLY_DIGITS}
+                                disabled={isSubmitting}
+                            >
+                                <InputOTPGroup>
+                                    <InputOTPSlot index={0} />
+                                    <InputOTPSlot index={1} />
+                                    <InputOTPSlot index={2} />
+                                    <InputOTPSlot index={3} />
+                                    <InputOTPSlot index={4} />
+                                    <InputOTPSlot index={5} />
+                                    <InputOTPSlot index={6} />
+                                    <InputOTPSlot index={7} />
+                                </InputOTPGroup>
+                            </InputOTP>
+                            <p className="text-xs text-muted-foreground">
+                                Enter your 8-digit user identifier for security verification
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
                             <Label htmlFor="password" required>New Password</Label>
                             <div className="relative">
                                 <Input
@@ -265,6 +305,8 @@ export default function SetPassword() {
                             type="submit"
                             disabled={
                                 isSubmitting ||
+                                !identifier ||
+                                identifier.length !== 8 ||
                                 !password ||
                                 !confirmPassword ||
                                 password !== confirmPassword ||
