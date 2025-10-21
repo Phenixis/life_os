@@ -66,6 +66,10 @@ export default function TaskModal() {
         if (task && task.project) {
             setProject({ title: task.project.title, id: task.project.id })
         }
+        if (task) {
+            setImportance(task.importance?.toString() || "0")
+            setDuration(task.duration?.toString() || "0")
+        }
     }, [task])
 
     const [toDoAfter, setToDoAfter] = useState<number>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].id : -1)
@@ -88,8 +92,8 @@ export default function TaskModal() {
     const closeDialogRef = useRef<() => void>(() => {
     })
     const titleRef = useRef<HTMLInputElement>(null)
-    const importanceRef = useRef<string>(task?.importance?.toString() || "0")
-    const durationRef = useRef<string>(task?.duration?.toString() || "0")
+    const [importance, setImportance] = useState<string>(task?.importance?.toString() || "0")
+    const [duration, setDuration] = useState<string>(task?.duration?.toString() || "0")
     const durationTriggerRef = useRef<HTMLButtonElement>(null)
 
     // Track if a submission is in progress (to prevent duplicates)
@@ -107,14 +111,10 @@ export default function TaskModal() {
         setToDoAfterDebounceValue("")
         setFormChanged(false)
         setShowAdvancedOptions(false)
+        setImportance("0")
+        setDuration("0")
         if (titleRef.current) {
             titleRef.current.value = ""
-        }
-        if (importanceRef.current) {
-            importanceRef.current = "0"
-        }
-        if (durationRef.current) {
-            durationRef.current = "0"
         }
     }, [task])
 
@@ -167,8 +167,8 @@ export default function TaskModal() {
 
         try {
             const title = titleRef.current?.value || ""
-            const importance = Number.parseInt(importanceRef.current || "0")
-            const duration = Number.parseInt(durationRef.current || "0")
+            const importanceValue = Number.parseInt(importance || "0")
+            const durationValue = Number.parseInt(duration || "0")
             const id = task?.id
 
             if (!title.trim()) {
@@ -177,14 +177,14 @@ export default function TaskModal() {
             }
 
             const urgency = calculateUrgency(dueDate)
-            const score = importance * urgency - duration
+            const score = importanceValue * urgency - durationValue
             const todoData = {
                 id: mode === "edit" ? id : -1,
                 user_id: user?.id,
                 title: title,
-                importance: importance,
+                importance: importanceValue,
                 urgency: urgency,
-                duration: duration,
+                duration: durationValue,
                 score: score,
                 due: dueDate,
                 project_id: project.id,
@@ -200,12 +200,12 @@ export default function TaskModal() {
                     updated_at: new Date(),
                 } as Project.Select,
                 importanceDetails: {
-                    level: importance,
-                    name: importanceData?.find((item) => item.level === importance)?.name || "",
+                    level: importanceValue,
+                    name: importanceData?.find((item) => item.level === importanceValue)?.name || "",
                 },
                 durationDetails: {
-                    level: duration,
-                    name: durationData?.find((item) => item.level === duration)?.name || "",
+                    level: durationValue,
+                    name: durationData?.find((item) => item.level === durationValue)?.name || "",
                 },
                 tasksToDoAfter: tasks?.filter((task) => task.id === toDoAfter).map((task) => ({
                     ...task
@@ -385,9 +385,9 @@ export default function TaskModal() {
                 body: JSON.stringify({
                     id: mode === "edit" ? id : undefined,
                     title,
-                    importance,
+                    importance: importanceValue,
                     dueDate: dueDate.toISOString(),
-                    duration,
+                    duration: durationValue,
                     project: project,
                     toDoAfterId: toDoAfter,
                 }),
@@ -529,9 +529,9 @@ export default function TaskModal() {
                                     <Label htmlFor="importance" required>Importance</Label>
                                     <Select
                                         name="importance"
-                                        defaultValue={task?.importance?.toString() || "0"}
+                                        value={importance}
                                         onValueChange={(value) => {
-                                            importanceRef.current = value
+                                            setImportance(value)
                                             setFormChanged(
                                                 (value !== task?.importance?.toString() && mode === "edit") || value !== "0"
                                             )
@@ -625,7 +625,7 @@ export default function TaskModal() {
                                         Duration
                                     </Label>
                                     {
-                                        durationRef.current === "3" && (
+                                        duration === "3" && (
                                             <Help className="ml-1" size="sm">
                                                 <p>It is not recommended to mark a task as longer than 60 minutes, consider
                                                     divide it into smaller tasks.</p>
@@ -634,9 +634,9 @@ export default function TaskModal() {
                                     }
                                     <Select
                                         name="duration"
-                                        defaultValue={task?.duration?.toString() || "0"}
+                                        value={duration}
                                         onValueChange={(value) => {
-                                            durationRef.current = value
+                                            setDuration(value)
                                             setFormChanged(
                                                 (value !== task?.duration?.toString() && mode === "edit") || value !== "0"
                                             )
