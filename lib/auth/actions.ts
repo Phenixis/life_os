@@ -7,8 +7,9 @@ import {db} from "@/lib/db/drizzle"
 import {eq} from "drizzle-orm"
 import {verifyPassword} from "@/lib/utils/password"
 import {createUser} from "@/lib/db/queries/user/user"
+import {createPasswordResetRequest} from "@/lib/db/queries/user/password-reset-request"
 import {User} from "@/lib/db/schema"
-import {sendWelcomeEmail} from "@/components/utils/send_email"
+import {sendPasswordSetupEmail} from "@/components/utils/send_email"
 import {updateDarkModeCookie} from "@/lib/cookies"
 import {DarkModeCookie} from "@/lib/flags"
 import {createCheckoutSession} from '../services/payments/stripe';
@@ -25,7 +26,7 @@ export async function signUp(prevState: ActionState, formData: FormData) {
         return {error: "Missing required fields"}
     }
 
-    let user: { user: User.User.Select, password: string }
+    let user: User.User.Select
 
     try {
         user = await createUser(email, firstName, lastName)
@@ -34,28 +35,36 @@ export async function signUp(prevState: ActionState, formData: FormData) {
         return {error: errorMessage}
     }
 
+    // Create a password reset request for initial password setup
+    let resetRequest
     try {
-        await sendWelcomeEmail(user.user, user.password)
+        resetRequest = await createPasswordResetRequest(user.id, true)
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+        return {error: `Failed to create password setup request: ${errorMessage}`}
+    }
+
+    // Send email with password setup link
+    try {
+        await sendPasswordSetupEmail(user, resetRequest.id)
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
         return {error: errorMessage}
     }
 
-    const userData = user.user
-
     await updateDarkModeCookie({
-        dark_mode: userData.dark_mode_activated,
-        auto_dark_mode: userData.auto_dark_mode_enabled,
-        startHour: userData.dark_mode_start_hour,
-        startMinute: userData.dark_mode_start_minute,
-        endHour: userData.dark_mode_end_hour,
-        endMinute: userData.dark_mode_end_minute,
-        override: userData.dark_mode_override,
-        has_jarvis_asked_dark_mode: userData.has_jarvis_asked_dark_mode,
+        dark_mode: user.dark_mode_activated,
+        auto_dark_mode: user.auto_dark_mode_enabled,
+        startHour: user.dark_mode_start_hour,
+        startMinute: user.dark_mode_start_minute,
+        endHour: user.dark_mode_end_hour,
+        endMinute: user.dark_mode_end_minute,
+        override: user.dark_mode_override,
+        has_jarvis_asked_dark_mode: user.has_jarvis_asked_dark_mode,
     } as DarkModeCookie)
 
     if (redirectTo && redirectTo === 'checkout' && priceId) {
-        await createCheckoutSession({priceId, userId: user.user.id.toString()});
+        await createCheckoutSession({priceId, userId: user.id.toString()});
     }
 
     return {success: true}

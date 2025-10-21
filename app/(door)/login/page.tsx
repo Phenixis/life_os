@@ -1,6 +1,7 @@
 "use client"
 
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { useActionState, useEffect, useState, useRef, startTransition } from "react"
 import type { ActionState } from "@/middleware"
 import { Loader } from "lucide-react"
@@ -31,7 +32,6 @@ export default function Login() {
     const searchParams = useSearchParams()
     const [identifier, setIdentifier] = useState("")
     const [password, setPassword] = useState("")
-    const [hiddenPassword, setHiddenPassword] = useState("")
 
     const formRef = useRef<HTMLFormElement>(null)
     const identifierRef = useRef<HTMLInputElement>(null)
@@ -84,16 +84,6 @@ export default function Login() {
         }
     }, [identifier])
 
-    useEffect(() => {
-        if (password.length === 8) {
-            startTransition(() => {
-                if (formRef.current) {
-                    formAction(new FormData(formRef.current))
-                }
-            })
-        }
-    }, [password, formAction])
-
     return (
         <form
             action={formAction}
@@ -138,36 +128,15 @@ export default function Login() {
                         </InputOTPGroup>
                     </InputOTP>
                     <Label required>Enter your password</Label>
-                    <InputOTP
+                    <Input
                         type="password"
-                        maxLength={8}
-                        value={hiddenPassword}
+                        value={password}
                         ref={passwordRef}
-                        onChange={(value) => {
-                            if (value.length > password.length) {
-                                const realValue = password + value.slice(-1)
-                                const regex = /^\d*$/
-                                if (regex.test(realValue)) {
-                                    setPassword(realValue)
-                                    setHiddenPassword("*".repeat(realValue.length))
-                                }
-                            } else {
-                                setPassword(password.slice(0, value.length))
-                                setHiddenPassword(value)
-                            }
-                        }}
-                    >
-                        <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                            <InputOTPSlot index={6} />
-                            <InputOTPSlot index={7} />
-                        </InputOTPGroup>
-                    </InputOTP>
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={pending}
+                        required
+                        className="text-center"
+                    />
                 </CardContent>
                 <CardFooter className={`${pending || state?.error ? "flex justify-between" : "flex justify-end"}`}>
                     {
