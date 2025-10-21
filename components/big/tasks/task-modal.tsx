@@ -64,7 +64,7 @@ export default function TaskModal() {
     // Keep project state in sync when the task prop arrives/changes (e.g., when opening in edit mode)
     useEffect(() => {
         if (task && task.project) {
-            setProject({ title: task.project.title, id: task.project.id })
+            setProject({title: task.project.title, id: task.project.id})
         }
         if (task) {
             setImportance(task.importance?.toString() || "0")
@@ -178,6 +178,9 @@ export default function TaskModal() {
 
             const urgency = calculateUrgency(dueDate)
             const score = importanceValue * urgency - durationValue
+            // Generate a unique temporary ID for optimistic updates (negative timestamp to avoid conflicts)
+            const optimisticId = mode === "edit" ? id : -Date.now()
+
             const todoData = {
                 id: optimisticId,
                 user_id: user?.id,
@@ -408,7 +411,7 @@ export default function TaskModal() {
                             (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
                             async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
                                 if (!Array.isArray(currentData)) return currentData
-                                
+
                                 // Replace the optimistic task (with optimisticId) with the real task data
                                 return currentData.map((item: Task.Task.TaskWithRelations) => {
                                     if (item.id === optimisticId) {
@@ -424,7 +427,7 @@ export default function TaskModal() {
                             {revalidate: false},
                         )
                     }
-                    
+
                     // Invalidate all task-related cache keys to ensure calendar and other components refresh
                     mutate((key) => {
                         if (typeof key === "string") {
@@ -443,7 +446,7 @@ export default function TaskModal() {
                         (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
                         async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
                             if (!Array.isArray(currentData)) return currentData
-                            
+
                             // Remove the failed optimistic task
                             return currentData.filter((item: Task.Task.TaskWithRelations) => item.id !== optimisticId)
                         },
