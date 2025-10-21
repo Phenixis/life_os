@@ -31,15 +31,25 @@ export async function createMeteo(userId: string, dayOrMeteo: string | lib.Schem
             ...newMeteo,
             user_id: userId,
         })
-        .returning({ day: lib.Schema.Meteo.table.day });
+        .returning({ id: lib.Schema.Meteo.table.id });
 
     // Revalidate all pages that might show meteo
     lib.revalidatePath("/my", 'layout');
 
-    return result[0].day;
+    return result[0].id;
 }
 
 // ## Read
+
+export async function getMeteoById(userId: string, id: number) {
+    return await lib.db
+        .select()
+        .from(lib.Schema.Meteo.table)
+        .where(lib.and(
+            lib.eq(lib.Schema.Meteo.table.id, id),
+            lib.eq(lib.Schema.Meteo.table.user_id, userId),
+        )) as lib.Schema.Meteo.Select[]
+}
 
 export async function getMeteoByDay(userId: string, day: string) {
     return await lib.db
@@ -90,19 +100,38 @@ export async function updateMeteo(userId: string, dayOrMeteo: string | lib.Schem
             lib.eq(lib.Schema.Meteo.table.day, typeof dayOrMeteo === "string" ? dayOrMeteo : dayOrMeteo.day),
             lib.eq(lib.Schema.Meteo.table.user_id, userId),
         ))
-        .returning({ day: lib.Schema.Meteo.table.day });
+        .returning({ id: lib.Schema.Meteo.table.id });
 
     // Revalidate all pages that might show meteo
     lib.revalidatePath("/my", 'layout');
 
-    if (!result) {
+    if (!result || result.length === 0) {
         return null;
     }
 
-    return result[0].day;
+    return result[0].id;
 }
 
 // ## Delete
+
+export async function deleteMeteoById(userId: string, id: number) {
+    const result = await lib.db.update(lib.Schema.Meteo.table)
+        .set({ deleted_at: lib.sql`CURRENT_TIMESTAMP` })
+        .where(lib.and(
+            lib.eq(lib.Schema.Meteo.table.id, id),
+            lib.eq(lib.Schema.Meteo.table.user_id, userId),
+        ))
+        .returning({ id: lib.Schema.Meteo.table.id })
+
+    // Revalidate all pages that might show meteo
+    lib.revalidatePath("/my", 'layout')
+
+    if (result && result.length > 0) {
+        return result[0].id
+    }
+
+    return null
+}
 
 export async function deleteMeteoByDay(userId: string, day: string) {
     const result = await lib.db.update(lib.Schema.Meteo.table)
@@ -111,13 +140,13 @@ export async function deleteMeteoByDay(userId: string, day: string) {
             lib.eq(lib.Schema.Meteo.table.day, day),
             lib.eq(lib.Schema.Meteo.table.user_id, userId),
         ))
-        .returning({ day: lib.Schema.Meteo.table.day })
+        .returning({ id: lib.Schema.Meteo.table.id })
 
     // Revalidate all pages that might show meteo
     lib.revalidatePath("/my", 'layout')
 
     if (result && result.length > 0) {
-        return result[0].day
+        return result[0].id
     }
 
     return null
