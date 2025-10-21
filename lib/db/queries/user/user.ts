@@ -72,7 +72,7 @@ export async function generateUniqueApiKey(): Promise<string> {
 }
 
 /**
- * Create a new user with a hashed password
+ * Create a new user with a placeholder password (will be set via reset request)
  * @returns The created user
  * @param email
  * @param first_name
@@ -89,8 +89,9 @@ export async function createUser(
         throw new Error("User already exists")
     }
 
-    const password = await generateUserPassword()
-    const hashedPassword = await hashPassword(password)
+    // Generate a temporary strong password that will be replaced when user sets their own
+    const tempPassword = await generateUserPassword()
+    const hashedPassword = await hashPassword(tempPassword)
     const apiKey = await generateUniqueApiKey()
     const id = await generateUniqueUserId()
 
@@ -107,7 +108,7 @@ export async function createUser(
         throw new Error("Failed to create user")
     }
 
-    return {user: insertedUser[0], password: password}
+    return insertedUser[0]
 }
 
 export async function getUserId() {

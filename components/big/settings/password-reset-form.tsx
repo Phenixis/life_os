@@ -84,7 +84,7 @@ export function PasswordResetForm({ user }: PasswordResetFormProps) {
                     Password Management
                 </CardTitle>
                 <CardDescription>
-                    Reset your password to generate new secure credentials. Your new password will be sent to your email address.
+                    Request a password reset link. You&apos;ll receive an email with instructions to set a new password.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -96,11 +96,11 @@ export function PasswordResetForm({ user }: PasswordResetFormProps) {
                                 Important Security Information
                             </h4>
                             <div className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
-                                <p>• A new 8-digit password will be automatically generated</p>
-                                <p>• Your new credentials will be sent to: <strong>{user.email}</strong></p>
-                                <p>• You will be automatically logged out after the reset</p>
-                                <p>• You will need to log in again with the new password</p>
-                                <p>• This action cannot be undone</p>
+                                <p>• A password reset link will be sent to: <strong>{user.email}</strong></p>
+                                <p>• The link will be valid for 24 hours</p>
+                                <p>• You will be automatically logged out after requesting the reset</p>
+                                <p>• You will need to follow the link to set a new password</p>
+                                <p>• Your new password must meet security requirements</p>
                             </div>
                         </div>
                     </div>
@@ -133,7 +133,7 @@ export function PasswordResetForm({ user }: PasswordResetFormProps) {
                                             </span>
                                         </span>
                                         <span className="block text-sm text-muted-foreground mt-2">
-                                            This will generate a new password and email it to you. You will be automatically logged out afterwards and need to log in with your new credentials.
+                                            This will send a password reset link to your email. You will be automatically logged out and need to follow the link to set a new password.
                                         </span>
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
@@ -157,10 +157,10 @@ export function PasswordResetForm({ user }: PasswordResetFormProps) {
                                 </AlertDialogTitle>
                                 <AlertDialogDescription className="space-y-2">
                                     <span className="block font-medium text-red-600 dark:text-red-400">
-                                        This is your final confirmation. Your password will be permanently changed.
+                                        This is your final confirmation. You will be logged out and need to reset your password.
                                     </span>
                                     <span className="block">
-                                        A new 8-digit password will be generated and sent to <strong>{user.email}</strong>. 
+                                        A password reset link will be sent to <strong>{user.email}</strong>. 
                                         Make sure you have access to this email address.
                                     </span>
                                     <span className="block text-sm text-muted-foreground">
