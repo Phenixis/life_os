@@ -1,31 +1,20 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { useActionState, useEffect, useState, useRef, startTransition } from "react"
-import type { ActionState } from "@/middleware"
-import { Loader } from "lucide-react"
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from "@/components/ui/input-otp"
-import {
-    REGEXP_ONLY_DIGITS
-} from "input-otp"
+import {Label} from "@/components/ui/label"
+import {Input} from "@/components/ui/input"
+import {startTransition, useActionState, useEffect, useRef, useState} from "react"
+import type {ActionState} from "@/middleware"
+import {Loader} from "lucide-react"
+import {Card, CardContent, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card"
+import {Button} from "@/components/ui/button"
+import {InputOTP, InputOTPGroup, InputOTPSlot,} from "@/components/ui/input-otp"
+import {REGEXP_ONLY_DIGITS} from "input-otp"
 import Link from "next/link"
-import { toast } from "sonner"
-import { ForgotPasswordForm } from "@/components/big/auth/forgot-password-form"
-import { useSearchParams } from "next/navigation"
-import { login } from "@/lib/auth/actions"
+import {toast} from "sonner"
+import {ForgotPasswordForm} from "@/components/big/auth/forgot-password-form"
+import {ForgotIdentifierForm} from "@/components/big/auth/forgot-identifier-form"
+import {useSearchParams} from "next/navigation"
+import {login} from "@/lib/auth/actions"
 
 export default function Login() {
     const searchParams = useSearchParams()
@@ -47,7 +36,7 @@ export default function Login() {
             return result
         }
         return null
-    }, { error: "" })
+    }, {error: ""})
 
     useEffect(() => {
         toast.dismiss("logout")
@@ -104,8 +93,8 @@ export default function Login() {
                             />
                         ))
                     }
-                    <input type="hidden" name="identifier" value={identifier} />
-                    <input type="hidden" name="password" value={password} />
+                    <input type="hidden" name="identifier" value={identifier}/>
+                    <input type="hidden" name="password" value={password}/>
                     <Label required>Enter your identifier</Label>
                     <InputOTP
                         maxLength={8}
@@ -116,14 +105,14 @@ export default function Login() {
                         autoFocus
                     >
                         <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                            <InputOTPSlot index={6} />
-                            <InputOTPSlot index={7} />
+                            <InputOTPSlot index={0}/>
+                            <InputOTPSlot index={1}/>
+                            <InputOTPSlot index={2}/>
+                            <InputOTPSlot index={3}/>
+                            <InputOTPSlot index={4}/>
+                            <InputOTPSlot index={5}/>
+                            <InputOTPSlot index={6}/>
+                            <InputOTPSlot index={7}/>
                         </InputOTPGroup>
                     </InputOTP>
                     <Label required>Enter your password</Label>
@@ -140,7 +129,7 @@ export default function Login() {
                 <CardFooter className={`${pending || state?.error ? "flex justify-between" : "flex justify-end"}`}>
                     {
                         pending ? (
-                            <Loader className="animate-spin size-4" />
+                            <Loader className="animate-spin size-4"/>
                         ) : (
                             state?.error && <p className="text-red-500">{state.error}</p>
                         )
@@ -151,11 +140,19 @@ export default function Login() {
                     >Login</Button>
                 </CardFooter>
             </Card>
-            <Link href={{
-                pathname: "/sign-up",
-                query: Object.fromEntries(searchParams.entries()),
-            }} className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline">Don&apos;t have an account?</Link>
-            <ForgotPasswordForm />
+            <div className="flex gap-4 items-center justify-center">
+                <ForgotIdentifierForm/>
+                <ForgotPasswordForm/>
+            </div>
+            <Link
+                href={{
+                    pathname: "/sign-up",
+                    query: Object.fromEntries(searchParams.entries()),
+                }}
+                className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline"
+            >
+                Don&apos;t have an account?
+            </Link>
         </form>
     )
 }
