@@ -95,8 +95,8 @@ export function ForgotPasswordForm() {
                         </div>
                         <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                             <p className="text-sm text-blue-700 dark:text-blue-300">
-                                A new 8-digit password will be generated and sent to your email address.
-                                You&apos;ll need to use this new password to log in.
+                                You will receive an email with a secure link to reset your password.
+                                The link will be valid for 24 hours.
                             </p>
                         </div>
                     </div>

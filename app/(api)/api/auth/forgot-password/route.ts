@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserByEmail, generateUserPassword, updateUserPassword } from "@/lib/db/queries/user/user"
+import { getUserByEmail } from "@/lib/db/queries/user/user"
+import { createPasswordResetRequest, invalidateUserPasswordResetRequests } from "@/lib/db/queries/user/password-reset-request"
 import { sendPasswordResetEmail } from "@/components/utils/send_email"
 
 /**
- * Forgot password - generates new password and sends email notification
+ * Forgot password - creates a password reset request and sends email with reset link
  * Accepts only email as identifier
  */
 export async function POST(request: NextRequest) {
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
 
         if (!identifier || typeof identifier !== 'string') {
             return NextResponse.json({
-                error: "Identifier is required"
+                error: "Email is required"
             }, { status: 400 })
         }
 
@@ -33,36 +34,33 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // Generate new password
-        const newPassword = await generateUserPassword()
+        // Invalidate any existing pending reset requests for this user
+        await invalidateUserPasswordResetRequests(user.id)
 
-        // Update user password in database
-        const updateResult = await updateUserPassword({
-            userId: user.id,
-            newPassword: newPassword
-        })
-
-        if (!updateResult.success) {
-            console.error("Failed to update password:", updateResult.error)
+        // Create new password reset request
+        let resetRequest
+        try {
+            resetRequest = await createPasswordResetRequest(user.id, false)
+        } catch (error) {
+            console.error("Failed to create password reset request:", error)
             return NextResponse.json({
-                error: "Failed to reset password. Please try again."
+                error: "Failed to create password reset request. Please try again."
             }, { status: 500 })
         }
 
-        // Send email notification with new password
+        // Send email notification with reset link
         try {
-            await sendPasswordResetEmail(user, newPassword)
+            await sendPasswordResetEmail(user, resetRequest.id)
         } catch (emailError) {
             console.error("Failed to send password reset email:", emailError)
-            // Password was updated successfully, but email failed
             return NextResponse.json({
-                error: "Password was reset successfully, but failed to send email notification. Please contact support to get your new password."
-            }, { status: 207 }) // 207 Multi-Status - partial success
+                error: "Failed to send password reset email. Please try again."
+            }, { status: 500 })
         }
 
         return NextResponse.json({
             success: true,
-            message: "If the email or identifier exists in our system, you will receive a password reset email shortly."
+            message: "If the email exists in our system, you will receive a password reset email shortly."
         })
 
     } catch (error) {

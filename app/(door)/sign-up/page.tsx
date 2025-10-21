@@ -153,7 +153,7 @@ export default function SignUp() {
                         </DialogHeader>
                         <p>Your account has been created !</p>
                         <DialogDescription>
-                            You should have received an email with your credentials. These credentials are unique and this is the only time you will see them, please save them in a secure location.
+                            You should have received an email with a link to set up your password. Please check your inbox and follow the instructions to complete your account setup.
                         </DialogDescription>
                         <DialogFooter>
                             <Button onClick={() => {
