@@ -324,3 +324,89 @@ export async function sendPasswordResetEmail(user: User.User.Select, newPassword
 
     await sendEmail(user.email, "Password Reset - New Credentials", emailContent);
 }
+
+export async function sendIdentifierEmail(user: User.User.Select) {
+    const emailContent = `
+            <html>
+            <head>
+            <style>
+            body {
+                background-color: #f3f4f6;
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+            main {
+                max-width: 768px;
+                width: 100%;
+                margin: 20px auto;
+                padding: 20px;
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #000000;
+                margin-bottom: 16px;
+                text-align: center;
+            }
+            h2 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #374151;
+                margin-top: 16px;
+            }
+            .info-box {
+                background-color: #dbeafe;
+                border: 1px solid #3b82f6;
+                border-radius: 8px;
+                padding: 16px;
+                margin: 16px 0;
+            }
+            .info-box h3 {
+                color: #1e40af;
+                margin-top: 0;
+                font-size: 1.125rem;
+            }
+            .info-box p {
+                color: #1e40af;
+            }
+            @media (max-width: 600px) {
+                main {
+                    padding: 10px;
+                }
+                h1 {
+                    font-size: 1.25rem;
+                }
+                h2 {
+                    font-size: 1rem;
+                }
+            }
+            </style>
+            </head>
+            <body>
+            <main>
+            <h1>Your Identifier</h1>
+            <h2>Identifier Recovery Request</h2>
+            <p>Hi ${user.first_name},</p>
+            <p>You recently requested your identifier. Here it is:</p>
+            
+            <div class="info-box">
+                <h3>🔑 Your Identifier</h3>
+                <p><strong>Identifier:</strong> ${user.id}</p>
+                <p>Use this identifier to log in to your account.</p>
+            </div>
+            
+            <p>You can log in to your account <a href="${process.env.NEXT_PUBLIC_APP_URL}/login">here</a></p>
+            <p>If you forgot your password, you can reset it from the login page.</p>
+            <p>If you did not request this information, please contact us immediately at <a href="mailto:max@maximeduhamel.com">max@maximeduhamel.com</a></p>
+            <p>Best regards,</p>
+            <p>Maxime Duhamel</p>
+            </main>
+            </body>
+            </html>
+        `;
+
+    await sendEmail(user.email, "Your Account Identifier", emailContent);
+}

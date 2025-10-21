@@ -23,6 +23,7 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 import { ForgotPasswordForm } from "@/components/big/auth/forgot-password-form"
+import { ForgotIdentifierForm } from "@/components/big/auth/forgot-identifier-form"
 import { useSearchParams } from "next/navigation"
 import { login } from "@/lib/auth/actions"
 
@@ -186,7 +187,10 @@ export default function Login() {
                 pathname: "/sign-up",
                 query: Object.fromEntries(searchParams.entries()),
             }} className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline">Don&apos;t have an account?</Link>
-            <ForgotPasswordForm />
+            <div className="flex gap-4 items-center justify-center">
+                <ForgotIdentifierForm />
+                <ForgotPasswordForm />
+            </div>
         </form>
     )
 }
