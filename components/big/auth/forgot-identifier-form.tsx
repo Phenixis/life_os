@@ -69,7 +69,7 @@ export function ForgotIdentifierForm() {
             <DialogTrigger className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline cursor-pointer">
                 Forgot identifier?
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" maxHeight={"max-h-76"}>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Mail className="size-5" />
