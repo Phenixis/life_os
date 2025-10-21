@@ -598,7 +598,7 @@ export default function TaskDisplay(
             )}
             {/* Delete Task Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" maxHeight={"max-h-54"}>
                     <DialogHeader>
                         <DialogTitle>Delete Task</DialogTitle>
                         <DialogDescription>

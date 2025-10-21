@@ -11,15 +11,17 @@ import {useTasks} from "@/hooks/use-tasks"
 import TaskDisplay from "@/components/big/tasks/task-display"
 import DailyMoodModal from "@/components/big/dailyMood/dailyMood-modal"
 
-export default function Calendar({
-                                     className,
-                                     showNumberOfTasks = true,
-                                     showDailyMood = true,
-                                 }: {
-    className: string,
-    showNumberOfTasks?: boolean
-    showDailyMood?: boolean
-}) {
+export default function Calendar(
+    {
+        className,
+        showNumberOfTasks = true,
+        showDailyMood = true,
+    }: {
+        className: string,
+        showNumberOfTasks?: boolean
+        showDailyMood?: boolean
+    }
+) {
     const searchParams = useSearchParams()
     const now = new Date()
     const [date, setDate] = useState<Date | undefined>(new Date())
@@ -28,10 +30,10 @@ export default function Calendar({
     // Only fetch data when showNumberOfTasks is true
     const {data: numberOfTasks, isLoading} = useNumberOfTasks({
         projects: searchParams.get(TASK_PARAMS.PROJECTS)
-            ? searchParams.get(TASK_PARAMS.PROJECTS)!.split(",").map(title => ({ title, id: -1 }))
+            ? searchParams.get(TASK_PARAMS.PROJECTS)!.split(",").map(title => ({title, id: -1}))
             : undefined,
         excludedProjects: searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)
-            ? searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)!.split(",").map(title => ({ title, id: -1 }))
+            ? searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)!.split(",").map(title => ({title, id: -1}))
             : undefined,
         dueAfter: month ? new Date(month.getFullYear(), month.getMonth(), 0) : undefined,
         dueBefore: month ? new Date(month.getFullYear(), month.getMonth() + 1, 0) : undefined,
@@ -78,7 +80,7 @@ export default function Calendar({
     return (
         <div
             className={cn(
-                "flex flex-row md:flex-col justify-start items-start md:items-center border-l border-gray-100 dark:border-gray-800 md:h-screen md:max-w-[300px] md:p-2",
+                "flex flex-row md:flex-col justify-start items-start md:items-center border-l border-gray-100 dark:border-gray-800 md:w-full md:h-screen md:max-w-[300px] md:p-2",
                 className,
             )}
         >

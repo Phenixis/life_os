@@ -208,7 +208,7 @@ export async function PATCH(request: NextRequest) {
 
         if (task) {
             // Si le task a une relation toDoAfter, on la supprime
-            const existingToDoAfterRelations = await TaskQueries.Task.getTasksToDoAfter(Number(taskId))
+            const existingToDoAfterRelations = await TaskQueries.Task.getTasksToDoAfter(typeof taskId === "number" ? taskId : taskId.done_task_id)
 
             const filteredToDoAfterRelations = existingToDoAfterRelations.filter(
                 (relation) => relation.deleted_at === null
@@ -220,7 +220,7 @@ export async function PATCH(request: NextRequest) {
                 }
             }
 
-            const existingToDoBeforeRelations = await TaskQueries.Task.getTasksToDoBefore(Number(taskId))
+            const existingToDoBeforeRelations = await TaskQueries.Task.getTasksToDoBefore(typeof taskId === "number" ? taskId : taskId.done_task_id)
 
             const filteredToDoBeforeRelations = existingToDoBeforeRelations.filter(
                 (relation) => relation.deleted_at === null
@@ -233,7 +233,7 @@ export async function PATCH(request: NextRequest) {
             }
         }
 
-        return NextResponse.json({id: taskId})
+        return NextResponse.json({id: typeof taskId === "number" ? taskId : taskId.done_task_id})
     } catch (error) {
         console.error("Error toggling task completion:", error)
         return NextResponse.json({error: "Failed to update task status"}, {status: 500})

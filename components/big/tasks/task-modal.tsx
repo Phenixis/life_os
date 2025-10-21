@@ -10,6 +10,7 @@ import type {Project, Task} from "@/lib/db/schema"
 import {ChevronDown, CircleHelp, Minus, Plus} from "lucide-react"
 import {useSWRConfig} from "swr"
 import {Calendar, TaskCount} from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {calculateUrgency} from "@/lib/utils/task"
 import {format} from "date-fns"
 import {useDebouncedCallback} from "use-debounce"
@@ -51,7 +52,6 @@ export default function TaskModal() {
         return initialDate
     })
     const [showCalendar, setShowCalendar] = useState(false)
-    const calendarRef = useRef<HTMLDivElement>(null)
 
     const [project, setProject] = useState<simplifiedProject>(task && task.project ? {
         title: task.project.title,
@@ -134,21 +134,6 @@ export default function TaskModal() {
         }
     }, [isOpen])
 
-    // Close calendar when clicking outside
-    useEffect(() => {
-        if (!showCalendar) return
-
-        const handleClickOutside = (event: MouseEvent) => {
-            if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
-                setShowCalendar(false)
-            }
-        }
-
-        document.addEventListener("mousedown", handleClickOutside)
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside)
-        }
-    }, [showCalendar])
 
     // Reset form state when dialog opens
     useEffect(() => {
@@ -229,7 +214,6 @@ export default function TaskModal() {
                     if (!Array.isArray(currentData)) return currentData
 
                     if (mode === "create") {
-
                         const updatedData: TaskCount[] = currentData.map((item: TaskCount) => {
                             if (new Date(item.due).toDateString() === new Date(todoData.due).toDateString()) {
                                 return {
@@ -356,7 +340,7 @@ export default function TaskModal() {
                     })
 
                     const orderByFromSearchParams = savedFilters?.orderBy
-                    const orderingDirectionFromSearchParams = savedFilters?.orderingDirection ? 1 : -1
+                    const orderingDirectionFromSearchParams = savedFilters?.orderingDirection === "desc" ? -1 : 1
                     const sortedData: Task.Task.TaskWithRelations[] = filteredData.sort(
                         (a: Task.Task.TaskWithRelations, b: Task.Task.TaskWithRelations) => {
                             if (orderByFromSearchParams) {
@@ -594,9 +578,9 @@ export default function TaskModal() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="relative">
+                                <div>
                                     <Label htmlFor="dueDate" required>Due date</Label>
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-1 items-center">
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -617,14 +601,31 @@ export default function TaskModal() {
                                         >
                                             <Minus/>
                                         </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="w-full"
-                                            onClick={() => setShowCalendar(!showCalendar)}
-                                        >
-                                            {format(dueDate, "dd/MM/yyyy")}
-                                        </Button>
+                                        
+                                        <Popover open={showCalendar} onOpenChange={setShowCalendar}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="w-full"
+                                                >
+                                                    {format(dueDate, "dd/MM/yyyy")}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-3" align="start" side="bottom">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={dueDate}
+                                                    onSelect={handleDateChange}
+                                                    disabled={(date) => {
+                                                        const today = new Date()
+                                                        today.setHours(0, 0, 0, 0)
+                                                        return date < today
+                                                    }}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -640,24 +641,6 @@ export default function TaskModal() {
                                             <Plus/>
                                         </Button>
                                     </div>
-
-                                    {showCalendar && (
-                                        <div
-                                            ref={calendarRef}
-                                            className="absolute z-50 mt-1 bg-popover p-3 rounded-md shadow-md border border-border"
-                                        >
-                                            <Calendar
-                                                mode="single"
-                                                selected={dueDate}
-                                                onSelect={handleDateChange}
-                                                disabled={(date) => {
-                                                    const today = new Date()
-                                                    today.setHours(0, 0, 0, 0)
-                                                    return date < today
-                                                }}
-                                            />
-                                        </div>
-                                    )}
                                 </div>
                                 <div className="w-full">
                                     <Label htmlFor="duration" required>
