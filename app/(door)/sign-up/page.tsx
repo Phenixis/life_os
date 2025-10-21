@@ -93,6 +93,7 @@ export default function SignUp() {
                                 name="first_name"
                                 className="text-center"
                                 ref={firstNameRef}
+                                autoFocus
                                 onChange={verifyFormFilled}
                             />
                         </div>
@@ -120,12 +121,12 @@ export default function SignUp() {
                         }}
                     />
                 </CardContent>
-                <CardFooter className={`${pending ? "flex justify-between" : "flex justify-end"}`}>
+                <CardFooter className={`flex ${pending || state?.error ? "justify-between" : "justify-end"} items-end`}>
                     {
                         pending ? (
                             <Loader className="animate-spin size-4" />
                         ) : (
-                            state?.error && <p className="text-red-500">{state.error}</p>
+                            state?.error && <p className="text-red-500 max-w-64">{state.error}</p>
                         )
                     }
                     <Button
@@ -147,7 +148,7 @@ export default function SignUp() {
 
             {showDialog && (
                 <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                    <DialogContent>
+                    <DialogContent maxHeight="max-h-64">
                         <DialogHeader>
                             <DialogTitle>Account created</DialogTitle>
                         </DialogHeader>

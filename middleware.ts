@@ -9,7 +9,7 @@ export type ActionState = {
 }
 
 const protectedRoutes = ["/my"]
-const unaccessibleWhenLoggedIn = ["/login"]
+const unaccessibleWhenLoggedIn = ["/login", "/sign-up"]
 const apiRoutes = ["/api"]
 const apiRoutesWithoutAPIKey = ["/api/auth", "/api/stripe/checkout"]
 

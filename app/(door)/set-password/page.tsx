@@ -1,28 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from "@/components/ui/input-otp"
-import {
-    REGEXP_ONLY_DIGITS
-} from "input-otp"
-import { Loader, Eye, EyeOff, Check, X } from "lucide-react"
-import { toast } from "sonner"
+import {useEffect, useState} from "react"
+import {useRouter, useSearchParams} from "next/navigation"
+import {Button} from "@/components/ui/button"
+import {Input} from "@/components/ui/input"
+import {Label} from "@/components/ui/label"
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card"
+import {InputOTP, InputOTPGroup, InputOTPSlot,} from "@/components/ui/input-otp"
+import {REGEXP_ONLY_DIGITS} from "input-otp"
+import {Check, Eye, EyeOff, Loader, X} from "lucide-react"
+import {toast} from "sonner"
 
 export default function SetPassword() {
     const searchParams = useSearchParams()
@@ -33,7 +20,6 @@ export default function SetPassword() {
     const [isValid, setIsValid] = useState(false)
     const [isInitialSetup, setIsInitialSetup] = useState(false)
     const [userEmail, setUserEmail] = useState("")
-    const [validationError, setValidationError] = useState("")
 
     const [identifier, setIdentifier] = useState("")
     const [password, setPassword] = useState("")
@@ -53,7 +39,6 @@ export default function SetPassword() {
     useEffect(() => {
         if (!token) {
             setIsValidating(false)
-            setValidationError("No token provided")
             return
         }
 
@@ -66,14 +51,11 @@ export default function SetPassword() {
                     setIsValid(true)
                     setIsInitialSetup(data.isInitialSetup)
                     setUserEmail(data.userEmail || "")
-                } else {
-                    setValidationError(data.reason || "Invalid or expired token")
                 }
             })
             .catch(error => {
                 console.error("Error validating token:", error)
                 setIsValidating(false)
-                setValidationError("Failed to validate token")
             })
     }, [token])
 
@@ -134,7 +116,7 @@ export default function SetPassword() {
             }
 
             toast.success(data.message)
-            
+
             // Redirect to login after a short delay
             setTimeout(() => {
                 router.push("/login")
@@ -152,8 +134,8 @@ export default function SetPassword() {
         return (
             <div className="w-full min-h-screen flex items-center justify-center">
                 <Card className="w-full max-w-md">
-                    <CardContent className="pt-6 flex flex-col items-center gap-4">
-                        <Loader className="animate-spin size-8" />
+                    <CardContent className="pt-2 md:pt-4 xl:pt-6 flex flex-col items-center gap-4">
+                        <Loader className="animate-spin size-8"/>
                         <p className="text-sm text-muted-foreground">Validating your request...</p>
                     </CardContent>
                 </Card>
@@ -166,8 +148,8 @@ export default function SetPassword() {
             <div className="w-full min-h-screen flex items-center justify-center">
                 <Card className="w-full max-w-md">
                     <CardHeader>
-                        <CardTitle className="text-red-500">Invalid Request</CardTitle>
-                        <CardDescription>{validationError}</CardDescription>
+                        <CardTitle className="text-red-500 text-center">Invalid Request</CardTitle>
+                        {/*<CardDescription>{validationError}</CardDescription>*/}
                     </CardHeader>
                     <CardFooter>
                         <Button onClick={() => router.push("/login")} variant="outline" className="w-full">
@@ -187,7 +169,7 @@ export default function SetPassword() {
                         {isInitialSetup ? "Welcome! Set Your Password" : "Reset Your Password"}
                     </CardTitle>
                     <CardDescription>
-                        {isInitialSetup 
+                        {isInitialSetup
                             ? "Create a secure password to complete your account setup"
                             : "Create a new password for your account"
                         }
@@ -196,7 +178,8 @@ export default function SetPassword() {
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4">
                         {userEmail && (
-                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                            <div
+                                className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                                 <p className="text-sm text-blue-700 dark:text-blue-300">
                                     Setting password for: <strong>{userEmail}</strong>
                                 </p>
@@ -205,24 +188,27 @@ export default function SetPassword() {
 
                         <div className="space-y-2">
                             <Label required>Enter your identifier</Label>
-                            <InputOTP
-                                maxLength={8}
-                                value={identifier}
-                                onChange={(value) => setIdentifier(value)}
-                                pattern={REGEXP_ONLY_DIGITS}
-                                disabled={isSubmitting}
-                            >
-                                <InputOTPGroup>
-                                    <InputOTPSlot index={0} />
-                                    <InputOTPSlot index={1} />
-                                    <InputOTPSlot index={2} />
-                                    <InputOTPSlot index={3} />
-                                    <InputOTPSlot index={4} />
-                                    <InputOTPSlot index={5} />
-                                    <InputOTPSlot index={6} />
-                                    <InputOTPSlot index={7} />
-                                </InputOTPGroup>
-                            </InputOTP>
+                            <div className={"w-fit mx-auto"}>
+                                <InputOTP
+                                    maxLength={8}
+                                    value={identifier}
+                                    onChange={(value) => setIdentifier(value)}
+                                    pattern={REGEXP_ONLY_DIGITS}
+                                    disabled={isSubmitting}
+                                    className=""
+                                >
+                                    <InputOTPGroup>
+                                        <InputOTPSlot index={0}/>
+                                        <InputOTPSlot index={1}/>
+                                        <InputOTPSlot index={2}/>
+                                        <InputOTPSlot index={3}/>
+                                        <InputOTPSlot index={4}/>
+                                        <InputOTPSlot index={5}/>
+                                        <InputOTPSlot index={6}/>
+                                        <InputOTPSlot index={7}/>
+                                    </InputOTPGroup>
+                                </InputOTP>
+                            </div>
                             <p className="text-xs text-muted-foreground">
                                 Enter your 8-digit user identifier for security verification
                             </p>
@@ -244,7 +230,7 @@ export default function SetPassword() {
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
-                                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                                    {showPassword ? <EyeOff className="size-4"/> : <Eye className="size-4"/>}
                                 </button>
                             </div>
                         </div>
@@ -265,7 +251,7 @@ export default function SetPassword() {
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
-                                    {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                                    {showConfirmPassword ? <EyeOff className="size-4"/> : <Eye className="size-4"/>}
                                 </button>
                             </div>
                         </div>
@@ -316,7 +302,7 @@ export default function SetPassword() {
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader className="size-4 mr-2 animate-spin" />
+                                    <Loader className="size-4 mr-2 animate-spin"/>
                                     Setting Password...
                                 </>
                             ) : (
@@ -330,13 +316,13 @@ export default function SetPassword() {
     )
 }
 
-function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
+function PasswordRequirement({met, text}: { met: boolean; text: string }) {
     return (
         <div className="flex items-center gap-2 text-sm">
             {met ? (
-                <Check className="size-4 text-green-500 flex-shrink-0" />
+                <Check className="size-4 text-green-500 flex-shrink-0"/>
             ) : (
-                <X className="size-4 text-gray-400 flex-shrink-0" />
+                <X className="size-4 text-gray-400 flex-shrink-0"/>
             )}
             <span className={met ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}>
                 {text}

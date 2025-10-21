@@ -69,7 +69,7 @@ export function ForgotPasswordForm() {
             <DialogTrigger className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline cursor-pointer">
                 Forgot password?
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" maxHeight="max-h-96">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Mail className="size-5" />
@@ -110,7 +110,7 @@ export function ForgotPasswordForm() {
                             <ArrowLeft className="size-4 mr-2" />
                             Back to Login
                         </Button>
-                        <Button type="submit" disabled={isLoading || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier) === false}>
+                        <Button type="submit" disabled={isLoading || !(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier))}>
                             {isLoading ? (
                                 <>
                                     <Loader className="size-4 mr-2 animate-spin" />
