@@ -405,7 +405,18 @@ export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: 
     return getTasks(userId, orderBy, orderingDirection, -1, undefined, undefined, threeDaysFromNow, undefined, false);
 }
 
-export async function getDeletedTasks(userId: string, orderBy: keyof Existing = "deleted_at", orderingDirection: "asc" | "desc" = "desc", limit = 50) {
+export async function getDeletedTasks(userId: string, orderBy: keyof Existing = "deleted_at", orderingDirection: "asc" | "desc" = "desc", limit = 50, page = 1) {
+    // Get total count
+    const [{ count }] = await lib.db
+        .select({ count: lib.sql<number>`count(*)` })
+        .from(table)
+        .where(
+            lib.and(
+                lib.eq(table.user_id, userId),
+                lib.isNotNull(table.deleted_at)
+            )
+        )
+
     const tasks = await lib.db
         .select({
             id: table.id,
@@ -453,9 +464,10 @@ export async function getDeletedTasks(userId: string, orderBy: keyof Existing = 
         .orderBy(
             orderingDirection === "asc" ? lib.asc(table[orderBy]) : lib.desc(table[orderBy])
         )
+        .offset((page - 1) * limit)
         .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit)
 
-    return tasks.map(task => ({
+    const mapped = tasks.map(task => ({
         ...task,
         tasksToDoAfter: null,
         tasksToDoBefore: null,
@@ -463,6 +475,14 @@ export async function getDeletedTasks(userId: string, orderBy: keyof Existing = 
         durationDetails: task.durationDetails!,
         recursive: false as const
     })) as lib.Schema.Task.Task.TaskWithNonRecursiveRelations[]
+
+    return {
+        tasks: mapped,
+        totalCount: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        limit,
+    }
 }
 
 export async function getTasksCompletedTheDayBefore(userId: string, orderBy: keyof Existing = "completed_at", orderingDirection: "asc" | "desc" = "asc") {

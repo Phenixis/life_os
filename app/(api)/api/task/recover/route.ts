@@ -36,9 +36,11 @@ export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams
         const limitParam = searchParams.get("limit")
+        const pageParam = searchParams.get("page")
         const limit = limitParam ? Number.parseInt(limitParam) : 50
+        const page = pageParam ? Number.parseInt(pageParam) : 1
 
-        const tasks = await TaskQueries.Task.getDeletedTasks(verification.userId, "deleted_at", "desc", limit)
+        const tasks = await TaskQueries.Task.getDeletedTasks(verification.userId, "deleted_at", "desc", limit, page)
 
         return NextResponse.json(tasks)
     } catch (error) {
