@@ -405,6 +405,66 @@ export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: 
     return getTasks(userId, orderBy, orderingDirection, -1, undefined, undefined, threeDaysFromNow, undefined, false);
 }
 
+export async function getDeletedTasks(userId: string, orderBy: keyof Existing = "deleted_at", orderingDirection: "asc" | "desc" = "desc", limit = 50) {
+    const tasks = await lib.db
+        .select({
+            id: table.id,
+            title: table.title,
+            importance: table.importance,
+            urgency: table.urgency,
+            duration: table.duration,
+            due: table.due,
+            score: table.score,
+            completed_at: table.completed_at,
+            created_at: table.created_at,
+            updated_at: table.updated_at,
+            deleted_at: table.deleted_at,
+            project_id: table.project_id,
+            user_id: table.user_id,
+            project: {
+                id: lib.Schema.Project.table.id,
+                title: lib.Schema.Project.table.title,
+                description: lib.Schema.Project.table.description,
+                completed: lib.Schema.Project.table.completed,
+                created_at: lib.Schema.Project.table.created_at,
+                updated_at: lib.Schema.Project.table.updated_at,
+                deleted_at: lib.Schema.Project.table.deleted_at,
+                user_id: lib.Schema.Project.table.user_id,
+            },
+            importanceDetails: {
+                level: lib.Schema.Task.Importance.table.level,
+                name: lib.Schema.Task.Importance.table.name,
+            },
+            durationDetails: {
+                level: lib.Schema.Task.Duration.table.level,
+                name: lib.Schema.Task.Duration.table.name,
+            },
+        })
+        .from(table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
+        .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
+        .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
+        .where(
+            lib.and(
+                lib.eq(table.user_id, userId),
+                lib.isNotNull(table.deleted_at)
+            )
+        )
+        .orderBy(
+            orderingDirection === "asc" ? lib.asc(table[orderBy]) : lib.desc(table[orderBy])
+        )
+        .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit)
+
+    return tasks.map(task => ({
+        ...task,
+        tasksToDoAfter: null,
+        tasksToDoBefore: null,
+        importanceDetails: task.importanceDetails!,
+        durationDetails: task.durationDetails!,
+        recursive: false as const
+    })) as lib.Schema.Task.Task.TaskWithNonRecursiveRelations[]
+}
+
 export async function getTasksCompletedTheDayBefore(userId: string, orderBy: keyof Existing = "completed_at", orderingDirection: "asc" | "desc" = "asc") {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -544,6 +604,25 @@ export async function deleteTaskById(userId: string, id: number) {
 
     const result = await lib.db.update(table)
         .set({deleted_at: lib.sql`CURRENT_TIMESTAMP`, updated_at: lib.sql`CURRENT_TIMESTAMP`})
+        .where(lib.and(
+            lib.eq(table.id, id),
+            lib.eq(table.user_id, userId),
+        ))
+        .returning({id: table.id})
+
+    // Revalidate all pages that might show todos
+    lib.revalidatePath("/my", 'layout')
+
+    if (result && result.length > 0) {
+        return result[0].id
+    }
+
+    return null
+}
+
+export async function recoverTaskById(userId: string, id: number) {
+    const result = await lib.db.update(table)
+        .set({deleted_at: null, updated_at: lib.sql`CURRENT_TIMESTAMP`})
         .where(lib.and(
             lib.eq(table.id, id),
             lib.eq(table.user_id, userId),

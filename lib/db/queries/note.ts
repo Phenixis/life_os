@@ -160,3 +160,61 @@ export async function deleteNote(userId: string, id: number) {
 
     return note
 }
+
+export async function getDeletedNotes(
+    userId: string,
+    limit: number = 25,
+    page: number = 1
+) {
+    // Get total count
+    const [{ count }] = await lib.db
+        .select({ count: lib.sql<number>`count(*)` })
+        .from(lib.Schema.Note.Note.table)
+        .where(
+            lib.and(
+                lib.isNotNull(lib.Schema.Note.Note.table.deleted_at),
+                lib.eq(lib.Schema.Note.Note.table.user_id, userId)
+            )
+        )
+
+    // Get paginated notes
+    const notes = await lib.db.select({
+        id: lib.Schema.Note.Note.table.id,
+        user_id: lib.Schema.Note.Note.table.user_id,
+        project_id: lib.Schema.Note.Note.table.project_id,
+        title: lib.Schema.Note.Note.table.title,
+        content: lib.Schema.Note.Note.table.content,
+        salt: lib.Schema.Note.Note.table.salt,
+        iv: lib.Schema.Note.Note.table.iv,
+        created_at: lib.Schema.Note.Note.table.created_at,
+        updated_at: lib.Schema.Note.Note.table.updated_at,
+        deleted_at: lib.Schema.Note.Note.table.deleted_at,
+    }).from(lib.Schema.Note.Note.table)
+        .where(
+            lib.and(
+                lib.isNotNull(lib.Schema.Note.Note.table.deleted_at),
+                lib.eq(lib.Schema.Note.Note.table.user_id, userId)
+            )
+        )
+        .orderBy(lib.desc(lib.Schema.Note.Note.table.deleted_at))
+        .offset((page - 1) * limit)
+        .limit(limit)
+
+    return {
+        notes,
+        totalCount: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        limit
+    } as NotesAndData
+}
+
+export async function recoverNote(userId: string, id: number) {
+    const note = await lib.db.update(lib.Schema.Note.Note.table).set({
+        deleted_at: null
+    }).where(lib.and(lib.eq(lib.Schema.Note.Note.table.id, id), lib.eq(lib.Schema.Note.Note.table.user_id, userId)))
+
+    lib.revalidatePath("/my", "layout");
+
+    return note
+}
