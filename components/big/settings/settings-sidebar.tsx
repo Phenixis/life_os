@@ -11,7 +11,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import {CircleDollarSign, Palette, Shield, User} from "lucide-react"
+import {CircleDollarSign, Palette, Shield, Trash2, User} from "lucide-react"
 import {usePathname} from "next/navigation"
 
 export const settingsItems = [
@@ -42,6 +42,13 @@ export const settingsItems = [
         icon: <CircleDollarSign className="size-4"/>,
         description: "Manage your subscription plan",
         alternativeNames: ["billing", "payment"],
+    },
+    {
+        name: "Trash",
+        href: "/my/settings/trash",
+        icon: <Trash2 className="size-4"/>,
+        description: "Recover deleted tasks and notes",
+        alternativeNames: ["deleted tasks", "deleted notes"]
     }
 ]
 
