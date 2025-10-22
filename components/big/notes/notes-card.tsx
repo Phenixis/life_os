@@ -8,6 +8,7 @@ import {Button} from "@/components/ui/button"
 import {Filter, FolderTree, Plus} from "lucide-react"
 import NoteDisplay from "./note-display"
 import {useNotes} from "@/hooks/use-notes"
+import {useDeletedNotes} from "@/hooks/use-deleted-notes"
 import {useProjects} from "@/hooks/use-projects"
 import {useRouter, useSearchParams} from "next/navigation"
 import SearchNote from "@/components/big/notes/search-note"
@@ -58,11 +59,13 @@ export function NotesCard(
         limit: initialLimit,
         orderBy: initialOrderBy = "created_at",
         orderingDirection: initialOrderingDirection = "desc",
+        isTrash = false
     }: {
         className?: string
         limit?: number
         orderBy?: keyof Note.Note.Select
         orderingDirection?: "asc" | "desc"
+        isTrash?: boolean
     }
 ) {
     // -------------------- Imports & Hooks --------------------
@@ -98,12 +101,19 @@ export function NotesCard(
         withNotes: true,
     })
 
-    const {data: notesData, isLoading} = useNotes({
+    const {data: regularNotesData, isLoading: regularLoading} = useNotes({
         title,
         limit,
         projects: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
         excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
     })
+
+    const {data: deletedNotesData, isLoading: deletedLoading} = useDeletedNotes({
+        limit,
+    })
+
+    const notesData = isTrash ? deletedNotesData : regularNotesData
+    const isLoading = isTrash ? deletedLoading : regularLoading
 
     // -------------------- Effects --------------------
     useEffect(() => {
@@ -206,32 +216,35 @@ export function NotesCard(
             <CardHeader className="flex flex-col sticky top-0 bg-background z-10">
                 <div className="flex flex-row items-center justify-between w-full gap-2">
                     <CardTitle>
-                        Your Notes
+                        {isTrash ? "Deleted Notes" : "Your Notes"}
                     </CardTitle>
-                    <div className="flex gap-2 xl:opacity-0 duration-300 lg:group-hover/NoteCard:opacity-100">
-                        <Button
-                            variant={isFilterOpen ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setIsFilterOpen((prev) => !prev)}
-                            disabled={isPending || isLoading}
-                            tooltip="Filter/group the notes"
-                            className="h-10 py-2 flex items-center border-none"
-                        >
-                            <Filter className="h-4 w-4"/>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className={
-                                "whitespace-nowrap transition-transform duration-300 border-none"
-                            }
-                            onClick={() => noteModal.openModal()}
-                        >
-                            <Plus size={24}/>
-                        </Button>
-                    </div>
+                    {!isTrash && (
+                        <div className="flex gap-2 xl:opacity-0 duration-300 lg:group-hover/NoteCard:opacity-100">
+                            <Button
+                                variant={isFilterOpen ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setIsFilterOpen((prev) => !prev)}
+                                disabled={isPending || isLoading}
+                                tooltip="Filter/group the notes"
+                                className="h-10 py-2 flex items-center border-none"
+                            >
+                                <Filter className="h-4 w-4"/>
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className={
+                                    "whitespace-nowrap transition-transform duration-300 border-none"
+                                }
+                                onClick={() => noteModal.openModal()}
+                            >
+                                <Plus size={24}/>
+                            </Button>
+                        </div>
+                    )}
                 </div>
-                <div className={`${!isFilterOpen && "hidden"} flex flex-col gap-2`}>
+                {!isTrash && (
+                    <div className={`${!isFilterOpen && "hidden"} flex flex-col gap-2`}>
                     <div className="flex flex-row justify-between items-end gap-6 flex-wrap">
                         <RadioButtons
                             values={[5, 10, 25, 50]}
@@ -274,6 +287,7 @@ export function NotesCard(
                         )}
                     </div>
                 </div>
+                )}
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -298,7 +312,7 @@ export function NotesCard(
                                         <h3 className="font-medium text-sm p-2 rounded-md">{name}</h3>
                                         <div className="pl-2">
                                             {notes.map((note: Note.Note.Select) => (
-                                                <NoteDisplay note={note} className="mt-2" key={note.id}/>
+                                                <NoteDisplay note={note} className="mt-2" key={note.id} isTrash={isTrash}/>
                                             ))}
                                         </div>
                                     </div>
@@ -310,7 +324,7 @@ export function NotesCard(
                             .slice(0, limit)
                             .map((note: Note.Note.Select) => (
                                 <div key={note.id} className="mt-1">
-                                    <NoteDisplay note={note}/>
+                                    <NoteDisplay note={note} isTrash={isTrash}/>
                                 </div>
                             ))
                     )

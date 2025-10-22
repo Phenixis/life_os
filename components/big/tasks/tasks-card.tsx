@@ -9,6 +9,7 @@ import {Button} from "@/components/ui/button"
 import {Calendar, Filter, FolderTree, PlusIcon, Square, SquareMinus} from "lucide-react"
 import TaskDisplay from "./task-display"
 import {useTasks} from "@/hooks/use-tasks"
+import {useDeletedTasks} from "@/hooks/use-deleted-tasks"
 import {useProjects} from "@/hooks/use-projects"
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
 import {Calendar as CalendarComponent} from "@/components/ui/calendar"
@@ -61,7 +62,8 @@ export function TasksCard(
         limit: initialLimit = 5,
         orderBy: initialOrderBy = "score",
         orderingDirection: initialOrderingDirection = "desc",
-        withProject = true
+        withProject = true,
+        isTrash = false
     }: {
         className?: string
         initialCompleted?: boolean
@@ -69,6 +71,7 @@ export function TasksCard(
         orderBy?: keyof Task.Task.Select
         orderingDirection?: "asc" | "desc"
         withProject?: boolean
+        isTrash?: boolean
     }
 ) {
     const taskModal = useTaskModal()
@@ -120,7 +123,7 @@ export function TasksCard(
         taskDeleted: false,
     })
 
-    const {tasks, isLoading} = useTasks({
+    const {tasks: regularTasks, isLoading: regularLoading} = useTasks({
         completed,
         orderBy,
         limit,
@@ -130,6 +133,13 @@ export function TasksCard(
         excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects.map(project => project.id) : undefined,
         dueBefore: dueBeforeDate,
     })
+
+    const {tasks: deletedTasksList, isLoading: deletedLoading} = useDeletedTasks({
+        limit,
+    })
+
+    const tasks = isTrash ? deletedTasksList : regularTasks
+    const isLoading = isTrash ? deletedLoading : regularLoading
 
     // Memoize the numberOfTasks parameters to prevent unnecessary re-renders
     const numberOfTasksParams = useMemo(() => ({
@@ -292,67 +302,72 @@ export function TasksCard(
                 acc[projectId].tasks.push(task)
                 return acc
             },
-            {} as Record<string, { name: string; tasks: Task.Task.TaskWithRelations[] }>
+            {} as Record<string, { name: string; tasks: (Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations)[] }>
         )
-    }, [tasks, projects, limit]) as Record<string, { name: string; tasks: Task.Task.TaskWithRelations[] }>
+    }, [tasks, projects, limit]) as Record<string, { name: string; tasks: (Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations)[] }>
 
     return (
         <Card
             className={cn(`w-full md:max-w-xl group/TodoCard h-fit max-h-screen overflow-y-auto scrollbar-hide`, className)}
         >
             <CardHeader className="flex flex-col sticky top-0 bg-background z-10 pt-6 md:pt-6">
-                <div className="absolute top-0 left-0 w-full h-1 bg-muted"
-                     title={`${tasksCompleted} task${tasksCompleted > 1 ? 's' : ''} completed out of ${tasksTotal} task${tasksTotal > 1 ? 's' : ''}`}>
-                    <div
-                        className={cn(
-                            "absolute top-0 left-0 h-full transition-all duration-300",
-                            isCountLoading ? "bg-muted animate-pulse" : "bg-primary"
-                        )}
-                        style={{width: isCountLoading ? "100%" : `${progression}%`}}
-                    />
-                    <div className="w-full flex justify-between items-center pt-2 px-1">
-                        {isCountLoading || isCountError ? null : (
-                            <>
-                                <p className="text-muted-foreground text-xs">
-                                    {tasksCompleted} task{tasksCompleted > 1 ? 's' : ''} completed
-                                </p>
-                                <p className="text-muted-foreground text-xs">
-                                    {tasksUncompleted} task{tasksUncompleted > 1 ? 's' : ''} to complete
-                                </p>
-                            </>
-                        )}
+                {!isTrash && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-muted"
+                         title={`${tasksCompleted} task${tasksCompleted > 1 ? 's' : ''} completed out of ${tasksTotal} task${tasksTotal > 1 ? 's' : ''}`}>
+                        <div
+                            className={cn(
+                                "absolute top-0 left-0 h-full transition-all duration-300",
+                                isCountLoading ? "bg-muted animate-pulse" : "bg-primary"
+                            )}
+                            style={{width: isCountLoading ? "100%" : `${progression}%`}}
+                        />
+                        <div className="w-full flex justify-between items-center pt-2 px-1">
+                            {isCountLoading || isCountError ? null : (
+                                <>
+                                    <p className="text-muted-foreground text-xs">
+                                        {tasksCompleted} task{tasksCompleted > 1 ? 's' : ''} completed
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                        {tasksUncompleted} task{tasksUncompleted > 1 ? 's' : ''} to complete
+                                    </p>
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
                 <div className="flex flex-row items-center justify-between w-full gap-2">
                     <CardTitle>
-                        Your Tasks
+                        {isTrash ? "Deleted Tasks" : "Your Tasks"}
                     </CardTitle>
-                    <div className="flex gap-2 xl:opacity-0 duration-300 lg:group-hover/TodoCard:opacity-100">
-                        <Button
-                            variant={isFilterOpen ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setIsFilterOpen((prev) => !prev)}
-                            disabled={isPending || isLoading}
-                            tooltip="Filter/group the tasks"
-                            className="h-10 py-2 flex items-center border-none"
-                        >
-                            <Filter className="h-4 w-4"/>
-                        </Button>
-                        {/*<TaskModal />*/}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            tooltip="Create a new task"
-                            className="h-10 px-2 flex items-center border-none"
-                            onClick={() => {
-                                taskModal.openModal()
-                            }}
-                        >
-                            <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]"/>
-                        </Button>
-                    </div>
+                    {!isTrash && (
+                        <div className="flex gap-2 xl:opacity-0 duration-300 lg:group-hover/TodoCard:opacity-100">
+                            <Button
+                                variant={isFilterOpen ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setIsFilterOpen((prev) => !prev)}
+                                disabled={isPending || isLoading}
+                                tooltip="Filter/group the tasks"
+                                className="h-10 py-2 flex items-center border-none"
+                            >
+                                <Filter className="h-4 w-4"/>
+                            </Button>
+                            {/*<TaskModal />*/}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                tooltip="Create a new task"
+                                className="h-10 px-2 flex items-center border-none"
+                                onClick={() => {
+                                    taskModal.openModal()
+                                }}
+                            >
+                                <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]"/>
+                            </Button>
+                        </div>
+                    )}
                 </div>
-                <div className={`${!isFilterOpen && "hidden"} flex flex-col gap-2`}>
+                {!isTrash && (
+                    <div className={`${!isFilterOpen && "hidden"} flex flex-col gap-2`}>
                     <div className="flex flex-row justify-between items-center gap-4 flex-wrap">
                         {/* Due Before Date Filter */}
                         <Popover>
@@ -431,6 +446,7 @@ export function TasksCard(
                         )}
                     </div>
                 </div>
+                )}
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -453,7 +469,7 @@ export function TasksCard(
                                     <div className="border-l ml-1 pl-1">
                                         {tasks.map(
                                             (
-                                                task: Task.Task.TaskWithRelations,
+                                                task: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations,
                                             ) => (
                                                 <TaskDisplay
                                                     key={task.id}
@@ -461,6 +477,7 @@ export function TasksCard(
                                                     orderedBy={orderBy}
                                                     currentLimit={limit}
                                                     currentDueBefore={dueBeforeDate}
+                                                    isTrash={isTrash}
                                                 />
                                             ),
                                         )}
@@ -473,14 +490,16 @@ export function TasksCard(
                             .slice(0, limit)
                             .map(
                                 (
-                                    task: Task.Task.TaskWithRelations
+                                    task: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations
                                 ) => (
                                     <TaskDisplay
                                         key={task.id}
                                         task={task}
                                         orderedBy={orderBy}
                                         currentLimit={limit}
-                                        currentDueBefore={dueBeforeDate}/>
+                                        currentDueBefore={dueBeforeDate}
+                                        isTrash={isTrash}
+                                    />
                                 ),
                             )
                     )
