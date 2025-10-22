@@ -1,36 +1,39 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { toast } from "sonner"
-import { User } from "@/lib/db/schema"
-import { useSWRConfig } from "swr"
-import { Loader2 } from "lucide-react"
+import {useMemo, useState} from "react"
+import {Button} from "@/components/ui/button"
+import {Label} from "@/components/ui/label"
+import {Switch} from "@/components/ui/switch"
+import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from "@/components/ui/card"
+import {toast} from "sonner"
+import {User} from "@/lib/db/schema"
+import {useSWRConfig} from "swr"
+import {Loader2} from "lucide-react"
 
 interface NotificationsFormProps {
     user: User.User.Select
 }
 
-export function NotificationsForm({ user }: NotificationsFormProps) {
+export function NotificationsForm({user}: NotificationsFormProps) {
     const [isLoading, setIsLoading] = useState(false)
-    const [dailyRecapEnabled, setDailyRecapEnabled] = useState(user.daily_recap_email_enabled)
-    const [lastSavedValue, setLastSavedValue] = useState(user.daily_recap_email_enabled)
-    const { mutate } = useSWRConfig()
+    const [formState, setFormState] = useState({
+        daily_recap_email_enabled: user.daily_recap_email_enabled,
+        // add more fields here later
+    })
+    const [initialFormState] = useState(formState) // frozen initial values
+    const {mutate} = useSWRConfig()
+
+    // Generic "isDirty" computation
+    const isDirty = useMemo(() => {
+        return Object.keys(formState).some(
+            key => formState[key as keyof typeof formState] !== initialFormState[key as keyof typeof initialFormState]
+        )
+    }, [formState, initialFormState])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Check if anything has changed
-        if (dailyRecapEnabled === lastSavedValue) {
+        if (!isDirty) {
             toast.info("No changes detected - your notification preferences are already up to date.")
             return
         }
@@ -42,9 +45,9 @@ export function NotificationsForm({ user }: NotificationsFormProps) {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user.api_key}`
+                    "Authorization": `Bearer ${user.api_key}`,
                 },
-                body: JSON.stringify({ daily_recap_email_enabled: dailyRecapEnabled }),
+                body: JSON.stringify(formState),
             })
 
             if (!response.ok) {
@@ -53,14 +56,15 @@ export function NotificationsForm({ user }: NotificationsFormProps) {
             }
 
             const updatedUser = await response.json()
-            
-            // Update the last saved value
-            setLastSavedValue(updatedUser.daily_recap_email_enabled)
-            
-            // Update the user data in the global state
-            mutate("/api/user")
-            
             toast.success("Notification preferences updated successfully!")
+
+            // Update initial values to reflect the new saved state
+            Object.keys(formState).forEach(key => {
+                initialFormState[key as keyof typeof formState] =
+                    updatedUser[key as keyof typeof updatedUser]
+            })
+
+            mutate("/api/user")
 
         } catch (error) {
             console.error("Error updating notification preferences:", error)
@@ -86,26 +90,29 @@ export function NotificationsForm({ user }: NotificationsFormProps) {
                                 Daily Recap Email
                             </Label>
                             <p className="text-sm text-muted-foreground">
-                                Receive a morning email with your completed tasks from yesterday and upcoming tasks for today.
+                                Receive a morning email with your completed tasks from yesterday and upcoming tasks for
+                                today.
                             </p>
                         </div>
                         <Switch
                             id="daily-recap"
-                            checked={dailyRecapEnabled}
-                            onCheckedChange={setDailyRecapEnabled}
+                            checked={formState.daily_recap_email_enabled}
+                            onCheckedChange={(val) =>
+                                setFormState(prev => ({...prev, daily_recap_email_enabled: val}))
+                            }
                             disabled={isLoading}
                         />
                     </div>
 
                     <div className="flex justify-end pt-4">
-                        <Button 
-                            type="submit" 
-                            disabled={isLoading}
+                        <Button
+                            type="submit"
+                            disabled={isLoading || !isDirty}
                             className="min-w-[120px]"
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
                                     Saving...
                                 </>
                             ) : (

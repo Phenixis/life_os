@@ -23,7 +23,7 @@ export const table = lib.pgTable('user', {
     note_draft_content: lib.text('note_draft_content').notNull().default(""),
     note_draft_project_title: lib.varchar('note_draft_project_title', { length: 255 }).notNull().default(""),
     
-    daily_recap_email_enabled: lib.boolean('daily_recap_email_enabled').notNull().default(true),
+    daily_recap_email_enabled: lib.boolean('daily_recap_email_enabled').notNull().default(false),
     
     stripe_customer_id: lib.varchar('stripe_customer_id', { length: 255 }),
 

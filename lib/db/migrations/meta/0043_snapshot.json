@@ -1821,7 +1821,7 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "stripe_customer_id": {
           "name": "stripe_customer_id",
