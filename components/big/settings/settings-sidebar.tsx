@@ -40,15 +40,15 @@ export const settingsItems = [
         name: "Subscription",
         href: "/my/settings/subscription",
         icon: <CircleDollarSign className="size-4"/>,
-        description: "Manage your subscription plan"
+        description: "Manage your subscription plan",
         alternativeNames: ["billing", "payment"],
     },
     {
         name: "Trash",
         href: "/my/settings/trash",
         icon: <Trash2 className="size-4"/>,
-        description: "Recover deleted tasks and notes"
-      alternativeNames: ["deleted tasks", "deleted notes"]
+        description: "Recover deleted tasks and notes",
+        alternativeNames: ["deleted tasks", "deleted notes"]
     }
 ]
 
