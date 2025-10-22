@@ -5,8 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import useSWR from "swr"
 import { useUser } from "@/hooks/use-user"
-import TaskDisplay from "@/components/big/tasks/task-display"
-import NoteDisplay from "@/components/big/notes/note-display"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Task, Note } from "@/lib/db/schema"
 import { Button } from "@/components/ui/button"
@@ -91,29 +89,45 @@ function DeletedTasksList() {
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-4">
             {tasks.map((task: Task.Task.TaskWithNonRecursiveRelations) => (
                 <Card key={task.id} className="relative">
                     <CardContent className="p-4">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <TaskDisplay task={task} />
+                        <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-1">
+                                    <h3 className="font-semibold">{task.title}</h3>
+                                    <div className="text-xs text-muted-foreground space-y-1">
+                                        {task.project && (
+                                            <p>Project: {task.project.title}</p>
+                                        )}
+                                        {task.due && (
+                                            <p>Due: {new Date(task.due).toLocaleDateString()}</p>
+                                        )}
+                                        {task.importanceDetails && (
+                                            <p>Importance: {task.importanceDetails.name}</p>
+                                        )}
+                                        {task.durationDetails && (
+                                            <p>Duration: {task.durationDetails.name}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => recoverTask(task.id)}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Undo2 className="size-4" />
+                                    Recover
+                                </Button>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => recoverTask(task.id)}
-                                className="flex items-center gap-2"
-                            >
-                                <Undo2 className="size-4" />
-                                Recover
-                            </Button>
+                            {task.deleted_at && (
+                                <p className="text-xs text-muted-foreground">
+                                    Deleted on {new Date(task.deleted_at).toLocaleDateString()} at {new Date(task.deleted_at).toLocaleTimeString()}
+                                </p>
+                            )}
                         </div>
-                        {task.deleted_at && (
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Deleted {new Date(task.deleted_at).toLocaleDateString()}
-                            </p>
-                        )}
                     </CardContent>
                 </Card>
             ))}
@@ -190,29 +204,38 @@ function DeletedNotesList() {
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-4">
             {notes.map((note: Note.Note.Select) => (
                 <Card key={note.id} className="relative">
                     <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                                <NoteDisplay note={note} />
+                        <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                    <h3 className="font-semibold">{note.title}</h3>
+                                    <p className="text-sm text-muted-foreground line-clamp-3">
+                                        {note.salt && note.iv ? (
+                                            <span className="italic">Encrypted content</span>
+                                        ) : (
+                                            note.content
+                                        )}
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => recoverNote(note.id)}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Undo2 className="size-4" />
+                                    Recover
+                                </Button>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => recoverNote(note.id)}
-                                className="flex items-center gap-2 mt-2"
-                            >
-                                <Undo2 className="size-4" />
-                                Recover
-                            </Button>
+                            {note.deleted_at && (
+                                <p className="text-xs text-muted-foreground">
+                                    Deleted on {new Date(note.deleted_at).toLocaleDateString()} at {new Date(note.deleted_at).toLocaleTimeString()}
+                                </p>
+                            )}
                         </div>
-                        {note.deleted_at && (
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Deleted {new Date(note.deleted_at).toLocaleDateString()}
-                            </p>
-                        )}
                     </CardContent>
                 </Card>
             ))}
