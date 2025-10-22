@@ -77,16 +77,18 @@ function DeletedTasksList() {
                 <div key={task.id} className="flex items-center justify-between gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 flex-wrap">
-                            <p className="font-medium text-sm truncate">{task.title}</p>
+                            <p className="font-medium truncate">{task.title}</p>
                             {task.deleted_at && (
-                                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                    {new Date(task.deleted_at).toLocaleDateString()}
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                    (Deleted: {new Date(task.deleted_at).toLocaleDateString()})
                                 </span>
                             )}
                         </div>
                         <div className="flex gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                             {task.project && <span>Project: {task.project.title}</span>}
-                            {task.importanceDetails && <span>• {task.importanceDetails.name}</span>}
+                            {task.importanceDetails && <span>Importance: {task.importanceDetails.name}</span>}
+                            {task.due && <span>Due: {new Date(task.due).toLocaleDateString()}</span>}
+                            {task.duration !== undefined ? <span>Duration: {task.durationDetails.name}</span> : null}
                         </div>
                     </div>
                     <Button
@@ -197,9 +199,9 @@ export function TrashContent() {
 
     return (
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "tasks" | "notes")}>
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsList className="w-full h-fit md:h-10 flex-col md:flex-row">
+                <TabsTrigger value="tasks" className={"w-full"}>Tasks</TabsTrigger>
+                <TabsTrigger value="notes" className={"w-full"}>Notes</TabsTrigger>
             </TabsList>
             <TabsContent value="tasks" className="mt-4">
                 <DeletedTasksList />

@@ -598,24 +598,28 @@ export default function TaskDisplay(
             )}
             {/* Delete Task Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="sm:max-w-md" maxHeight={"max-h-54"}>
+                <DialogContent className="sm:max-w-md" maxHeight={"max-h-64 lg:max-h-54"}>
                     <DialogHeader>
                         <DialogTitle>Delete Task</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to delete this task?<br/><br/>You will be able to find it back in your
                             Trash (Settings &gt; Trash &gt; Tasks).
                         </DialogDescription>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <Checkbox
-                                id="delete-recurrency"
-                                className="border-muted-foreground"
-                                checked={deleteRecurrency}
-                                onClick={() => setDeleteRecurrency(!deleteRecurrency)}
-                            />
-                            <Label htmlFor="delete-recurrency" className="cursor-pointer">
-                                Delete task recurrency ?
-                            </Label>
-                        </div>
+                        {
+                            task?.recursive && (
+                                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                    <Checkbox
+                                        id="delete-recurrency"
+                                        className="border-muted-foreground"
+                                        checked={deleteRecurrency}
+                                        onClick={() => setDeleteRecurrency(!deleteRecurrency)}
+                                    />
+                                    <Label htmlFor="delete-recurrency" className="cursor-pointer">
+                                        Delete task recurrency ?
+                                    </Label>
+                                </div>
+                            )
+                        }
                     </DialogHeader>
                     <DialogFooter className="flex justify-between sm:justify-between">
                         <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
