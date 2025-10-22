@@ -27,6 +27,12 @@ export async function GET(request: NextRequest) {
         if (verification.userId === "00000000" && user.id !== "00000000") {
             continue
         }
+        
+        // Skip sending email if user has disabled daily recap emails
+        if (!user.daily_recap_email_enabled) {
+            continue
+        }
+        
         try {
             const tasksToDo = await TaskQueries.Task.getUncompletedAndDueInTheNextThreeDaysOrLessTasks(user.id);
             const tasksDone = await TaskQueries.Task.getTasksCompletedTheDayBefore(user.id);
