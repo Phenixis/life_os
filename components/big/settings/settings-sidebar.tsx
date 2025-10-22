@@ -11,7 +11,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import {CircleDollarSign, Palette, Shield, Trash2, User} from "lucide-react"
+import {Bell, CircleDollarSign, Palette, Shield, Trash2, User} from "lucide-react"
 import {usePathname} from "next/navigation"
 
 export const settingsItems = [
@@ -28,6 +28,13 @@ export const settingsItems = [
         icon: <Palette className="size-4"/>,
         description: "Dark mode and UI preferences",
         alternativeNames: ["theme", "dark mode"],
+    },
+    {
+        name: "Notifications",
+        href: "/my/settings/notifications",
+        icon: <Bell className="size-4"/>,
+        description: "Email notification preferences",
+        alternativeNames: ["email", "daily recap"],
     },
     {
         name: "Security",
