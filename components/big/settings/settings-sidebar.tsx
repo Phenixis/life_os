@@ -20,28 +20,28 @@ export const settingsItems = [
         href: "/my/settings/profile",
         icon: <User className="size-4"/>,
         description: "Manage your personal information",
-        alternativeNames: ["account", "personal info", "user profile"],
+        alternativeNames: ["account", "user"],
     },
     {
         name: "Appearance",
         href: "/my/settings/appearance",
         icon: <Palette className="size-4"/>,
         description: "Dark mode and UI preferences",
-        alternativeNames: ["theme", "dark mode", "ui", "interface"],
+        alternativeNames: ["theme", "dark mode"],
     },
     {
         name: "Security",
         href: "/my/settings/security",
         icon: <Shield className="size-4"/>,
         description: "Password and security settings",
-        alternativeNames: ["password", "authentication", "privacy"],
+        alternativeNames: ["password"],
     },
     {
         name: "Subscription",
         href: "/my/settings/subscription",
         icon: <CircleDollarSign className="size-4"/>,
         description: "Manage your subscription plan",
-        alternativeNames: ["billing", "payment", "plan", "pricing"],
+        alternativeNames: ["billing", "payment"],
     }
 ]
 

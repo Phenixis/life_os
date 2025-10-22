@@ -16,35 +16,35 @@ export const tools: ToolCardProps[] = [
         href: "/my/tools",
         icon: <LayoutGrid className="size-4"/>,
         description: "View all available tools",
-        alternativeNames: ["tools", "utilities", "features"],
+        alternativeNames: ["tools"],
     },
     {
         name: "Weighted Multi-Criteria Decision Matrix",
         href: "/my/tools/WMCDM",
         icon: <Grid2X2 className="size-4"/>,
         description: "A decision-making tool that helps evaluate multiple options against various criteria, with each criterion having a different level of importance (weight).",
-        alternativeNames: ["WMCDM", "decision matrix", "decision maker", "compare options", "criteria"],
+        alternativeNames: ["WMCDM", "decision matrix"],
     },
     {
         name: "Movie Tracker",
         href: "/my/tools/movie-tracker",
         icon: <Film className="size-4"/>,
         description: "A tool for tracking movies and TV shows.",
-        alternativeNames: ["movies", "films", "watchlist", "tv shows", "cinema"],
+        alternativeNames: ["movie", "movies", "film", "films"],
     },
     {
         name: "Chat",
         href: "/my/tools/chat",
         icon: <MessagesSquare className="size-4"/>,
         description: "Chat with various and personalized profiles.",
-        alternativeNames: ["messaging", "conversation", "ai chat", "talk"],
+        alternativeNames: ["ai chat", "chatbot"],
     },
     {
         name: "Workout Tracker",
         href: "/my/tools/workout",
         icon: <Dumbbell className="size-4"/>,
         description: "Track your workout, analyze the stats and improve to your best self",
-        alternativeNames: ["exercise", "fitness", "gym", "training", "workout log"],
+        alternativeNames: ["workout", "exercise", "gym"],
     }
     // Future tools can be added here following the same structure
 ]

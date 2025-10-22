@@ -27,9 +27,9 @@ interface MenuItem {
 
 const items: Record<string, MenuItem[]> = {
     "Suggestions": [
-        {name: "Dashboard", href: "/my", alternativeNames: ["home", "overview"]},
-        {name: "Notes", href: "/my/notes", alternativeNames: ["note", "write", "notebook"]},
-        {name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo", "to-do", "todos"]},
+        {name: "Dashboard", href: "/my", alternativeNames: ["home"]},
+        {name: "Notes", href: "/my/notes", alternativeNames: ["note"]},
+        {name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"]},
     ],
     "Tools": tools.map(tool => ({
         name: tool.name,
@@ -40,7 +40,7 @@ const items: Record<string, MenuItem[]> = {
         {
             name: "Settings",
             href: "/settings",
-            alternativeNames: ["preferences", "configuration", "options"],
+            alternativeNames: ["preferences"],
         },
         ...settingsItems.map(item => ({
             name: item.name,
@@ -103,26 +103,26 @@ export default function Menu() {
                     <CommandGroup heading="Commands">
                         <CommandItem
                             onSelect={() => runCommand(() => toggleDarkMode())}
-                            keywords={["theme", "appearance", "light", "dark"]}
+                            keywords={["dark mode", "light mode"]}
                         >
                             Toggle Dark Mode
                             <CommandShortcut>Ctrl/⌘ + M</CommandShortcut>
                         </CommandItem>
                         <CommandItem
                             onSelect={() => runCommand(() => taskModal.openModal())}
-                            keywords={["new task", "add task", "task", "todo"]}
+                            keywords={["new task", "add task"]}
                         >
                             Create a task
                         </CommandItem>
                         <CommandItem
                             onSelect={() => runCommand(() => noteModal.openModal())}
-                            keywords={["new note", "add note", "note", "write"]}
+                            keywords={["new note", "add note"]}
                         >
                             Create a note
                         </CommandItem>
                         <CommandItem
                             onSelect={() => runCommand(() => dailyMoodModal.openModal())}
-                            keywords={["mood", "feeling", "emotion", "daily"]}
+                            keywords={["mood", "daily mood"]}
                         >
                             Enter my mood
                         </CommandItem>
@@ -134,7 +134,7 @@ export default function Menu() {
                                 setOpen(false)
                                 window.location.href = "/api/auth/logout"
                             }}
-                            keywords={["sign out", "exit", "logout"]}
+                            keywords={["sign out", "logout"]}
                         >
                             Log out
                         </CommandItem>
