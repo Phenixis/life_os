@@ -218,3 +218,21 @@ export async function recoverNote(userId: string, id: number) {
 
     return note
 }
+
+export async function permanentlyDeleteNote(userId: string, id: number) {
+    const note = await lib.db.delete(lib.Schema.Note.Note.table)
+        .where(lib.and(
+            lib.eq(lib.Schema.Note.Note.table.id, id),
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+            lib.isNotNull(lib.Schema.Note.Note.table.deleted_at)
+        ))
+        .returning({id: lib.Schema.Note.Note.table.id})
+
+    lib.revalidatePath("/my", "layout");
+
+    if (note && note.length > 0) {
+        return note[0].id
+    }
+
+    return null
+}

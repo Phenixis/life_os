@@ -44,3 +44,31 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Failed to fetch deleted notes" }, { status: 500 })
     }
 }
+
+// DELETE - Permanently delete a note
+export async function DELETE(request: NextRequest) {
+    const verification = await verifyRequest(request)
+    if ('error' in verification) return verification.error
+
+    try {
+        const url = new URL(request.url)
+        const idParam = url.searchParams.get("id")
+
+        if (!idParam) {
+            return NextResponse.json({ error: "Missing note ID" }, { status: 400 })
+        }
+
+        const id = Number(idParam)
+
+        const noteId = await NoteQueries.permanentlyDeleteNote(verification.userId, id)
+
+        if (!noteId) {
+            return NextResponse.json({ error: "Note not found or not in trash" }, { status: 404 })
+        }
+
+        return NextResponse.json({ id: noteId })
+    } catch (error) {
+        console.error("Error permanently deleting note:", error)
+        return NextResponse.json({ error: "Failed to permanently delete note" }, { status: 500 })
+    }
+}

@@ -639,6 +639,25 @@ export async function recoverTaskById(userId: string, id: number) {
     return null
 }
 
+export async function permanentlyDeleteTaskById(userId: string, id: number) {
+    const result = await lib.db.delete(table)
+        .where(lib.and(
+            lib.eq(table.id, id),
+            lib.eq(table.user_id, userId),
+            lib.isNotNull(table.deleted_at)
+        ))
+        .returning({id: table.id})
+
+    // Revalidate all pages that might show todos
+    lib.revalidatePath("/my", 'layout')
+
+    if (result && result.length > 0) {
+        return result[0].id
+    }
+
+    return null
+}
+
 // # TaskToDoAfter
 
 // ## Create
