@@ -5,6 +5,9 @@ import { eq } from "drizzle-orm"
 import * as Schema from "@/lib/db/schema"
 import type { User } from "@/lib/db/schema"
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
     console.log('=== Stripe Webhook Received ===')
     try {

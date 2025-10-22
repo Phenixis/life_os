@@ -49,11 +49,13 @@ export const metadata: Metadata = {
 
 const cx = (...classes: string[]) => classes.filter(Boolean).join(' ')
 
-export default async function RootLayout({
-                                             children,
-                                         }: {
-    children: React.ReactNode
-}) {
+export default async function RootLayout(
+    {
+        children,
+    }: {
+        children: React.ReactNode
+    }
+) {
     const isDarkMode = await darkMode()
     return (
         <html
@@ -66,7 +68,7 @@ export default async function RootLayout({
             <link rel="manifest" href="/manifest.json"/>
             <link rel="apple-touch-icon" href="/favicon.png"/>
             {
-                process.env.NEXT_PUBLIC_ENVIRONMENT === "developmen" ?
+                (process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && false) ?
                     (
                         <script
                             crossOrigin="anonymous"
