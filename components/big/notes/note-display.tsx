@@ -3,7 +3,7 @@
 import {Note} from "@/lib/db/schema"
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card"
 import {useState} from "react"
-import {ChevronDown, ChevronUp, ClipboardCheck, ClipboardPlus, Lock, PenIcon, Trash, Undo2} from "lucide-react"
+import {ChevronDown, ChevronUp, ClipboardCheck, ClipboardPlus, Lock, PenIcon, Trash} from "lucide-react"
 import {toast} from "sonner"
 import {useSWRConfig} from "swr"
 import {useUser} from "@/hooks/use-user"
@@ -24,7 +24,7 @@ import {cn} from "@/lib/utils"
 import {useNoteModal} from "@/contexts/modal-commands-context";
 import {useProjects} from "@/hooks/use-projects";
 
-export default function NoteDisplay({note, className, isTrash = false}: { note?: Note.Note.Select, className?: string, isTrash?: boolean }) {
+export default function NoteDisplay({note, className}: { note?: Note.Note.Select, className?: string }) {
     const user = useUser().user
     const noteModal = useNoteModal()
     const {mutate} = useSWRConfig()
@@ -116,29 +116,6 @@ export default function NoteDisplay({note, className, isTrash = false}: { note?:
         }
     }
 
-    const recoverNote = async () => {
-        if (!note || !user?.api_key) return
-
-        try {
-            const response = await fetch("/api/note/recover", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user.api_key}`
-                },
-                body: JSON.stringify({ id: note.id })
-            })
-
-            if (!response.ok) throw new Error("Failed to recover note")
-
-            toast.success("Note recovered successfully")
-            mutate((key) => typeof key === "string" && key.startsWith("/api/note"))
-        } catch (error) {
-            console.error("Error recovering note:", error)
-            toast.error("Failed to recover note")
-        }
-    }
-
     return (
         <>
             <Card className={cn(`h-fit group/Note`, className)}>
@@ -211,59 +188,45 @@ export default function NoteDisplay({note, className, isTrash = false}: { note?:
                                         <p>{note.content}</p>
                                     )
                                 }
-                                {isTrash && note.deleted_at && (
-                                    <p className="text-xs text-muted-foreground mt-4">
-                                        Deleted on {new Date(note.deleted_at).toLocaleDateString()} at {new Date(note.deleted_at).toLocaleTimeString()}
-                                    </p>
-                                )}
                             </CardContent>
                             <CardFooter className="flex flex-row justify-end space-x-2">
-                                {isTrash ? (
-                                    <Undo2 
-                                        className="w-4 h-4 cursor-pointer text-green-600 hover:text-green-500" 
-                                        onClick={recoverNote}
-                                    />
-                                ) : (
-                                    <>
-                                        {
-                                            note.salt && note.iv && decryptedContent && (
-                                                <Lock className="w-4 h-4 cursor-pointer" onClick={cancelDecrypt}/>
-                                            )
-                                        }
-                                        <Trash className="w-4 h-4 cursor-pointer text-red-500" onClick={handleDelete}/>
-                                        {
-                                            isCopied ? (
-                                                <ClipboardCheck className="w-4 h-4 cursor-pointer"/>
-                                            ) : ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
-                                                <ClipboardPlus className="w-4 h-4 cursor-pointer" onClick={() => {
-                                                    navigator.clipboard.writeText(note.salt && note.iv && decryptedContent ? decryptedContent : note.content)
-                                                    setIsCopied(true)
-                                                    toast.success("Copied to clipboard")
-                                                    setTimeout(() => {
-                                                        setIsCopied(false)
-                                                    }, 2000)
-                                                }}/>
-                                            )
-                                        }
-                                        {
-                                            ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
-                                                <PenIcon
-                                                    className={cn(
-                                                        "min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer",
-                                                        className)
-                                                    }
-                                                    onClick={() => {
-                                                        noteModal.setNote({
-                                                            note: note,
-                                                            password: password
-                                                        })
-                                                        noteModal.openModal()
-                                                    }}
-                                                />
-                                            )
-                                        }
-                                    </>
-                                )}
+                                {
+                                    note.salt && note.iv && decryptedContent && (
+                                        <Lock className="w-4 h-4 cursor-pointer" onClick={cancelDecrypt}/>
+                                    )
+                                }
+                                <Trash className="w-4 h-4 cursor-pointer text-red-500" onClick={handleDelete}/>
+                                {
+                                    isCopied ? (
+                                        <ClipboardCheck className="w-4 h-4 cursor-pointer"/>
+                                    ) : ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
+                                        <ClipboardPlus className="w-4 h-4 cursor-pointer" onClick={() => {
+                                            navigator.clipboard.writeText(note.salt && note.iv && decryptedContent ? decryptedContent : note.content)
+                                            setIsCopied(true)
+                                            toast.success("Copied to clipboard")
+                                            setTimeout(() => {
+                                                setIsCopied(false)
+                                            }, 2000)
+                                        }}/>
+                                    )
+                                }
+                                {
+                                    ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
+                                        <PenIcon
+                                            className={cn(
+                                                "min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer",
+                                                className)
+                                            }
+                                            onClick={() => {
+                                                noteModal.setNote({
+                                                    note: note,
+                                                    password: password
+                                                })
+                                                noteModal.openModal()
+                                            }}
+                                        />
+                                    )
+                                }
                             </CardFooter>
                         </>
                     )

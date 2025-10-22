@@ -4,7 +4,7 @@ import type React from "react"
 import {startTransition, useOptimistic, useRef, useState} from "react"
 import {Skeleton} from "@/components/ui/skeleton"
 import type {Task} from "@/lib/db/schema"
-import {ChevronsDownUp, ChevronsUpDown, PenIcon, TrashIcon, Undo2, Unlink} from "lucide-react"
+import {ChevronsDownUp, ChevronsUpDown, PenIcon, TrashIcon, Unlink} from "lucide-react"
 import {useSWRConfig} from "swr"
 import {cn} from "@/lib/utils"
 import Tooltip from "@/components/big/tooltip"
@@ -32,7 +32,6 @@ export default function TaskDisplay(
         currentLimit,
         currentDueBefore,
         otherId,
-        isTrash = false,
     }: {
         task?: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations
         orderedBy?: keyof Task.Task.Select
@@ -40,7 +39,6 @@ export default function TaskDisplay(
         currentLimit?: number
         currentDueBefore?: Date
         otherId?: number
-        isTrash?: boolean
     }
 ) {
     const user = useUser().user;
@@ -295,29 +293,6 @@ export default function TaskDisplay(
             mutate((key) => typeof key === "string" && key.startsWith("/api/task"))
         } finally {
             setIsDeleting(false)
-        }
-    }
-
-    async function recoverTask() {
-        if (!task || !user?.api_key) return
-
-        try {
-            const response = await fetch("/api/task/recover", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user.api_key}`
-                },
-                body: JSON.stringify({ id: task.id })
-            })
-
-            if (!response.ok) throw new Error("Failed to recover task")
-
-            toast.success("Task recovered successfully")
-            mutate((key) => typeof key === "string" && key.startsWith("/api/task"))
-        } catch (error) {
-            console.error("Error recovering task:", error)
-            toast.error("Failed to recover task")
         }
     }
 
@@ -580,13 +555,6 @@ export default function TaskDisplay(
                                             className="text-black dark:text-white">{task.durationDetails.name}</span>
                                         </p>
                                     )}
-                                    {isTrash && task.deleted_at && (
-                                        <p className="text-muted-foreground">
-                                            Deleted: <span className="text-black dark:text-white">
-                                                {new Date(task.deleted_at).toLocaleDateString()} at {new Date(task.deleted_at).toLocaleTimeString()}
-                                            </span>
-                                        </p>
-                                    )}
                                 </div>
                                 <div
                                     className={cn(
@@ -596,38 +564,27 @@ export default function TaskDisplay(
                                             : "w-fit xl:w-0 xl:max-w-0 xl:opacity-0",
                                     )}
                                 >
-                                    {isTrash ? (
-                                        <Tooltip tooltip="Recover task">
-                                            <Undo2
-                                                className="min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer text-green-600 lg:hover:text-green-500 duration-300"
-                                                onClick={recoverTask}
+                                    <div onClick={() => {
+                                        setIsCollapsibleOpen(false)
+                                        setIsHovering(false)
+                                    }}>
+                                        <Tooltip tooltip="Edit task">
+                                            <PenIcon
+                                                className="min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer"
+                                                onClick={() => {
+                                                    taskModal.setTask(task);
+                                                    taskModal.openModal();
+                                                }}
                                             />
                                         </Tooltip>
-                                    ) : (
-                                        <>
-                                            <div onClick={() => {
-                                                setIsCollapsibleOpen(false)
-                                                setIsHovering(false)
-                                            }}>
-                                                <Tooltip tooltip="Edit task">
-                                                    <PenIcon
-                                                        className="min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer"
-                                                        onClick={() => {
-                                                            taskModal.setTask(task);
-                                                            taskModal.openModal();
-                                                        }}
-                                                    />
-                                                </Tooltip>
-                                            </div>
+                                    </div>
 
-                                            <Tooltip tooltip="Delete task">
-                                                <TrashIcon
-                                                    className="min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] text-destructive cursor-pointer lg:hover:text-destructive/80 duration-300"
-                                                    onClick={deleteTask}
-                                                />
-                                            </Tooltip>
-                                        </>
-                                    )}
+                                    <Tooltip tooltip="Delete task">
+                                        <TrashIcon
+                                            className="min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] text-destructive cursor-pointer lg:hover:text-destructive/80 duration-300"
+                                            onClick={deleteTask}
+                                        />
+                                    </Tooltip>
                                 </div>
                             </div>
                         </div>
