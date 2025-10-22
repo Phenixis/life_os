@@ -19,24 +19,33 @@ import {tools} from "@/lib/tools-data"
 import {toast} from "sonner"
 import {settingsItems} from "@/components/big/settings/settings-sidebar"
 
-const items = {
+interface MenuItem {
+    name: string
+    href: string
+    alternativeNames?: string[]
+}
+
+const items: Record<string, MenuItem[]> = {
     "Suggestions": [
-        {name: "Dashboard", href: "/my"},
-        {name: "Notes", href: "/my/notes"},
-        {name: "Tasks", href: "/my/tasks"},
+        {name: "Dashboard", href: "/my", alternativeNames: ["home", "overview"]},
+        {name: "Notes", href: "/my/notes", alternativeNames: ["note", "write", "notebook"]},
+        {name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo", "to-do", "todos"]},
     ],
     "Tools": tools.map(tool => ({
         name: tool.name,
         href: tool.href,
+        alternativeNames: tool.alternativeNames,
     })),
     "Settings": [
         {
             name: "Settings",
-            href: "/settings"
+            href: "/settings",
+            alternativeNames: ["preferences", "configuration", "options"],
         },
         ...settingsItems.map(item => ({
             name: item.name,
             href: item.href,
+            alternativeNames: item.alternativeNames,
         }))
     ],
 }
@@ -83,6 +92,7 @@ export default function Menu() {
                                     <CommandItem
                                         key={item.name}
                                         onSelect={() => runCommand(() => router.push(item.href))}
+                                        keywords={item.alternativeNames}
                                     >
                                         {item.name}
                                     </CommandItem>
@@ -93,22 +103,26 @@ export default function Menu() {
                     <CommandGroup heading="Commands">
                         <CommandItem
                             onSelect={() => runCommand(() => toggleDarkMode())}
+                            keywords={["theme", "appearance", "light", "dark"]}
                         >
                             Toggle Dark Mode
                             <CommandShortcut>Ctrl/⌘ + M</CommandShortcut>
                         </CommandItem>
                         <CommandItem
                             onSelect={() => runCommand(() => taskModal.openModal())}
+                            keywords={["new task", "add task", "task", "todo"]}
                         >
                             Create a task
                         </CommandItem>
                         <CommandItem
                             onSelect={() => runCommand(() => noteModal.openModal())}
+                            keywords={["new note", "add note", "note", "write"]}
                         >
                             Create a note
                         </CommandItem>
                         <CommandItem
                             onSelect={() => runCommand(() => dailyMoodModal.openModal())}
+                            keywords={["mood", "feeling", "emotion", "daily"]}
                         >
                             Enter my mood
                         </CommandItem>
@@ -120,6 +134,7 @@ export default function Menu() {
                                 setOpen(false)
                                 window.location.href = "/api/auth/logout"
                             }}
+                            keywords={["sign out", "exit", "logout"]}
                         >
                             Log out
                         </CommandItem>
