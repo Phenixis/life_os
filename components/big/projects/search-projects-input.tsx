@@ -1,5 +1,5 @@
 import {useSearchProject} from "@/hooks/use-search-project"
-import {useDebouncedCallback} from "use-debounce"
+import {useDebouncedCallback, useDebouncedValue} from "use-debounce"
 import {useState, useEffect, useRef} from "react"
 import {Label} from "@/components/ui/label"
 import {Input} from "@/components/ui/input"
@@ -23,8 +23,10 @@ export default function SearchProjectsInput(
     }
 ) {
     const [projectInputValue, setProjectInputValue] = useState<string>(defaultValue)
+    // Debounce the search query to avoid overwhelming the server with API calls
+    const [debouncedProjectInputValue] = useDebouncedValue(projectInputValue, 300)
     const {projects, isLoading, isError} = useSearchProject({
-            query: projectInputValue,
+            query: debouncedProjectInputValue,
             limit: 5,
             enabled: enabled
         }
