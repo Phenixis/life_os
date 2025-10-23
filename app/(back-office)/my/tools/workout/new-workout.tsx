@@ -19,6 +19,7 @@ import {Minus, Plus, Save} from "lucide-react"
 import {cn} from "@/lib/utils"
 import {useWorkoutActions} from "@/hooks/use-workouts"
 import {toast} from "sonner"
+import {ExerciseSearchInput} from "./exercise-search-input"
 
 type Exercice = {
     name: string,
@@ -58,15 +59,67 @@ export function NewWorkout(
     const [workoutName, setWorkoutName] = useState("My Workout")
     const [difficulty, setDifficulty] = useState<1 | 2 | 3 | 4 | 5>(3)
     const [isSaving, setIsSaving] = useState(false)
+    const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
+    const [carouselApi, setCarouselApi] = useState<any>(null)
     const { createWorkout, createSavedWorkout } = useWorkoutActions()
+
+    useEffect(() => {
+        if (!carouselApi) return
+
+        const onSelect = () => {
+            setCurrentExerciseIndex(carouselApi.selectedScrollSnap())
+        }
+
+        carouselApi.on("select", onSelect)
+        onSelect()
+
+        return () => {
+            carouselApi.off("select", onSelect)
+        }
+    }, [carouselApi])
 
     useEffect(() => {
         if (!showDialog) {
             setExercices(defaultExercices)
             setWorkoutName("My Workout")
             setDifficulty(3)
+            setCurrentExerciseIndex(0)
         }
     }, [showDialog, defaultExercices]);
+
+    const addExerciseBefore = (index: number) => {
+        const newExercices = [...exercices];
+        newExercices.splice(index, 0, {
+            name: "New Exercice",
+            sets: [{
+                id: 0,
+                weight: 0,
+                nb_rep: 0,
+            }],
+        });
+        setExercices(newExercices);
+        // Wait for carousel to update, then scroll to the new exercise
+        setTimeout(() => {
+            carouselApi?.scrollTo(index);
+        }, 100);
+    };
+
+    const addExerciseAfter = (index: number) => {
+        const newExercices = [...exercices];
+        newExercices.splice(index + 1, 0, {
+            name: "New Exercice",
+            sets: [{
+                id: 0,
+                weight: 0,
+                nb_rep: 0,
+            }],
+        });
+        setExercices(newExercices);
+        // Wait for carousel to update, then scroll to the new exercise
+        setTimeout(() => {
+            carouselApi?.scrollTo(index + 1);
+        }, 100);
+    };
 
     return (
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -122,25 +175,6 @@ export function NewWorkout(
                             <DialogTitle>
                                 Create New Workout
                             </DialogTitle>
-                            <Button
-                                variant={"ghost"}
-                                onClick={() => {
-                                    setExercices([...exercices, {
-                                        name: "New Exercice",
-                                        sets: [{
-                                            id: 0,
-                                            weight: 0,
-                                            nb_rep: 0,
-                                        }],
-                                    }])
-                                }}
-                                type="button"
-                            >
-                                <Plus className={"size-4"}/>
-                                <span className={"hidden lg:block"}>
-                                Add an Exercice
-                            </span>
-                            </Button>
                         </DialogHeader>
                         <DialogDescription className={"hidden"}>
                             Add a new workout
@@ -167,7 +201,49 @@ export function NewWorkout(
                                 />
                             </div>
                         </div>
-                        <Carousel className={"my-2 mx-auto lg:w-[80%] pb-12 lg:pb-0"}>
+                        <Carousel setApi={setCarouselApi} className={"my-2 mx-auto lg:w-[80%] pb-12 lg:pb-0 relative"}>
+                            {/* Add exercise before button - styled like carousel button */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full"
+                                onClick={() => {
+                                    if (exercices.length > 0) {
+                                        addExerciseBefore(currentExerciseIndex);
+                                    } else {
+                                        setExercices([{
+                                            name: "New Exercice",
+                                            sets: [{id: 0, weight: 0, nb_rep: 0}]
+                                        }]);
+                                    }
+                                }}
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span className="sr-only">Add exercise before</span>
+                            </Button>
+
+                            {/* Add exercise after button - styled like carousel button */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full"
+                                onClick={() => {
+                                    if (exercices.length > 0) {
+                                        addExerciseAfter(currentExerciseIndex);
+                                    } else {
+                                        setExercices([{
+                                            name: "New Exercice",
+                                            sets: [{id: 0, weight: 0, nb_rep: 0}]
+                                        }]);
+                                    }
+                                }}
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span className="sr-only">Add exercise after</span>
+                            </Button>
+
                             <CarouselContent>
                                 {
                                     exercices.map((exercice, index) => (
@@ -179,14 +255,14 @@ export function NewWorkout(
                                                     <span className={"text-lg md:text-lg"}>
                                                         {index + 1}.
                                                     </span>
-                                                    <InvisibleInput
+                                                    <ExerciseSearchInput
                                                         id={"exercice-name-" + index}
-                                                        defaultValue={exercice.name}
-                                                        onChange={(e) => {
+                                                        value={exercice.name}
+                                                        onChange={(value) => {
                                                             const newExercices = [...exercices];
                                                             newExercices[index] = {
                                                                 ...exercices[index],
-                                                                name: e.target.value
+                                                                name: value
                                                             };
                                                             setExercices(newExercices);
                                                         }}
@@ -208,27 +284,8 @@ export function NewWorkout(
                                                 </TableCaption>
                                                 <TableHeader>
                                                     <TableRow className={"group/row"}>
-                                                        <TableHead
-                                                            className={"flex justify-between items-center"}>
+                                                        <TableHead>
                                                             N° Set
-                                                            <Button
-                                                                size={"icon"}
-                                                                type={"button"}
-                                                                variant={"ghost"}
-                                                                onClick={() => {
-                                                                    const newExercices = [...exercices];
-                                                                    const currentSets = newExercices[index].sets;
-                                                                    const nextId = currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0;
-                                                                    newExercices[index].sets.push({
-                                                                        id: nextId,
-                                                                        weight: 0,
-                                                                        nb_rep: 0,
-                                                                    });
-                                                                    setExercices(newExercices);
-                                                                }}
-                                                            >
-                                                                <Plus className={"size-4"}/>
-                                                            </Button>
                                                         </TableHead>
                                                         <TableHead>Weight</TableHead>
                                                         <TableHead>Nb Rep</TableHead>
@@ -265,7 +322,7 @@ export function NewWorkout(
                                                                         value={set.weight}
                                                                         onChange={(e) => {
                                                                             const newSets = [...exercice.sets]
-                                                                            newSets[setIndex].weight = parseInt(e.target.value)
+                                                                            newSets[setIndex].weight = parseInt(e.target.value) || 0
                                                                             setExercices([...exercices])
                                                                         }}
                                                                     />
@@ -278,7 +335,7 @@ export function NewWorkout(
                                                                         value={set.nb_rep}
                                                                         onChange={(e) => {
                                                                             const newSets = [...exercice.sets]
-                                                                            newSets[setIndex].nb_rep = parseInt(e.target.value)
+                                                                            newSets[setIndex].nb_rep = parseInt(e.target.value) || 0
                                                                             setExercices([...exercices])
                                                                         }}
                                                                     />
@@ -286,6 +343,58 @@ export function NewWorkout(
                                                             </TableRow>
                                                         ))
                                                     }
+                                                    {/* Empty row for adding new set - automatically adds to sets when user starts typing */}
+                                                    <TableRow className="opacity-50 hover:opacity-100 transition-opacity">
+                                                        <TableCell className="text-center">
+                                                            {exercice.sets.length + 1}
+                                                        </TableCell>
+                                                        <TableCell className="w-2/6">
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="Weight"
+                                                                onFocus={(e) => {
+                                                                    // Add new empty set when user focuses on the new row
+                                                                    const newExercices = [...exercices];
+                                                                    const currentSets = newExercices[index].sets;
+                                                                    const nextId = currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0;
+                                                                    newExercices[index].sets.push({
+                                                                        id: nextId,
+                                                                        weight: 0,
+                                                                        nb_rep: 0,
+                                                                    });
+                                                                    setExercices(newExercices);
+                                                                    // Focus on the actual input in the new row
+                                                                    setTimeout(() => {
+                                                                        const newInput = document.getElementById(`exercice-${index}-set-weight-${nextId}`);
+                                                                        if (newInput) newInput.focus();
+                                                                    }, 0);
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="w-2/6">
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="Reps"
+                                                                onFocus={(e) => {
+                                                                    // Add new empty set when user focuses on the new row
+                                                                    const newExercices = [...exercices];
+                                                                    const currentSets = newExercices[index].sets;
+                                                                    const nextId = currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0;
+                                                                    newExercices[index].sets.push({
+                                                                        id: nextId,
+                                                                        weight: 0,
+                                                                        nb_rep: 0,
+                                                                    });
+                                                                    setExercices(newExercices);
+                                                                    // Focus on the actual input in the new row
+                                                                    setTimeout(() => {
+                                                                        const newInput = document.getElementById(`exercice-${index}-set-nb-reps-${nextId}`);
+                                                                        if (newInput) newInput.focus();
+                                                                    }, 0);
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                    </TableRow>
                                                 </TableBody>
                                             </Table>
                                         </CarouselItem>

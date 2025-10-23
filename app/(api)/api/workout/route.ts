@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
 import * as WorkoutQueries from "@/lib/db/queries/workout/workout"
+import * as PastWorkoutQueries from "@/lib/db/queries/workout/past-workout"
 import * as ExerciceQueries from "@/lib/db/queries/workout/exercice"
 import * as SetQueries from "@/lib/db/queries/workout/set"
 import * as lib from "@/lib/db/queries/lib"
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url)
         const limit = parseInt(searchParams.get('limit') || '50')
 
-        const workouts = await WorkoutQueries.GetByUserId(userId, false, limit)
+        // Use getPastWorkouts to get properly formatted workout data with exercises and sets
+        const workouts = await PastWorkoutQueries.getPastWorkouts(userId, limit)
 
         return NextResponse.json({ workouts })
     } catch (error) {
