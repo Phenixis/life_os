@@ -8,14 +8,17 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import {Button} from "@/components/ui/button";
+import {Button} from "@/components/ui/button"
 import {useEffect, useState} from "react"
-import {Input} from "@/components/ui/input";
-import {InvisibleInput} from "@/components/ui/invisible-input";
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from "@/components/ui/carousel"
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
-import {Minus, Plus} from "lucide-react";
-import {cn} from "@/lib/utils";
+import {Input} from "@/components/ui/input"
+import {InvisibleInput} from "@/components/ui/invisible-input"
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
+import {Label} from "@/components/ui/label"
+import {Minus, Plus, Save} from "lucide-react"
+import {cn} from "@/lib/utils"
+import {useWorkoutActions} from "@/hooks/use-workouts"
+import {toast} from "sonner"
 
 type Exercice = {
     name: string,
@@ -50,15 +53,20 @@ export function NewWorkout(
         className?: string,
     }
 ) {
-    const initialExercices = defaultExercices.values();
     const [showDialog, setShowDialog] = useState(false)
     const [exercices, setExercices] = useState<Exercice[]>(defaultExercices)
+    const [workoutName, setWorkoutName] = useState("My Workout")
+    const [difficulty, setDifficulty] = useState<1 | 2 | 3 | 4 | 5>(3)
+    const [isSaving, setIsSaving] = useState(false)
+    const { createWorkout, createSavedWorkout } = useWorkoutActions()
 
     useEffect(() => {
         if (!showDialog) {
-            setExercices(initialExercices.toArray())
+            setExercices(defaultExercices)
+            setWorkoutName("My Workout")
+            setDifficulty(3)
         }
-    }, [showDialog]);
+    }, [showDialog, defaultExercices]);
 
     return (
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -82,6 +90,32 @@ export function NewWorkout(
             </DialogTrigger>
             <DialogContent maxHeight="max-h-130">
                 <form
+                    onSubmit={async (e) => {
+                        e.preventDefault()
+                        setIsSaving(true)
+                        
+                        try {
+                            await createWorkout({
+                                name: workoutName,
+                                date: new Date(),
+                                difficulty: difficulty,
+                                exercises: exercices.map(ex => ({
+                                    name: ex.name,
+                                    sets: ex.sets.map(s => ({
+                                        weight: s.weight,
+                                        nb_rep: s.nb_rep
+                                    }))
+                                }))
+                            })
+                            
+                            toast.success("Workout saved successfully!")
+                            setShowDialog(false)
+                        } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "Failed to save workout")
+                        } finally {
+                            setIsSaving(false)
+                        }
+                    }}
                     className={"space-y-4 mx-auto w-full max-w-[calc(100vw-5.25rem)] overflow-y-auto sm:max-w-[462px] lg:max-w-[718px] flex flex-col justify-between"}>
                     <div>
                         <DialogHeader className="flex flex-row justify-between items-center">
@@ -111,6 +145,28 @@ export function NewWorkout(
                         <DialogDescription className={"hidden"}>
                             Add a new workout
                         </DialogDescription>
+                        <div className="space-y-4 my-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="workout-name">Workout Name</Label>
+                                <Input
+                                    id="workout-name"
+                                    value={workoutName}
+                                    onChange={(e) => setWorkoutName(e.target.value)}
+                                    placeholder="Enter workout name"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="difficulty">Difficulty (1-5)</Label>
+                                <Input
+                                    id="difficulty"
+                                    type="number"
+                                    min={1}
+                                    max={5}
+                                    value={difficulty}
+                                    onChange={(e) => setDifficulty(Math.max(1, Math.min(5, parseInt(e.target.value) || 3)) as 1 | 2 | 3 | 4 | 5)}
+                                />
+                            </div>
+                        </div>
                         <Carousel className={"my-2 mx-auto lg:w-[80%] pb-12 lg:pb-0"}>
                             <CarouselContent>
                                 {
@@ -246,19 +302,50 @@ export function NewWorkout(
                             }
                         </Carousel>
                     </div>
-                    <footer className={"flex justify-end items-center gap-2"}>
+                    <footer className={"flex justify-between items-center gap-2"}>
                         <Button
                             variant={"outline"}
                             type={"button"}
-                            onClick={() => {
-                                setExercices(initialExercices.toArray())
-                                setShowDialog(false)
+                            disabled={isSaving}
+                            onClick={async () => {
+                                setIsSaving(true)
+                                try {
+                                    await createSavedWorkout({
+                                        name: workoutName,
+                                        exercises: exercices.map(ex => ({
+                                            name: ex.name,
+                                            sets: ex.sets.map(s => ({
+                                                weight: s.weight,
+                                                nb_rep: s.nb_rep
+                                            }))
+                                        }))
+                                    })
+                                    
+                                    toast.success("Workout template saved!")
+                                } catch (error) {
+                                    toast.error(error instanceof Error ? error.message : "Failed to save template")
+                                } finally {
+                                    setIsSaving(false)
+                                }
                             }}>
-                            Cancel
+                            <Save className="size-4 mr-2" />
+                            Save as Template
                         </Button>
-                        <Button type={"submit"}>
-                            Save
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant={"outline"}
+                                type={"button"}
+                                disabled={isSaving}
+                                onClick={() => {
+                                    setExercices(defaultExercices)
+                                    setShowDialog(false)
+                                }}>
+                                Cancel
+                            </Button>
+                            <Button type={"submit"} disabled={isSaving}>
+                                {isSaving ? "Saving..." : "Complete Workout"}
+                            </Button>
+                        </div>
                     </footer>
                 </form>
             </DialogContent>

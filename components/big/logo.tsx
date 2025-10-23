@@ -1,7 +1,7 @@
 import Image from 'next/image'
-import * as LogoSVG from 'public/logo.svg';
 import Link from 'next/link'
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
+import LogoSVG from '@/public/logo.svg'
 
 export default function Logo({
     className,

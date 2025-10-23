@@ -1,13 +1,14 @@
 "use client"
 
-import {Button} from "@/components/ui/button";
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
-import {useState} from "react";
-import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
-import {ChevronDown} from "lucide-react";
-import {Skeleton} from "@/components/ui/skeleton";
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from "@/components/ui/carousel"
+import {Button} from "@/components/ui/button"
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
+import {useState} from "react"
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible"
+import {ChevronDown} from "lucide-react"
+import {Skeleton} from "@/components/ui/skeleton"
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
+import {EditPastWorkout} from "@/app/(back-office)/my/tools/workout/edit-past-workout"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
@@ -46,6 +47,7 @@ function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
 }
 
 export type PastWorkoutProps = {
+    id: number
     title: string
     date: Date
     difficulty: 1 | 2 | 3 | 4 | 5
@@ -73,7 +75,7 @@ export function PastWorkoutDisplay(
             <header className={"flex justify-between items-center gap-4"}>
                 {workout ? (
                     <>
-                        <h3 className={"line-clamp-1"}>
+                        <h3 className={"line-clamp-1 flex-1"}>
                             <span className={"inline-block text-xl font-bold"}>
                                 {workout.title}
                             </span>
@@ -81,7 +83,10 @@ export function PastWorkoutDisplay(
                                 {formatRelativeDate(workout.date)}
                             </span>
                         </h3>
-                        <Difficulty value={workout.difficulty}/>
+                        <div className="flex items-center gap-2">
+                            <EditPastWorkout workout={workout} />
+                            <Difficulty value={workout.difficulty}/>
+                        </div>
                     </>
                 ) : (
                     <>

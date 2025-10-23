@@ -1,4 +1,12 @@
-type PastWorkout = {
+import * as lib from "../lib"
+
+const workoutTable = lib.Schema.Workout.Workout.table
+const setTable = lib.Schema.Workout.WorkoutSet.table
+const exerciceTable = lib.Schema.Workout.Exercice.table
+const setWorkoutTable = lib.Schema.Workout.Set_Workout.table
+
+export type PastWorkout = {
+    id: number
     title: string
     date: Date
     difficulty: 1 | 2 | 3 | 4 | 5
@@ -11,7 +19,90 @@ type PastWorkout = {
     }[]
 }
 
-export async function getPastWorkouts(): Promise<PastWorkout[]> {
+export async function getPastWorkouts(userId: string, limit: number = 50): Promise<PastWorkout[]> {
+    const workouts = await lib.db
+        .select()
+        .from(workoutTable)
+        .where(lib.and(
+            lib.eq(workoutTable.user_id, userId),
+            lib.isNull(workoutTable.deleted_at)
+        ))
+        .orderBy(lib.desc(workoutTable.date))
+        .limit(limit);
+    
+    const result: PastWorkout[] = [];
+    
+    for (const workout of workouts) {
+        // Get all set-to-workout links for this workout
+        const setLinks = await lib.db
+            .select({
+                set_id: setWorkoutTable.set_id,
+            })
+            .from(setWorkoutTable)
+            .where(lib.and(
+                lib.eq(setWorkoutTable.workout_id, workout.id),
+                lib.isNull(setWorkoutTable.deleted_at)
+            ));
+        
+        const setIds = setLinks.map(link => link.set_id);
+        
+        if (setIds.length === 0) {
+            result.push({
+                id: workout.id,
+                title: workout.name,
+                date: workout.date,
+                difficulty: workout.difficulty as 1 | 2 | 3 | 4 | 5,
+                exercices: []
+            });
+            continue;
+        }
+        
+        // Get all sets with their exercises
+        const setsWithExercises = await lib.db
+            .select({
+                weight: setTable.weight,
+                nb_reps: setTable.nb_reps,
+                exercice_name: exerciceTable.name,
+            })
+            .from(setTable)
+            .leftJoin(exerciceTable, lib.eq(setTable.exercice_id, exerciceTable.id))
+            .where(lib.and(
+                lib.inArray(setTable.id, setIds),
+                lib.isNull(setTable.deleted_at)
+            ));
+        
+        // Group sets by exercise
+        const exerciseMap = new Map<string, { name: string, sets: { weight: number, nb_rep: number }[] }>();
+        
+        for (const set of setsWithExercises) {
+            const exerciseName = set.exercice_name || 'Unknown Exercise';
+            
+            if (!exerciseMap.has(exerciseName)) {
+                exerciseMap.set(exerciseName, {
+                    name: exerciseName,
+                    sets: []
+                });
+            }
+            
+            exerciseMap.get(exerciseName)!.sets.push({
+                weight: set.weight,
+                nb_rep: set.nb_reps
+            });
+        }
+        
+        result.push({
+            id: workout.id,
+            title: workout.name,
+            date: workout.date,
+            difficulty: workout.difficulty as 1 | 2 | 3 | 4 | 5,
+            exercices: Array.from(exerciseMap.values())
+        });
+    }
+    
+    return result;
+}
+
+export async function getPastWorkoutsMockData(): Promise<PastWorkout[]> {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const date = new Date();
@@ -25,6 +116,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
 
     return [
         {
+            id: 1,
             title: "Upper body - Pull",
             date: date,
             difficulty: 3,
@@ -84,6 +176,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
                 ]
         },
         {
+            id: 2,
             title: "Lower Body - Push",
             date: d8,
             difficulty: 5,
@@ -163,6 +256,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
             ]
         },
         {
+            id: 3,
             title: "Full Body Conditioning",
             date: d2,
             difficulty: 4,
@@ -194,6 +288,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
             ]
         },
         {
+            id: 4,
             title: "Upper Body - Push",
             date: d4,
             difficulty: 3,
@@ -225,6 +320,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
             ]
         },
         {
+            id: 5,
             title: "Lower Body - Pull",
             date: d6,
             difficulty: 4,
@@ -256,6 +352,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
             ]
         },
         {
+            id: 6,
             title: "Mobility & Core",
             date: d10,
             difficulty: 2,
@@ -287,6 +384,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
             ]
         },
         {
+            id: 7,
             title: "Upper Body - Pull (Volume)",
             date: d12,
             difficulty: 3,
@@ -318,6 +416,7 @@ export async function getPastWorkouts(): Promise<PastWorkout[]> {
             ]
         },
         {
+            id: 8,
             title: "Cardio Intervals",
             date: d14,
             difficulty: 2,

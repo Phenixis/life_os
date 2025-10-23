@@ -1,16 +1,29 @@
-import {getPastWorkouts} from "@/lib/db/queries/workout/past-workout";
-import {PastWorkoutDisplay} from "./past-workout-display"
+"use client"
 
-export async function PastWorkoutsAsync() {
-    const savedWorkouts = await getPastWorkouts()
+import { useWorkouts } from "@/hooks/use-workouts"
+import { PastWorkoutDisplay } from "./past-workout-display"
+
+export function PastWorkoutsAsync() {
+    const { workouts, isLoading } = useWorkouts()
+
+    if (isLoading) {
+        return (
+            <>
+                <PastWorkoutDisplay />
+                <PastWorkoutDisplay />
+                <PastWorkoutDisplay />
+            </>
+        )
+    }
 
     return (
-        savedWorkouts.sort(
-            (a, b) => a.date < b.date ? 1 : -1
-        ).map((workout, index) => (
-            <PastWorkoutDisplay key={index}
-                                workout={workout}
-            />
-        ))
+        <>
+            {workouts.map((workout) => (
+                <PastWorkoutDisplay 
+                    key={workout.id}
+                    workout={workout}
+                />
+            ))}
+        </>
     )
 }

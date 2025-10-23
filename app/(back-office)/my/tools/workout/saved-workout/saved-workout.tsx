@@ -1,11 +1,7 @@
-import {Suspense} from "react";
-import {SavedWorkouts} from "./saved-workout-async";
-import {SavedWorkoutSkeleton} from "./saved-workout-skeleton";
+"use client"
+
+import { SavedWorkouts } from "./saved-workout-async"
 
 export function SavedWorkout() {
-    return (
-        <Suspense fallback={<SavedWorkoutSkeleton/>}>
-            <SavedWorkouts/>
-        </Suspense>
-    )
+    return <SavedWorkouts />
 }

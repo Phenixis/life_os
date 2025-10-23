@@ -1,11 +1,7 @@
-import {Suspense} from "react";
-import {PastWorkoutsAsync} from "./past-workouts-async";
-import {PastWorkoutsSkeleton} from "./past-workouts-skeleton";
+"use client"
+
+import { PastWorkoutsAsync } from "./past-workouts-async"
 
 export function PastWorkouts() {
-    return (
-        <Suspense fallback={<PastWorkoutsSkeleton/>}>
-            <PastWorkoutsAsync/>
-        </Suspense>
-    )
+    return <PastWorkoutsAsync />
 }

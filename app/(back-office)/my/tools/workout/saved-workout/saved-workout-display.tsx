@@ -1,15 +1,17 @@
 "use client"
 
-import {Button} from "@/components/ui/button";
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
-import {useState} from "react";
-import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
-import {ChevronDown} from "lucide-react";
-import {Skeleton} from "@/components/ui/skeleton";
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from "@/components/ui/carousel"
-import {NewWorkout} from "@/app/(back-office)/my/tools/workout/new-workout";
+import {Button} from "@/components/ui/button"
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
+import {useState} from "react"
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible"
+import {ChevronDown} from "lucide-react"
+import {Skeleton} from "@/components/ui/skeleton"
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
+import {NewWorkout} from "@/app/(back-office)/my/tools/workout/new-workout"
+import {EditSavedWorkout} from "@/app/(back-office)/my/tools/workout/edit-saved-workout"
 
 export type SavedWorkoutProps = {
+    id: number
     title: string
     exercices: {
         name: string,
@@ -39,10 +41,15 @@ export function SavedWorkoutDisplay(
                         <h3 className={"text-xl font-bold"}>
                             {workout.title}
                         </h3>
-                        <NewWorkout
-                            className={"lg:opacity-0 lg:group-hover/workout:opacity-100"}
-                            defaultExercices={workout.exercices}
-                        />
+                        <div className="flex gap-2">
+                            <EditSavedWorkout 
+                                savedWorkout={workout}
+                            />
+                            <NewWorkout
+                                className={"lg:opacity-0 lg:group-hover/workout:opacity-100"}
+                                defaultExercices={workout.exercices}
+                            />
+                        </div>
                     </>
                 ) : (
                     <>
