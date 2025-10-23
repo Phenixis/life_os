@@ -1,6 +1,6 @@
 import {useSearchProject} from "@/hooks/use-search-project"
 import {useDebouncedCallback} from "use-debounce"
-import {useState} from "react"
+import {useState, useEffect, useRef} from "react"
 import {Label} from "@/components/ui/label"
 import {Input} from "@/components/ui/input"
 import {cn} from "@/lib/utils"
@@ -24,16 +24,26 @@ export default function SearchProjectsInput(
 ) {
     const [projectInputValue, setProjectInputValue] = useState<string>(defaultValue)
     const {projects, isLoading, isError} = useSearchProject({
-            query: project.title,
+            query: projectInputValue,
             limit: 5,
             enabled: enabled
         }
     )
     const [showProjectSuggestions, setShowProjectSuggestions] = useState(false)
+    const isUserTypingRef = useRef(false)
 
     const handleProjectChange = useDebouncedCallback((value: { title: string, id: number }) => {
         setProject(value)
     }, 200)
+
+    // Sync projectInputValue when project prop changes from parent (e.g., when modal opens with existing project)
+    // Only update if the user is not currently typing to avoid the write-back issue
+    useEffect(() => {
+        if (!isUserTypingRef.current && project.title !== projectInputValue) {
+            setProjectInputValue(project.title)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [project.title])
 
     return (
         <div className={cn("w-full", className)}>
@@ -45,6 +55,8 @@ export default function SearchProjectsInput(
                 value={projectInputValue}
                 onFocus={() => setShowProjectSuggestions(true)}
                 onBlur={(e) => {
+                    // User finished typing
+                    isUserTypingRef.current = false
                     // Delay hiding to allow click on suggestions
                     setTimeout(() => {
                         if (!e.relatedTarget || !e.relatedTarget.closest(".project-suggestions")) {
@@ -53,6 +65,7 @@ export default function SearchProjectsInput(
                     }, 100)
                 }}
                 onChange={(e) => {
+                    isUserTypingRef.current = true
                     setProjectInputValue(e.target.value)
                     if (projects && projects.length > 0) {
                         projects.forEach(proj => {
@@ -83,6 +96,7 @@ export default function SearchProjectsInput(
                                     onMouseDown={(e) => e.preventDefault()} // Prevent blur on click
                                     onClick={() => {
                                         const selectedProject = {title: proj.title, id: proj.id}
+                                        isUserTypingRef.current = false
                                         setProjectInputValue(selectedProject.title)
                                         setProject(selectedProject)
                                         setShowProjectSuggestions(false)
