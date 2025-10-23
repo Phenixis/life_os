@@ -32,14 +32,17 @@ export function SavedWorkoutDisplay(
 
     return (
         <div
-            className={"h-fit w-full border bg-gray-50 dark:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
+            className={"h-fit w-full lg:hover:bg-gray-50 dark:lg:hover:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
             <header className={"flex justify-between items-center space-x-12"}>
                 {workout ? (
                     <>
                         <h3 className={"text-xl font-bold"}>
                             {workout.title}
                         </h3>
-                        <NewWorkout defaultExercices={workout.exercices}/>
+                        <NewWorkout
+                            className={"lg:opacity-0 lg:group-hover/workout:opacity-100"}
+                            defaultExercices={workout.exercices}
+                        />
                     </>
                 ) : (
                     <>

@@ -69,17 +69,19 @@ export function PastWorkoutDisplay(
 
     return (
         <div
-            className={"h-fit w-full border bg-gray-50 dark:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
+            className={"h-fit w-full lg:hover:bg-gray-50 dark:lg:hover:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
             <header className={"flex justify-between items-center gap-4"}>
                 {workout ? (
                     <>
-                        <h3 className={"text-xl font-bold"}>
-                            {workout.title}
-                            <span className={"inline-block ml-4 font-normal text-sm text-gray-500"}>
+                        <h3 className={"line-clamp-1"}>
+                            <span className={"inline-block text-xl font-bold"}>
+                                {workout.title}
+                            </span>
+                            <span className={"inline-block ml-2 font-normal text-sm text-gray-500"}>
                                 {formatRelativeDate(workout.date)}
                             </span>
                         </h3>
-                        <Difficulty value={workout.difficulty} />
+                        <Difficulty value={workout.difficulty}/>
                     </>
                 ) : (
                     <>

@@ -12,7 +12,6 @@ module.exports = withPWA({
         remotePatterns: [
             { protocol: 'https', hostname: 'openweathermap.org', pathname: '/img/wn/**' },
             { protocol: 'https', hostname: 'image.tmdb.org', pathname: '/t/p/**' },
-            // Add any other external image hosts you use
         ],
     },
 })
