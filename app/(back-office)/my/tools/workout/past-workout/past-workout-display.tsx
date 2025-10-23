@@ -9,6 +9,7 @@ import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
 import {EditPastWorkout} from "@/app/(back-office)/my/tools/workout/edit-past-workout"
+import {WorkoutProgressionDisplay, ExerciseBestSetDisplay} from "./workout-progression-display"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
@@ -129,6 +130,7 @@ export function PastWorkoutDisplay(
                         )
                     }
                 </div>
+                {workout && <WorkoutProgressionDisplay workoutId={workout.id} />}
                 <CollapsibleContent className={"my-2"}>
                     {
                         workout ? (
@@ -139,7 +141,15 @@ export function PastWorkoutDisplay(
                                             <CarouselItem key={index}
                                                           className={"flex flex-col items-center justify-start"}>
                                                 <Table className={"mx-auto"}>
-                                                    <TableCaption>{exercice.name}</TableCaption>
+                                                    <TableCaption>
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <span>{exercice.name}</span>
+                                                            <ExerciseBestSetDisplay 
+                                                                exerciseName={exercice.name}
+                                                                sets={exercice.sets}
+                                                            />
+                                                        </div>
+                                                    </TableCaption>
                                                     <TableHeader>
                                                         <TableRow>
                                                             <TableHead>N° Set</TableHead>

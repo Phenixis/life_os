@@ -9,8 +9,10 @@ import type {
     CreateWorkoutRequest, 
     UpdateWorkoutRequest,
     CreateSavedWorkoutRequest,
-    UpdateSavedWorkoutRequest 
+    UpdateSavedWorkoutRequest,
+    WorkoutProgression
 } from "@/lib/types/workout"
+import { analyzeWorkoutProgression } from "@/lib/utils/workout-progression"
 
 interface WorkoutsApiResponse {
     workouts: PastWorkout[]
@@ -199,5 +201,38 @@ export function useWorkoutActions() {
         createSavedWorkout,
         updateSavedWorkout,
         deleteSavedWorkout
+    }
+}
+
+/**
+ * Hook to analyze workout progression
+ * Compares exercises in a workout against previous workouts
+ * 
+ * @param workoutId - ID of the workout to analyze
+ * @returns Progression analysis or null if workout not found
+ */
+export function useWorkoutProgression(workoutId: number | null): {
+    progression: WorkoutProgression | null;
+    isLoading: boolean;
+    error: unknown;
+} {
+    const { workouts, isLoading, error } = useWorkouts()
+
+    if (isLoading || !workoutId) {
+        return { progression: null, isLoading, error }
+    }
+
+    const currentWorkout = workouts.find(w => w.id === workoutId)
+
+    if (!currentWorkout) {
+        return { progression: null, isLoading: false, error: null }
+    }
+
+    const progression = analyzeWorkoutProgression(currentWorkout, workouts)
+
+    return {
+        progression,
+        isLoading: false,
+        error: null
     }
 }

@@ -50,3 +50,29 @@ export interface UpdateSavedWorkoutRequest {
     name?: string;
     exercises?: WorkoutExercise[];
 }
+
+// Progression tracking types
+
+export interface BestSet {
+    weight: number;
+    nb_rep: number;
+    score: number; // weight × reps
+}
+
+export interface ExerciseProgression {
+    exerciseName: string;
+    currentBestSet: BestSet;
+    previousBestSet: BestSet | null;
+    progression: {
+        weightDiff: number; // Difference in weight (current - previous)
+        repsDiff: number; // Difference in reps (current - previous)
+        scoreDiff: number; // Difference in total score (current - previous)
+        percentageChange: number; // Percentage change in score
+    } | null;
+}
+
+export interface WorkoutProgression {
+    workoutId: number;
+    workoutDate: Date;
+    exercises: ExerciseProgression[];
+}
