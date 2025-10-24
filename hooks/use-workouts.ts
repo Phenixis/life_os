@@ -22,6 +22,14 @@ interface SavedWorkoutsApiResponse {
     savedWorkouts: SavedWorkout[]
 }
 
+interface ExerciseSearchResult {
+    name: string
+}
+
+interface ExerciseSearchApiResponse {
+    exercises: ExerciseSearchResult[]
+}
+
 // Hook to fetch past workouts
 export function useWorkouts(limit?: number) {
     const { user } = useUser()
@@ -234,5 +242,35 @@ export function useWorkoutProgression(workoutId: number | null): {
         progression,
         isLoading: false,
         error: null
+    }
+}
+
+/**
+ * Hook to search for exercises by name
+ * 
+ * @param query - Search query for exercise name
+ * @param limit - Maximum number of results to return
+ * @returns List of matching exercise names
+ */
+export function useExerciseSearch(query: string, limit: number = 10): {
+    exercises: ExerciseSearchResult[];
+    isLoading: boolean;
+    error: unknown;
+} {
+    const { user } = useUser()
+    
+    const url = query.trim() 
+        ? `/api/workout/exercises/search?q=${encodeURIComponent(query)}&limit=${limit}`
+        : null
+    
+    const { data, error, isLoading } = useSWR(
+        user && url ? url : null,
+        (url) => fetcher(url, user!.api_key)
+    )
+
+    return {
+        exercises: data?.exercises || [],
+        isLoading,
+        error
     }
 }
