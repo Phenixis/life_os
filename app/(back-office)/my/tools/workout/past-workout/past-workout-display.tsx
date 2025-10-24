@@ -9,7 +9,7 @@ import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
 import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
-import {WorkoutProgressionDisplay, ExerciseBestSetDisplay} from "./workout-progression-display"
+import {ExerciseBestSetDisplay, WorkoutProgressionDisplay} from "./workout-progression-display"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
@@ -85,7 +85,7 @@ export function PastWorkoutDisplay(
                             </span>
                         </h3>
                         <div className="flex items-center gap-2">
-                            <WorkoutModal data={workout} />
+                            <WorkoutModal data={workout}/>
                             <Difficulty value={workout.difficulty}/>
                         </div>
                     </>
@@ -130,52 +130,54 @@ export function PastWorkoutDisplay(
                         )
                     }
                 </div>
-                {workout && <WorkoutProgressionDisplay workoutId={workout.id} />}
                 <CollapsibleContent className={"my-2"}>
                     {
                         workout ? (
-                            <Carousel className={"my-2 mx-auto w-[70%] lg:w-[80%]"}>
-                                <CarouselContent>
-                                    {
-                                        workout.exercices.map((exercice, index) => (
-                                            <CarouselItem key={index}
-                                                          className={"flex flex-col items-center justify-start"}>
-                                                <Table className={"mx-auto"}>
-                                                    <TableCaption>
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <span>{exercice.name}</span>
-                                                            <ExerciseBestSetDisplay 
-                                                                exerciseName={exercice.name}
-                                                                sets={exercice.sets}
-                                                            />
-                                                        </div>
-                                                    </TableCaption>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>N° Set</TableHead>
-                                                            <TableHead>Weight</TableHead>
-                                                            <TableHead>Nb Rep</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody className={"w-full"}>
-                                                        {
-                                                            exercice.sets.map((exercice, index) => (
-                                                                <TableRow key={index} className={"w-full"}>
-                                                                    <TableCell>{index + 1}</TableCell>
-                                                                    <TableCell>{exercice.weight}</TableCell>
-                                                                    <TableCell>{exercice.nb_rep}</TableCell>
-                                                                </TableRow>
-                                                            ))
-                                                        }
-                                                    </TableBody>
-                                                </Table>
-                                            </CarouselItem>
-                                        ))
-                                    }
-                                </CarouselContent>
-                                <CarouselNext className={"lg:hidden lg:group-hover/workout:flex"}/>
-                                <CarouselPrevious className={"lg:hidden lg:group-hover/workout:flex"}/>
-                            </Carousel>
+                            <>
+                                <Carousel className={"my-2 mx-auto w-[70%] lg:w-[80%]"}>
+                                    <CarouselContent>
+                                        {
+                                            workout.exercices.map((exercice, index) => (
+                                                <CarouselItem key={index}
+                                                              className={"flex flex-col items-center justify-start"}>
+                                                    <Table className={"mx-auto"}>
+                                                        <TableCaption>
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <span>{exercice.name}</span>
+                                                                <ExerciseBestSetDisplay
+                                                                    exerciseName={exercice.name}
+                                                                    sets={exercice.sets}
+                                                                />
+                                                            </div>
+                                                        </TableCaption>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>N° Set</TableHead>
+                                                                <TableHead>Weight</TableHead>
+                                                                <TableHead>Nb Rep</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody className={"w-full"}>
+                                                            {
+                                                                exercice.sets.map((exercice, index) => (
+                                                                    <TableRow key={index} className={"w-full"}>
+                                                                        <TableCell>{index + 1}</TableCell>
+                                                                        <TableCell>{exercice.weight}</TableCell>
+                                                                        <TableCell>{exercice.nb_rep}</TableCell>
+                                                                    </TableRow>
+                                                                ))
+                                                            }
+                                                        </TableBody>
+                                                    </Table>
+                                                </CarouselItem>
+                                            ))
+                                        }
+                                    </CarouselContent>
+                                    <CarouselNext className={"lg:hidden lg:group-hover/workout:flex"}/>
+                                    <CarouselPrevious className={"lg:hidden lg:group-hover/workout:flex"}/>
+                                </Carousel>
+                                <WorkoutProgressionDisplay workoutId={workout.id} />
+                            </>
                         ) : (
                             <p>
                                 skeleton

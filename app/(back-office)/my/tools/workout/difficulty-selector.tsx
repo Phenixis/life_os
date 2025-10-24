@@ -53,13 +53,13 @@ export function DifficultySelector({
                         <div
                             className={cn(
                                 heights[index],
-                                "w-3 rounded-sm transition-all",
+                                "w-2 rounded-sm transition-all",
                                 isActive || isHovered
                                     ? colors[index].active
                                     : colors[index].passive
                             )}
                         />
-                        {(isHovered || isActive) && (
+                        {(isHovered) && (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-popover border rounded shadow-sm whitespace-nowrap">
                                 {difficulties[index]}
                             </div>

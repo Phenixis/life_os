@@ -96,7 +96,7 @@ export function EditSavedWorkout({
                     <Button
                         variant={"ghost"}
                         size={"icon"}
-                        className={cn("lg:opacity-0 lg:group-hover/workout:opacity-100", className)}
+                        className={cn("", className)}
                     >
                         <Pencil className="size-4" />
                     </Button>

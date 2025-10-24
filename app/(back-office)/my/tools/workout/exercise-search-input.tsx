@@ -44,7 +44,7 @@ export function ExerciseSearchInput({
                     handleChange(e.target.value)
                 }}
                 className={cn(
-                    "w-full bg-transparent text-center outline-none",
+                    "w-full bg-transparent px-2 outline-none",
                     "text-lg md:text-lg font-medium",
                     className
                 )}

@@ -41,13 +41,12 @@ export function SavedWorkoutDisplay(
                         <h3 className={"text-xl font-bold"}>
                             {workout.title}
                         </h3>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 lg:opacity-0 lg:group-hover/workout:opacity-100">
                             <EditSavedWorkout 
                                 savedWorkout={workout}
                             />
                             <WorkoutModal
                                 data={workout.exercices}
-                                className="lg:opacity-0 lg:group-hover/workout:opacity-100"
                             />
                         </div>
                     </>
@@ -74,7 +73,7 @@ export function SavedWorkoutDisplay(
                                         ))
                                     }
                                 </p>
-                                <CollapsibleTrigger asChild className={"lg:hidden lg:group-hover/workout:flex"}>
+                                <CollapsibleTrigger asChild className={"lg:opacity-0 lg:group-hover/workout:opacity-100"}>
                                     <Button size="sm" variant="ghost">
                                         Details
                                         <ChevronDown

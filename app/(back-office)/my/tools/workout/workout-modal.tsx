@@ -21,10 +21,17 @@ import {
 import {Button} from "@/components/ui/button"
 import {useEffect, useState} from "react"
 import {Input} from "@/components/ui/input"
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
+import {
+    Carousel,
+    CarouselApi,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious
+} from "@/components/ui/carousel"
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
 import {Label} from "@/components/ui/label"
-import {Minus, Plus, Save, RotateCcw, Trash2, Pencil} from "lucide-react"
+import {Minus, Pencil, Plus, RotateCcw, Save, Trash2} from "lucide-react"
 import {cn} from "@/lib/utils"
 import {useWorkoutActions} from "@/hooks/use-workouts"
 import {toast} from "sonner"
@@ -65,29 +72,31 @@ function isPastWorkout(data: Exercice[] | PastWorkout | undefined): data is Past
     return data !== undefined && !Array.isArray(data) && 'id' in data
 }
 
-export function WorkoutModal({
-    data,
-    className,
-    triggerButton
-}: WorkoutModalProps) {
+export function WorkoutModal(
+    {
+        data,
+        className,
+        triggerButton
+    }: WorkoutModalProps
+) {
     const [showDialog, setShowDialog] = useState(false)
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-    
+
     // Determine mode and initial data
     const isPastWorkoutEdit = isPastWorkout(data)
     const isTemplateStart = Array.isArray(data)
     const mode = isPastWorkoutEdit ? 'edit' : 'create'
-    
+
     // Initialize state based on mode
-    const initialExercises = isPastWorkoutEdit 
+    const initialExercises = isPastWorkoutEdit
         ? data.exercices.map(ex => ({
             ...ex,
-            sets: ex.sets.map((s, idx) => ({ ...s, id: idx }))
-          }))
-        : isTemplateStart 
-        ? data 
-        : defaultExercice
-    
+            sets: ex.sets.map((s, idx) => ({...s, id: idx}))
+        }))
+        : isTemplateStart
+            ? data
+            : defaultExercice
+
     const [exercices, setExercices] = useState<Exercice[]>(initialExercises)
     const [workoutName, setWorkoutName] = useState(isPastWorkoutEdit ? data.title : "My Workout")
     const [workoutDate, setWorkoutDate] = useState<Date>(() => {
@@ -98,9 +107,9 @@ export function WorkoutModal({
     const [difficulty, setDifficulty] = useState<1 | 2 | 3 | 4 | 5>(isPastWorkoutEdit ? data.difficulty : 3)
     const [isSaving, setIsSaving] = useState(false)
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
-    const [carouselApi, setCarouselApi] = useState<any>(null)
-    
-    const { createWorkout, updateWorkout, deleteWorkout, createSavedWorkout } = useWorkoutActions()
+    const [carouselApi, setCarouselApi] = useState<CarouselApi>(undefined)
+
+    const {createWorkout, updateWorkout, deleteWorkout, createSavedWorkout} = useWorkoutActions()
 
     useEffect(() => {
         if (!carouselApi) return
@@ -145,7 +154,8 @@ export function WorkoutModal({
         setExercices(newExercices)
         // Wait for carousel to update, then scroll to the new exercise with animation
         setTimeout(() => {
-            carouselApi?.scrollTo(index, true) // true enables smooth scrolling
+            carouselApi?.scrollTo(index + 1, true) // true disable the animation
+            carouselApi?.scrollTo(index)
         }, 50)
     }
 
@@ -162,7 +172,7 @@ export function WorkoutModal({
         setExercices(newExercices)
         // Wait for carousel to update, then scroll to the new exercise with animation
         setTimeout(() => {
-            carouselApi?.scrollTo(index + 1, true) // true enables smooth scrolling
+            carouselApi?.scrollTo(index + 1)
         }, 50)
     }
 
@@ -181,7 +191,7 @@ export function WorkoutModal({
 
     const handleDelete = async () => {
         if (!isPastWorkoutEdit) return
-        
+
         try {
             await deleteWorkout(data.id)
             toast.success("Workout deleted successfully!")
@@ -195,7 +205,7 @@ export function WorkoutModal({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSaving(true)
-        
+
         try {
             if (mode === 'edit' && isPastWorkoutEdit) {
                 await updateWorkout({
@@ -227,7 +237,7 @@ export function WorkoutModal({
                 })
                 toast.success("Workout saved successfully!")
             }
-            
+
             setShowDialog(false)
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Failed to save workout")
@@ -249,7 +259,7 @@ export function WorkoutModal({
                     }))
                 }))
             })
-            
+
             toast.success("Workout template saved!")
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Failed to save template")
@@ -264,7 +274,7 @@ export function WorkoutModal({
             size="icon"
             className={cn("lg:opacity-0 lg:group-hover/workout:opacity-100", className)}
         >
-            <Pencil className="size-4" />
+            <Pencil className="size-4"/>
         </Button>
     ) : isTemplateStart ? (
         <Button
@@ -287,7 +297,7 @@ export function WorkoutModal({
                 <DialogTrigger asChild>
                     {triggerButton || defaultTrigger}
                 </DialogTrigger>
-                <DialogContent maxHeight="max-h-130">
+                <DialogContent maxHeight="max-h-150">
                     <form
                         onSubmit={handleSubmit}
                         className="space-y-4 mx-auto w-full max-w-[calc(100vw-5.25rem)] overflow-y-auto sm:max-w-[462px] lg:max-w-[718px] flex flex-col justify-between"
@@ -301,8 +311,8 @@ export function WorkoutModal({
                             <DialogDescription className="hidden">
                                 {mode === 'edit' ? 'Edit your workout' : 'Add a new workout'}
                             </DialogDescription>
-                            <div className="space-y-4 my-4">
-                                <div className="space-y-2">
+                            <div className="mx-2 flex gap-4">
+                                <div className="space-y-2 w-full">
                                     <Label htmlFor="workout-name">Workout Name</Label>
                                     <Input
                                         id="workout-name"
@@ -311,21 +321,19 @@ export function WorkoutModal({
                                         placeholder="Enter workout name"
                                     />
                                 </div>
-                                <div className="flex gap-4">
-                                    <div className="space-y-2 flex-1">
-                                        <Label htmlFor="workout-date">Date</Label>
-                                        <DatePicker
-                                            value={workoutDate}
-                                            onChange={setWorkoutDate}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Difficulty</Label>
-                                        <DifficultySelector
-                                            value={difficulty}
-                                            onChange={setDifficulty}
-                                        />
-                                    </div>
+                                <div className="space-y-2 flex-1">
+                                    <Label htmlFor="workout-date">Date</Label>
+                                    <DatePicker
+                                        value={workoutDate}
+                                        onChange={setWorkoutDate}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Difficulty</Label>
+                                    <DifficultySelector
+                                        value={difficulty}
+                                        onChange={setDifficulty}
+                                    />
                                 </div>
                             </div>
                             <Carousel setApi={setCarouselApi} className="my-2 mx-auto lg:w-[80%] pb-12 lg:pb-0">
@@ -333,7 +341,8 @@ export function WorkoutModal({
                                     {exercices.map((exercice, index) => (
                                         <CarouselItem key={index} className="flex flex-col items-start justify-start">
                                             <Table className="mx-auto" captionPosition="top">
-                                                <TableCaption className="mt-0 p-1 flex items-center justify-between text-black dark:text-white">
+                                                <TableCaption
+                                                    className="mt-0 p-1 flex items-center justify-between text-black dark:text-white">
                                                     <span className="text-lg md:text-lg">
                                                         {index + 1}.
                                                     </span>
@@ -358,7 +367,7 @@ export function WorkoutModal({
                                                             variant="ghost"
                                                             onClick={() => resetExercise(index)}
                                                         >
-                                                            <RotateCcw className="size-4" />
+                                                            <RotateCcw className="size-4"/>
                                                             <span className="hidden lg:block">
                                                                 Reset Exercise
                                                             </span>
@@ -373,7 +382,7 @@ export function WorkoutModal({
                                                                 setExercices([...exercices.slice(0, index), ...exercices.slice(index + 1)])
                                                             }}
                                                         >
-                                                            <Minus className="size-4" />
+                                                            <Minus className="size-4"/>
                                                             <span className="hidden lg:block">
                                                                 Remove Exercise
                                                             </span>
@@ -393,21 +402,22 @@ export function WorkoutModal({
                                                     {exercice.sets.map((set, setIndex) => (
                                                         <TableRow key={setIndex} className="group/row">
                                                             <TableCell className="flex justify-between items-center">
-                                                                <input type="hidden" id={`exercice-${index}-set-id-${set.id}`} />
+                                                                <input type="hidden"
+                                                                       id={`exercice-${index}-set-id-${set.id}`}/>
                                                                 {setIndex + 1}
                                                                 {exercice.sets.length > 1 && (
                                                                     <Button
                                                                         size="icon"
                                                                         type="button"
                                                                         variant="ghost"
-                                                                        className="lg:opacity-0 lg:group-hover/row:opacity-100"
+                                                                        className="lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-has-focus/row:opacity-100"
                                                                         onClick={() => {
                                                                             const newExercices = [...exercices]
                                                                             newExercices[index].sets = exercice.sets.filter(s => s.id !== set.id)
                                                                             setExercices(newExercices)
                                                                         }}
                                                                     >
-                                                                        <Minus className="size-4" />
+                                                                        <Minus className="size-4"/>
                                                                     </Button>
                                                                 )}
                                                             </TableCell>
@@ -440,12 +450,14 @@ export function WorkoutModal({
                                                         </TableRow>
                                                     ))}
                                                     {/* Empty row for adding new set */}
-                                                    <TableRow className="opacity-50 hover:opacity-100 transition-opacity">
+                                                    <TableRow
+                                                        className="opacity-50 hover:opacity-100 transition-opacity">
                                                         <TableCell>
                                                             {exercice.sets.length + 1}
                                                         </TableCell>
                                                         <TableCell className="w-2/6">
                                                             <Input
+                                                                readOnly
                                                                 type="number"
                                                                 placeholder="Weight"
                                                                 onFocus={() => {
@@ -467,6 +479,7 @@ export function WorkoutModal({
                                                         </TableCell>
                                                         <TableCell className="w-2/6">
                                                             <Input
+                                                                readOnly
                                                                 type="number"
                                                                 placeholder="Reps"
                                                                 onFocus={() => {
@@ -494,7 +507,8 @@ export function WorkoutModal({
                                 </CarouselContent>
                                 {exercices.length > 0 && (
                                     <>
-                                        <div className="absolute left-12 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
+                                        <div
+                                            className="absolute -left-12 top-[calc(50%-40px)] -translate-y-1/2 z-10 flex flex-col gap-2">
                                             <Button
                                                 type="button"
                                                 variant="outline"
@@ -502,11 +516,12 @@ export function WorkoutModal({
                                                 className="h-8 w-8 rounded-full"
                                                 onClick={() => addExerciseBefore(currentExerciseIndex)}
                                             >
-                                                <Plus className="h-4 w-4" />
+                                                <Plus className="h-4 w-4"/>
                                                 <span className="sr-only">Add exercise before</span>
                                             </Button>
                                         </div>
-                                        <div className="absolute right-12 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
+                                        <div
+                                            className="absolute -right-12 top-[calc(50%-40px)] -translate-y-1/2 z-10 flex flex-col gap-2">
                                             <Button
                                                 type="button"
                                                 variant="outline"
@@ -514,12 +529,12 @@ export function WorkoutModal({
                                                 className="h-8 w-8 rounded-full"
                                                 onClick={() => addExerciseAfter(currentExerciseIndex)}
                                             >
-                                                <Plus className="h-4 w-4" />
+                                                <Plus className="h-4 w-4"/>
                                                 <span className="sr-only">Add exercise after</span>
                                             </Button>
                                         </div>
-                                        <CarouselPrevious />
-                                        <CarouselNext />
+                                        <CarouselPrevious/>
+                                        <CarouselNext/>
                                     </>
                                 )}
                             </Carousel>
@@ -531,7 +546,7 @@ export function WorkoutModal({
                                 disabled={isSaving}
                                 onClick={handleSaveAsTemplate}
                             >
-                                <Save className="size-4 mr-2" />
+                                <Save className="size-4 mr-2"/>
                                 Save as Template
                             </Button>
                             <div className="flex gap-2">
@@ -543,7 +558,7 @@ export function WorkoutModal({
                                         onClick={() => setShowDeleteDialog(true)}
                                         className="text-destructive"
                                     >
-                                        <Trash2 className="size-4 mr-2" />
+                                        <Trash2 className="size-4 mr-2"/>
                                         Delete
                                     </Button>
                                 )}
@@ -575,7 +590,8 @@ export function WorkoutModal({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction onClick={handleDelete}
+                                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>
