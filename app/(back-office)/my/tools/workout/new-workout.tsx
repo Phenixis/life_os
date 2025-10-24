@@ -11,7 +11,6 @@ import {
 import {Button} from "@/components/ui/button"
 import {useEffect, useState} from "react"
 import {Input} from "@/components/ui/input"
-import {InvisibleInput} from "@/components/ui/invisible-input"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
 import {Label} from "@/components/ui/label"
@@ -61,7 +60,7 @@ export function NewWorkout(
     const [isSaving, setIsSaving] = useState(false)
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
     const [carouselApi, setCarouselApi] = useState<any>(null)
-    const { createWorkout, createSavedWorkout } = useWorkoutActions()
+    const {createWorkout, createSavedWorkout} = useWorkoutActions()
 
     useEffect(() => {
         if (!carouselApi) return
@@ -146,7 +145,7 @@ export function NewWorkout(
                     onSubmit={async (e) => {
                         e.preventDefault()
                         setIsSaving(true)
-                        
+
                         try {
                             await createWorkout({
                                 name: workoutName,
@@ -160,7 +159,7 @@ export function NewWorkout(
                                     }))
                                 }))
                             })
-                            
+
                             toast.success("Workout saved successfully!")
                             setShowDialog(false)
                         } catch (error) {
@@ -219,7 +218,7 @@ export function NewWorkout(
                                     }
                                 }}
                             >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-4 w-4"/>
                                 <span className="sr-only">Add exercise before</span>
                             </Button>
 
@@ -240,7 +239,7 @@ export function NewWorkout(
                                     }
                                 }}
                             >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-4 w-4"/>
                                 <span className="sr-only">Add exercise after</span>
                             </Button>
 
@@ -344,7 +343,8 @@ export function NewWorkout(
                                                         ))
                                                     }
                                                     {/* Empty row for adding new set - automatically adds to sets when user starts typing */}
-                                                    <TableRow className="opacity-50 hover:opacity-100 transition-opacity">
+                                                    <TableRow
+                                                        className="opacity-50 hover:opacity-100 transition-opacity">
                                                         <TableCell className="text-center">
                                                             {exercice.sets.length + 1}
                                                         </TableCell>
@@ -352,7 +352,7 @@ export function NewWorkout(
                                                             <Input
                                                                 type="number"
                                                                 placeholder="Weight"
-                                                                onFocus={(e) => {
+                                                                onFocus={() => {
                                                                     // Add new empty set when user focuses on the new row
                                                                     const newExercices = [...exercices];
                                                                     const currentSets = newExercices[index].sets;
@@ -375,7 +375,8 @@ export function NewWorkout(
                                                             <Input
                                                                 type="number"
                                                                 placeholder="Reps"
-                                                                onFocus={(e) => {
+                                                                onFocus={() => {
+
                                                                     // Add new empty set when user focuses on the new row
                                                                     const newExercices = [...exercices];
                                                                     const currentSets = newExercices[index].sets;
@@ -429,7 +430,7 @@ export function NewWorkout(
                                             }))
                                         }))
                                     })
-                                    
+
                                     toast.success("Workout template saved!")
                                 } catch (error) {
                                     toast.error(error instanceof Error ? error.message : "Failed to save template")
@@ -437,7 +438,7 @@ export function NewWorkout(
                                     setIsSaving(false)
                                 }
                             }}>
-                            <Save className="size-4 mr-2" />
+                            <Save className="size-4 mr-2"/>
                             Save as Template
                         </Button>
                         <div className="flex gap-2">
