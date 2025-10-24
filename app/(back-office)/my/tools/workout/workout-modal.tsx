@@ -154,8 +154,7 @@ export function WorkoutModal(
         setExercices(newExercices)
         // Wait for carousel to update, then scroll to the new exercise with animation
         setTimeout(() => {
-            carouselApi?.scrollTo(index + 1, true) // true disable the animation
-            carouselApi?.scrollTo(index)
+            carouselApi?.scrollTo(index, true) // Scroll to new position with animation
         }, 50)
     }
 
@@ -172,7 +171,7 @@ export function WorkoutModal(
         setExercices(newExercices)
         // Wait for carousel to update, then scroll to the new exercise with animation
         setTimeout(() => {
-            carouselApi?.scrollTo(index + 1)
+            carouselApi?.scrollTo(index + 1, true) // Scroll to new position with animation
         }, 50)
     }
 
@@ -187,6 +186,26 @@ export function WorkoutModal(
             }]
         }
         setExercices(newExercices)
+    }
+
+    const removeExercise = (index: number) => {
+        const newExercices = [...exercices.slice(0, index), ...exercices.slice(index + 1)]
+        setExercices(newExercices)
+        
+        // Animate carousel transition
+        setTimeout(() => {
+            if (index < exercices.length - 1) {
+                // There is an exercise after the one we're deleting
+                // Jump to previous without animation, then animate to next
+                carouselApi?.scrollTo(index - 1, false) // Jump without animation
+                setTimeout(() => {
+                    carouselApi?.scrollTo(index, true) // Animate to what is now the next exercise
+                }, 10)
+            } else {
+                // No exercise after, just animate to previous
+                carouselApi?.scrollTo(index - 1, true) // Animate to previous
+            }
+        }, 50)
     }
 
     const handleDelete = async () => {
@@ -378,9 +397,7 @@ export function WorkoutModal(
                                                             type="button"
                                                             className="font-normal text-gray-700 lg:hover:text-gray-900 dark:text-gray-300 dark:lg:hover:text-gray-100"
                                                             variant="ghost-destructive"
-                                                            onClick={() => {
-                                                                setExercices([...exercices.slice(0, index), ...exercices.slice(index + 1)])
-                                                            }}
+                                                            onClick={() => removeExercise(index)}
                                                         >
                                                             <Minus className="size-4"/>
                                                             <span className="hidden lg:block">

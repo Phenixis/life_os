@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const heights = ["h-1", "h-2", "h-3", "h-4", "h-5"]
 const difficulties = ["Too Easy", "Easy", "Challenging", "Hard", "Too Hard"]
@@ -31,42 +31,39 @@ export function DifficultySelector({
     onChange: (value: 1 | 2 | 3 | 4 | 5) => void
     className?: string
 }) {
-    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-
     return (
-        <div className={cn("flex justify-start items-end gap-2", className)}>
-            {Array.from({ length: 5 }).map((_, index) => {
-                const difficultyLevel = (index + 1) as 1 | 2 | 3 | 4 | 5
-                const isActive = value === difficultyLevel
-                const isHovered = hoveredIndex === index
+        <TooltipProvider>
+            <div className={cn("flex justify-start items-end gap-2", className)}>
+                {Array.from({ length: 5 }).map((_, index) => {
+                    const difficultyLevel = (index + 1) as 1 | 2 | 3 | 4 | 5
+                    const isActive = value === difficultyLevel
 
-                return (
-                    <button
-                        key={index}
-                        type="button"
-                        onClick={() => onChange(difficultyLevel)}
-                        onMouseEnter={() => setHoveredIndex(index)}
-                        onMouseLeave={() => setHoveredIndex(null)}
-                        className="group relative cursor-pointer"
-                        title={difficulties[index]}
-                    >
-                        <div
-                            className={cn(
-                                heights[index],
-                                "w-2 rounded-sm transition-all",
-                                isActive || isHovered
-                                    ? colors[index].active
-                                    : colors[index].passive
-                            )}
-                        />
-                        {(isHovered) && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-popover border rounded shadow-sm whitespace-nowrap">
+                    return (
+                        <Tooltip key={index}>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    onClick={() => onChange(difficultyLevel)}
+                                    className="cursor-pointer"
+                                >
+                                    <div
+                                        className={cn(
+                                            heights[index],
+                                            "w-3 rounded-sm transition-all",
+                                            isActive
+                                                ? colors[index].active
+                                                : colors[index].passive
+                                        )}
+                                    />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" sideOffset={5}>
                                 {difficulties[index]}
-                            </div>
-                        )}
-                    </button>
-                )
-            })}
-        </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    )
+                })}
+            </div>
+        </TooltipProvider>
     )
 }

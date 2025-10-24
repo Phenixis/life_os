@@ -2,7 +2,7 @@
 
 import { useExerciseSearch } from "@/hooks/use-workouts"
 import { useDebouncedCallback } from "use-debounce"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 export function ExerciseSearchInput({
@@ -23,6 +23,11 @@ export function ExerciseSearchInput({
     const handleChange = useDebouncedCallback((value: string) => {
         onChange(value)
     }, 200)
+
+    // Sync internal state when prop changes
+    useEffect(() => {
+        setInputValue(value)
+    }, [value])
 
     return (
         <div className={cn("relative w-full", className)}>
