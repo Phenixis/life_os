@@ -145,8 +145,8 @@ export function NewWorkout(
                         <DialogDescription className={"hidden"}>
                             Add a new workout
                         </DialogDescription>
-                        <div className="space-y-4 my-4">
-                            <div className="space-y-2">
+                        <div className="w-full flex gap-4">
+                            <div className="w-full space-y-2">
                                 <Label htmlFor="workout-name">Workout Name</Label>
                                 <Input
                                     id="workout-name"
@@ -155,7 +155,7 @@ export function NewWorkout(
                                     placeholder="Enter workout name"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="w-full space-y-2">
                                 <Label htmlFor="difficulty">Difficulty (1-5)</Label>
                                 <Input
                                     id="difficulty"

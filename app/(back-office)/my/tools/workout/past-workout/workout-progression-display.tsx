@@ -102,6 +102,8 @@ export function ExerciseBestSetDisplay({ exerciseName, sets }: ExerciseBestSetDi
         return null
     }
 
+    console.log(exerciseName)
+
     // Calculate best set
     let bestSet = sets[0]
     let bestScore = bestSet.weight * bestSet.nb_rep
