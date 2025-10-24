@@ -8,7 +8,7 @@ import {ChevronDown} from "lucide-react"
 import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
-import {EditPastWorkout} from "@/app/(back-office)/my/tools/workout/edit-past-workout"
+import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
 import {WorkoutProgressionDisplay, ExerciseBestSetDisplay} from "./workout-progression-display"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
@@ -85,7 +85,7 @@ export function PastWorkoutDisplay(
                             </span>
                         </h3>
                         <div className="flex items-center gap-2">
-                            <EditPastWorkout workout={workout} />
+                            <WorkoutModal data={workout} />
                             <Difficulty value={workout.difficulty}/>
                         </div>
                     </>

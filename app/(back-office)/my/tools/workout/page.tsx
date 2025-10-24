@@ -1,7 +1,7 @@
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
-import {SavedWorkout} from "./saved-workout/saved-workout";
-import {PastWorkouts} from "@/app/(back-office)/my/tools/workout/past-workout/past-workouts";
-import {NewWorkout} from "./new-workout";
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
+import {SavedWorkout} from "./saved-workout/saved-workout"
+import {PastWorkouts} from "@/app/(back-office)/my/tools/workout/past-workout/past-workouts"
+import {WorkoutModal} from "./workout-modal"
 
 export default async function WorkoutPage() {
     return (
@@ -14,11 +14,11 @@ export default async function WorkoutPage() {
                     <PastWorkouts />
                 </article>
                 <article>
-                    <header className={`flex justify-between items-center space-x-4`}>
-                        <h2 className={`text-lg lg:text-xl leading-loose text-gray-900 dark:text-gray-100`}>
+                    <header className="flex justify-between items-center space-x-4">
+                        <h2 className="text-lg lg:text-xl leading-loose text-gray-900 dark:text-gray-100">
                             New workout
                         </h2>
-                        <NewWorkout />
+                        <WorkoutModal />
                     </header>
                     <SavedWorkout/>
                 </article>

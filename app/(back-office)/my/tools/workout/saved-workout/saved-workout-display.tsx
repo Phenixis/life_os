@@ -7,7 +7,7 @@ import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/
 import {ChevronDown} from "lucide-react"
 import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
-import {NewWorkout} from "@/app/(back-office)/my/tools/workout/new-workout"
+import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
 import {EditSavedWorkout} from "@/app/(back-office)/my/tools/workout/edit-saved-workout"
 
 export type SavedWorkoutProps = {
@@ -45,9 +45,9 @@ export function SavedWorkoutDisplay(
                             <EditSavedWorkout 
                                 savedWorkout={workout}
                             />
-                            <NewWorkout
-                                className={"lg:opacity-0 lg:group-hover/workout:opacity-100"}
-                                defaultExercices={workout.exercices}
+                            <WorkoutModal
+                                data={workout.exercices}
+                                className="lg:opacity-0 lg:group-hover/workout:opacity-100"
                             />
                         </div>
                     </>
