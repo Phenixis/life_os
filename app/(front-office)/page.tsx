@@ -11,7 +11,7 @@ import { CheckCircle, Zap, Shield, Target, Users, Sparkles, ArrowRight, Menu, X 
 import Link from "next/link"
 import Logo from "@/components/big/logo"
 import PricingCard from '@/components/big/pricing/pricing_card'
-import {basic, free} from "@/app/(back-office)/my/settings/subscription/plans";
+import {basic, free, pro} from "@/app/(back-office)/my/settings/subscription/plans";
 
 export default function LandingPage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -77,137 +77,6 @@ export default function LandingPage() {
 
     return (
         <div ref={containerRef} className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
-            {/* Navigation */}
-            <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 backdrop-blur-sm bg-white/80 dark:bg-black/80 sticky top-0 z-50">
-                <MotionDiv
-                    className="flex items-center space-x-2"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                    <Logo size={48} title />
-                </MotionDiv>
-
-                {/* Desktop Navigation Links */}
-                <MotionDiv
-                    className="hidden md:flex items-center space-x-8"
-                    variants={staggerContainer}
-                    initial="initial"
-                    animate="animate"
-                >
-                    {navigationItems.map((item) => (
-                        <MotionA
-                            key={item.name}
-                            href={item.href}
-                            variants={staggerItem}
-                            className="text-sm text-gray-600 dark:text-gray-400 lg:hover:text-black dark:lg:hover:text-white transition-colors relative group"
-                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)}
-                            whileHover={{ y: -2 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                        >
-                            {item.name}
-                            <MotionDiv
-                                className="absolute -bottom-1 left-0 right-0 h-0.5 bg-black dark:bg-white"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.2 }}
-                            />
-                        </MotionA>
-                    ))}
-                </MotionDiv>
-
-                {/* Desktop CTA Buttons */}
-                <div className="hidden md:flex items-center space-x-4">
-                    <MotionDiv whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Link href="/login" className="text-sm lg:hover:underline">Sign In</Link>
-                    </MotionDiv>
-                    <MotionDiv whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Link href="/sign-up">
-                            <Button size="sm" className="bg-black dark:bg-white text-white dark:text-black lg:hover:bg-gray-800 dark:lg:hover:bg-gray-200">
-                                Get Started
-                            </Button>
-                        </Link>
-                    </MotionDiv>
-                </div>
-
-                {/* Mobile Menu Button */}
-                <MotionButton
-                    className="md:hidden p-2"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    <MotionDiv
-                        animate={{ rotate: isMobileMenuOpen ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                    </MotionDiv>
-                </MotionButton>
-            </nav>
-
-            {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && (
-                <MotionDiv
-                    className="md:hidden fixed inset-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-sm"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <div className="flex flex-col items-center justify-center h-full space-y-8">
-                        <MotionDiv
-                            className="flex flex-col items-center space-y-6"
-                            variants={staggerContainer}
-                            initial="initial"
-                            animate="animate"
-                        >
-                            {navigationItems.map((item) => (
-                                <MotionA
-                                    key={item.name}
-                                    href={item.href}
-                                    variants={staggerItem}
-                                    className="text-2xl font-medium text-gray-600 dark:text-gray-400 lg:hover:text-black dark:lg:hover:text-white transition-colors"
-                                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                                        handleNavClick(e, item.href)
-                                        setIsMobileMenuOpen(false)
-                                    }}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    {item.name}
-                                </MotionA>
-                            ))}
-                        </MotionDiv>
-
-                        <MotionDiv
-                            className="flex flex-col items-center space-y-4"
-                            variants={staggerContainer}
-                            initial="initial"
-                            animate="animate"
-                        >
-                            <MotionDiv variants={staggerItem}>
-                                <Link
-                                    href="/login"
-                                    className="text-lg lg:hover:underline"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Sign In
-                                </Link>
-                            </MotionDiv>
-                            <MotionDiv variants={staggerItem}>
-                                <Button
-                                    size="lg"
-                                    className="bg-black dark:bg-white text-white dark:text-black lg:hover:bg-gray-800 dark:lg:hover:bg-gray-200"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Get Started
-                                </Button>
-                            </MotionDiv>
-                        </MotionDiv>
-                    </div>
-                </MotionDiv>
-            )}
-
             {/* Hero Section */}
             <MotionSection
                 className="px-6 py-20 text-center max-w-6xl mx-auto relative overflow-hidden"
@@ -722,7 +591,7 @@ export default function LandingPage() {
                             onClick={() => setIsYearly(true)}
                             className={`${isYearly && "font-bold"} text-sm text-gray-600 dark:text-gray-400 cursor-pointer`}>
                             Yearly
-                            <Badge className="ml-1 bg-blue-500 lg:hover:bg-blue-600">40% Off</Badge>
+                            <Badge className="ml-1 bg-blue-500 lg:hover:bg-blue-600">20% Off</Badge>
                         </span>
                     </MotionDiv>
 
@@ -733,98 +602,28 @@ export default function LandingPage() {
                         whileInView="animate"
                         viewport={{ once: true, margin: "-50px" }}
                     >
-                        <PricingCard plan={free} recurrency={isYearly ? 'yearly' : 'monthly'} />
+                        <PricingCard
+                            plan={free}
+                            recurrency={isYearly ? 'yearly' : 'monthly'}
+                        />
 
                         {/* Basic Plan */}
-                        <PricingCard plan={basic} isPopular recurrency={isYearly ? 'yearly' : 'monthly'} />
+                        <PricingCard
+                            plan={basic}
+                            isPopular={true}
+                            recurrency={isYearly ? 'yearly' : 'monthly'}
+                        />
 
                         {/* Pro Plan */}
-                        <MotionDiv variants={staggerItem} className="grayscale pointer-events-none">
-                            <MotionDiv
-                                whileHover={{ scale: 1.03, y: -10 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                            >
-                                <Card className="border-purple-500 dark:border-purple-400 relative flex flex-col h-[650px]">
-                                    <MotionDiv
-                                        className="absolute -top-3 left-1/2 transform -translate-x-1/2"
-                                        initial={{ opacity: 0, y: -10 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.5, delay: 0.3 }}
-                                        viewport={{ once: true }}
-                                    >
-                                        <Badge className="bg-purple-500 text-white">
-                                            Coming soon
-                                        </Badge>
-                                    </MotionDiv>
-                                    <CardHeader className="text-center pb-4">
-                                        <CardTitle className="text-2xl font-heading">Pro</CardTitle>
-                                        <div className="mt-4">
-                                            <MotionSpan
-                                                className="text-4xl font-bold"
-                                                initial={{ scale: 0.8 }}
-                                                whileInView={{ scale: 1 }}
-                                                transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.5 }}
-                                                viewport={{ once: true }}
-                                            >
-                                                €???
-                                            </MotionSpan>
-                                            <span className="text-gray-600 dark:text-gray-400">/month</span>
-                                        </div>
-                                        <CardDescription className="mt-2">
-                                            Exclusive community for serious achievers
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4 flex-1 flex flex-col">
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">
-                                            Everything in Basic, plus:
-                                        </p>
-                                        <div className="space-y-3 flex-1">
-                                            {[
-                                                'Weekly and Monthly virtual meetups',
-                                                '1 physical meetup per year',
-                                                'Exclusive community access',
-                                                'Priority support',
-                                                'Early access to new features'
-                                            ].map((feature, index) => (
-                                                <MotionDiv
-                                                    key={index}
-                                                    className="flex items-center space-x-3 text-left"
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    whileInView={{ opacity: 1, x: 0 }}
-                                                    transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                                                    viewport={{ once: true }}
-                                                >
-                                                    <CheckCircle className="h-5 w-5 text-green-500" />
-                                                    <span className="text-sm">{feature}</span>
-                                                </MotionDiv>
-                                            ))}
-                                        </div>
-                                        <div className="text-xs text-purple-600 dark:text-purple-400 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg font-medium">
-                                            ⚡ Limited to 10 members only
-                                        </div>
-                                        <MotionDiv
-                                            initial={{ opacity: 0, y: 20 }}
-                                            whileInView={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.5, delay: 1.1 }}
-                                            viewport={{ once: true }}
-                                        >
-                                            <MotionDiv
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <Button className="w-full text-white bg-purple-500 lg:hover:bg-purple-600 dark:text-white">
-                                                    Join Pro Community
-                                                </Button>
-                                            </MotionDiv>
-                                        </MotionDiv>
-                                    </CardContent>
-                                </Card>
-                            </MotionDiv>
-                        </MotionDiv>
+                        <PricingCard
+                            plan={pro}
+                            recurrency={isYearly ? 'yearly' : 'monthly'}
+                            active={false}
+                        />
                     </MotionDiv>
 
                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-8">
-                        No credit card required for Free plan. Cancel paid plans anytime.
+                        No credit card required for Free plan. Cancel paid plans anytime, cancellation at period end.
                     </p>
                 </div>
             </MotionSection>
@@ -885,55 +684,6 @@ export default function LandingPage() {
                     </MotionDiv>
                 </div>
             </MotionSection>
-
-            {/* Footer */}
-            <MotionFooter
-                className="px-6 py-8 border-t border-gray-200 dark:border-gray-800"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-            >
-                <MotionDiv
-                    className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center"
-                    variants={staggerContainer}
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true }}
-                >
-                    <MotionDiv
-                        className="flex items-center space-x-2 mb-4 md:mb-0"
-                        variants={staggerItem}
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    >
-                        <Logo size={32} title />
-                    </MotionDiv>
-                    <MotionDiv
-                        className="flex space-x-6 text-sm text-gray-600 dark:text-gray-400"
-                        variants={staggerContainer}
-                        initial="initial"
-                        whileInView="animate"
-                        viewport={{ once: true }}
-                    >
-                        {['Privacy', 'Terms', 'Contact'].map((link) => (
-                            <MotionDiv
-                                key={link}
-                                variants={staggerItem}
-                            >
-                                <MotionDiv
-                                    whileHover={{ y: -2 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                >
-                                    <Link href={`/${link.toLowerCase()}`} className="lg:hover:underline">
-                                        {link}
-                                    </Link>
-                                </MotionDiv>
-                            </MotionDiv>
-                        ))}
-                    </MotionDiv>
-                </MotionDiv>
-            </MotionFooter>
         </div>
     )
 }

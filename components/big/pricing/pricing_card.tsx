@@ -33,7 +33,7 @@ export default function PricingCard(
                 className={`relative hover:z-10 ${!active && "grayscale pointer-events-none"}`}
             >
                 <Card
-                    className={`${currentSubscription ? "relative border-green-500 dark:border-green-400" : !active ? "border-purple-500 dark:border-purple-400" : isPopular ? "relative border-blue-500 dark:border-blue-400" : "border-gray-200 dark:border-gray-800"} flex flex-col h-[650px]`}>
+                    className={`${currentSubscription ? "relative border-green-500 dark:border-green-400" : !active ? "border-purple-500 dark:border-purple-400" : isPopular ? "relative border-blue-500 dark:border-blue-400" : "border-gray-200 dark:border-gray-800"} flex flex-col h-full`}>
                     {
                         (isPopular || currentSubscription || !active) && (
                             <div
@@ -70,7 +70,7 @@ export default function PricingCard(
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
-                        <div className="space-y-3 flex-1">
+                        <div className="space-y-3 flex-1 my-6">
                             {plan.features.enabled.map((feature, index) => (
                                 <Tooltip key={index} tooltip={getFeature(feature).description || ""} className="w-full">
                                     <div
@@ -107,6 +107,12 @@ export default function PricingCard(
                                             priceId={plan.price ? plan.price[recurrency].priceId : ""}
                                             planName={plan.display_name}
                                             isFree={plan.price === undefined}
+                                        />
+                                    ) : plan.name === "free" ? (
+                                        <SubmitButton
+                                            isPopular={isPopular}
+                                            isFree={true}
+                                            isActive={active}
                                         />
                                     ) : (
                                         <form action={checkoutAction}>
