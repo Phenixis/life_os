@@ -15,7 +15,7 @@ import {Button} from "@/components/ui/button"
 import {useRouter} from "next/navigation"
 import {useDarkMode} from "@/hooks/use-dark-mode"
 import {useDailyMoodModal, useNoteModal, useTaskModal} from "@/contexts/modal-commands-context"
-import {tools} from "@/lib/tools-data"
+import {isToolsCategorie, tools} from "@/lib/tools-data"
 import {toast} from "sonner"
 import {settingsItems} from "@/components/big/settings/settings-sidebar"
 
@@ -31,11 +31,21 @@ const items: Record<string, MenuItem[]> = {
         {name: "Notes", href: "/my/notes", alternativeNames: ["note"]},
         {name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"]},
     ],
-    "Tools": tools.map(tool => ({
-        name: tool.name,
-        href: tool.href,
-        alternativeNames: tool.alternativeNames,
-    })),
+    "Tools": tools.flatMap(tool => {
+        if (isToolsCategorie(tool)) {
+            return tool.tools.map((tool) => ({
+                name: tool.name,
+                href: tool.href,
+                alternativeNames: tool.alternativeNames,
+            }))
+        }
+
+        return {
+            name: tool.name,
+            href: tool.href,
+            alternativeNames: tool.alternativeNames,
+        }
+    }),
     "Settings": [
         {
             name: "Settings",
