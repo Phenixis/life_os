@@ -18,29 +18,29 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { name, email, subject, category, message } = body;
 
-        // Validate required fields
-        if (!name || !email || !subject || !message) {
+        // Validate required fields and trim whitespace
+        if (!name?.trim() || !email?.trim() || !subject?.trim() || !message?.trim()) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
             );
         }
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+        // Validate email format using a more comprehensive regex following RFC standards
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+        if (!emailRegex.test(email.trim())) {
             return NextResponse.json(
                 { error: "Invalid email format" },
                 { status: 400 }
             );
         }
 
-        // Escape user input to prevent XSS
-        const safeName = escapeHtml(name);
-        const safeEmail = escapeHtml(email);
-        const safeSubject = escapeHtml(subject);
-        const safeCategory = category ? escapeHtml(category) : '';
-        const safeMessage = escapeHtml(message);
+        // Escape user input to prevent XSS (trim before escaping)
+        const safeName = escapeHtml(name.trim());
+        const safeEmail = escapeHtml(email.trim());
+        const safeSubject = escapeHtml(subject.trim());
+        const safeCategory = category?.trim() ? escapeHtml(category.trim()) : '';
+        const safeMessage = escapeHtml(message.trim());
 
         // Create HTML email content
         const emailContent = `
@@ -133,6 +133,10 @@ export async function POST(request: NextRequest) {
         );
     } catch (error) {
         console.error("Error sending contact email:", error);
+        // Log the detailed error for debugging while keeping user message generic
+        if (error instanceof Error) {
+            console.error("Error details:", error.message, error.stack);
+        }
         return NextResponse.json(
             { error: "Failed to send email" },
             { status: 500 }
