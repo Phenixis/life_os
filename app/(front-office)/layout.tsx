@@ -6,10 +6,12 @@ import React, {useRef, useState} from "react";
 import Link from "next/link";
 import {Button} from "@/components/ui/button";
 import {Menu, X} from "lucide-react";
+import {useRouter} from "next/navigation";
 
 export default function FrontOfficeLayout({children}: { children: React.ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
+    const router = useRouter();
 
     // Animation variants
     const staggerContainer = {
@@ -40,6 +42,10 @@ export default function FrontOfficeLayout({children}: { children: React.ReactNod
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         e.preventDefault()
+        if (window.location.pathname !== "/") {
+            router.push("/" + href)
+            return
+        }
         const element = document.querySelector(href) as HTMLElement
         if (element) {
             const offsetTop = element.offsetTop - 80 // Account for sticky nav
