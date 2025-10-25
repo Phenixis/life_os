@@ -110,7 +110,7 @@ export function TasksCard(
     const [progression, setProgression] = useState(0)
 
     // Add a ref to track if this is the first render
-    const isSavedFiltersBeenUser = useRef(false);
+    const isSavedFiltersBeenUsed = useRef(false);
 
     // -------------------- Data Fetching --------------------
     const {projects, isLoading: projectsLoading} = useProjects({
@@ -170,7 +170,7 @@ export function TasksCard(
 
     // Update localStorage when filters change
     useEffect(() => {
-        if (!isSavedFiltersBeenUser.current) {
+        if (!isSavedFiltersBeenUsed.current) {
             return;
         }
 
@@ -184,7 +184,7 @@ export function TasksCard(
             dueBeforeDate: dueBeforeDate?.toISOString(),
             groupByProject
         } as tasksFilters)
-        // Write to both keys to be backward-compatible with legacy storage
+
         window.localStorage.setItem("tasks_filters", serialized)
     }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject]);
 
@@ -195,38 +195,30 @@ export function TasksCard(
                 const savedFilters = JSON.parse(raw) as Partial<tasksFilters>
 
                 if (typeof savedFilters.completed === "boolean") {
-                    console.log('completed filter:', savedFilters.completed);
                     setCompleted(savedFilters.completed)
                 }
                 if (typeof savedFilters.limit === "number" && Number.isFinite(savedFilters.limit)) {
-                    console.log('limit filter:', savedFilters.limit);
                     setLimit(savedFilters.limit)
                 }
                 if (typeof savedFilters.orderBy === "string") {
-                    console.log('orderBy filter:', savedFilters.orderBy);
                     setOrderBy(savedFilters.orderBy as keyof Task.Task.Select)
                 }
                 if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") {
-                    console.log('ordering direction filter:', savedFilters.orderingDirection);
                     setOrderingDirection(savedFilters.orderingDirection)
                 }
                 if (Array.isArray(savedFilters.selectedProjects)) {
-                    console.log('selected projects filter:', savedFilters.selectedProjects);
                     setSelectedProjects(savedFilters.selectedProjects)
                 }
                 if (Array.isArray(savedFilters.removedProjects)) {
-                    console.log('removed projects filter:', savedFilters.removedProjects);
                     setRemovedProjects(savedFilters.removedProjects)
                 }
                 if (typeof savedFilters.dueBeforeDate === "string") {
                     const d = new Date(savedFilters.dueBeforeDate)
                     if (!isNaN(d.getTime())) {
-                        console.log('due before date filter:', d);
                         setDueBeforeDate(d)
                     }
                 }
                 if (typeof savedFilters.groupByProject === "boolean") {
-                    console.log('group by project filter:', savedFilters.groupByProject);
                     setGroupByProject(savedFilters.groupByProject)
                 }
             } catch (e) {
@@ -235,7 +227,7 @@ export function TasksCard(
             }
         }
 
-        isSavedFiltersBeenUser.current = true;
+        isSavedFiltersBeenUsed.current = true;
     }, [])
 
     // -------------------- Callbacks --------------------

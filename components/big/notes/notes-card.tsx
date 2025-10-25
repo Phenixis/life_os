@@ -3,7 +3,7 @@
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
 import {cn} from "@/lib/utils"
 import type {Note} from "@/lib/db/schema"
-import {useCallback, useEffect, useMemo, useState, useTransition, useRef} from "react"
+import {useCallback, useEffect, useMemo, useRef, useState, useTransition} from "react"
 import {Button} from "@/components/ui/button"
 import {Filter, FolderTree, Plus} from "lucide-react"
 import NoteDisplay from "./note-display"
@@ -89,7 +89,7 @@ export function NotesCard(
     const [title, setTitle] = useState<string>("")
 
     // Add a ref to track if this is the first render
-    const isFirstRender = useRef(true);
+    const isSavedFiltersBeenUsed = useRef(false);
 
     // -------------------- Data Fetching --------------------
     const {projects, isLoading: projectsLoading} = useProjects({
@@ -107,51 +107,62 @@ export function NotesCard(
 
     // -------------------- Effects --------------------
     useEffect(() => {
-        window.localStorage.setItem("notes_filters", JSON.stringify({
+        if (!isSavedFiltersBeenUsed.current) {
+            return;
+        }
+
+        const serialized = JSON.stringify({
             limit,
             orderBy,
             orderingDirection,
             selectedProjects,
             removedProjects,
             groupByProject,
-        } as notesFilters))
+        } as notesFilters)
+
+        window.localStorage.setItem("notes_filters", serialized)
     }, [groupByProject, limit, orderBy, orderingDirection, removedProjects, selectedProjects])
 
     useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
+        const raw = window.localStorage.getItem("notes_filters")
+
+        if (raw) {
+            try {
+                const savedFilters = JSON.parse(raw) as Partial<notesFilters>;
+
+                if (typeof savedFilters.limit === "number") {
+                    setLimit(savedFilters.limit)
+                }
+
+                if (typeof savedFilters.orderBy === "string") {
+                    setOrderBy(savedFilters.orderBy as keyof Note.Note.Select)
+                }
+
+                if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") {
+                    setOrderingDirection(savedFilters.orderingDirection)
+                }
+
+                if (Array.isArray(savedFilters.selectedProjects)) {
+                    setSelectedProjects(savedFilters.selectedProjects)
+                }
+
+                if (Array.isArray(savedFilters.removedProjects)) {
+                    setRemovedProjects(savedFilters.removedProjects)
+                }
+
+                if (typeof savedFilters.groupByProject === "boolean") {
+                    setGroupByProject(savedFilters.groupByProject)
+                }
+            } catch (e) {
+                // ignore malformed JSON
+                console.error("Error parsing saved filters:", e)
+            }
         }
 
-        const savedFilters = JSON.parse(window.localStorage.getItem("notes_filters") || "{}") as notesFilters;
-
-        if (savedFilters) {
-            setLimit(savedFilters.limit)
-            setOrderBy(savedFilters.orderBy)
-            setOrderingDirection(savedFilters.orderingDirection)
-            setSelectedProjects(savedFilters.selectedProjects)
-            setRemovedProjects(savedFilters.removedProjects)
-            setGroupByProject(savedFilters.groupByProject)
-        }
+        isSavedFiltersBeenUsed.current = true;
     }, [])
 
     // -------------------- Callbacks --------------------
-    const updateUrlParams = useCallback(() => {
-        const params = new URLSearchParams(searchParams.toString())
-
-        if (limit) params.set(NOTE_PARAMS.LIMIT, limit.toString())
-        if (orderBy) params.set(NOTE_PARAMS.ORDER_BY, orderBy as string)
-        if (orderingDirection) params.set(NOTE_PARAMS.ORDERING_DIRECTION, orderingDirection)
-        if (selectedProjects.length > 0) params.set(NOTE_PARAMS.PROJECTS, selectedProjects.join(","))
-        if (removedProjects.length > 0) params.set(NOTE_PARAMS.REMOVED_PROJECTS, removedProjects.join(","))
-        if (groupByProject) params.set(NOTE_PARAMS.GROUP_BY_PROJECT, "true")
-
-        router.push(`?${params.toString()}`, {scroll: false})
-    }, [limit, orderBy, orderingDirection, selectedProjects, removedProjects, groupByProject, router])
-
-    useEffect(() => {
-        updateUrlParams()
-    }, [limit, orderBy, orderingDirection, selectedProjects, groupByProject, updateUrlParams])
 
     /**
      * Toggles a project through three states:
