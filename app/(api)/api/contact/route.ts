@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/components/utils/send_email";
 
+// HTML escape function to prevent XSS
+function escapeHtml(text: string): string {
+    const map: Record<string, string> = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -13,6 +25,22 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return NextResponse.json(
+                { error: "Invalid email format" },
+                { status: 400 }
+            );
+        }
+
+        // Escape user input to prevent XSS
+        const safeName = escapeHtml(name);
+        const safeEmail = escapeHtml(email);
+        const safeSubject = escapeHtml(subject);
+        const safeCategory = category ? escapeHtml(category) : '';
+        const safeMessage = escapeHtml(message);
 
         // Create HTML email content
         const emailContent = `
@@ -81,14 +109,14 @@ export async function POST(request: NextRequest) {
             <h1>New Contact Form Submission</h1>
             <h2>Contact Information</h2>
             <div class="info-box">
-                <p><strong>Name:</strong> ${name}</p>
-                <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-                <p><strong>Subject:</strong> ${subject}</p>
-                ${category ? `<p><strong>Category:</strong> ${category}</p>` : ''}
+                <p><strong>Name:</strong> ${safeName}</p>
+                <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+                <p><strong>Subject:</strong> ${safeSubject}</p>
+                ${safeCategory ? `<p><strong>Category:</strong> ${safeCategory}</p>` : ''}
             </div>
             <h2>Message</h2>
             <div class="message-content">
-                ${message}
+                ${safeMessage}
             </div>
             </main>
             </body>
@@ -96,7 +124,7 @@ export async function POST(request: NextRequest) {
         `;
 
         // Send email to max@maximeduhamel.com
-        const emailSubject = `Contact Form: ${subject}`;
+        const emailSubject = `Contact Form: ${safeSubject}`;
         await sendEmail("max@maximeduhamel.com", emailSubject, emailContent);
 
         return NextResponse.json(
