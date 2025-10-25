@@ -147,7 +147,7 @@ export function NotesCard(
         if (groupByProject) params.set(NOTE_PARAMS.GROUP_BY_PROJECT, "true")
 
         router.push(`?${params.toString()}`, {scroll: false})
-    }, [limit, orderBy, orderingDirection, selectedProjects, removedProjects, groupByProject, router, searchParams])
+    }, [limit, orderBy, orderingDirection, selectedProjects, removedProjects, groupByProject, router])
 
     useEffect(() => {
         updateUrlParams()
