@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Mail, MapPin, Send, MessageCircle, Bug, Lightbulb } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function ContactPage() {
     const [formData, setFormData] = useState({
@@ -24,18 +25,35 @@ export default function ContactPage() {
         e.preventDefault()
         setIsSubmitting(true)
         
-        // Simulate form submission
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        
-        setSubmitted(true)
-        setIsSubmitting(false)
-        setFormData({
-            name: '',
-            email: '',
-            subject: '',
-            category: '',
-            message: ''
-        })
+        try {
+            console.log(formData)
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            })
+            console.log(response)
+
+            if (!response.ok) {
+                throw new Error('Failed to send message')
+            }
+
+            setSubmitted(true)
+            setFormData({
+                name: '',
+                email: '',
+                subject: '',
+                category: '',
+                message: ''
+            })
+        } catch (error) {
+            console.error('Error submitting form:', error)
+            toast.error('Failed to send message. Please try again.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     const handleChange = (field: string, value: string) => {
