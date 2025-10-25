@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/components/utils/send_email";
 
+// RFC compliant email regex pattern for comprehensive validation
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
 // HTML escape function to prevent XSS
 function escapeHtml(text: string): string {
     const map: Record<string, string> = {
@@ -27,8 +30,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate email format using a more comprehensive regex following RFC standards
-        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-        if (!emailRegex.test(email.trim())) {
+        if (!EMAIL_REGEX.test(email.trim())) {
             return NextResponse.json(
                 { error: "Invalid email format" },
                 { status: 400 }
@@ -39,7 +41,8 @@ export async function POST(request: NextRequest) {
         const safeName = escapeHtml(name.trim());
         const safeEmail = escapeHtml(email.trim());
         const safeSubject = escapeHtml(subject.trim());
-        const safeCategory = category?.trim() ? escapeHtml(category.trim()) : '';
+        const trimmedCategory = category?.trim();
+        const safeCategory = trimmedCategory ? escapeHtml(trimmedCategory) : '';
         const safeMessage = escapeHtml(message.trim());
 
         // Create HTML email content
