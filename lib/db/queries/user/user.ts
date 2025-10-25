@@ -245,7 +245,7 @@ export async function updateDarkModePreferences({
             .where(lib.eq(table.id, userId))
 
         // Revalidate the flags to update the theme
-        lib.revalidateTag("flags")
+        lib.revalidateTag("flags", "max")
 
         return {success: true}
     } catch (error) {
@@ -352,7 +352,7 @@ export async function updateUserStripeCustomerId(userId: string, stripeCustomerI
             })
             .where(lib.eq(table.id, userId))
 
-        lib.revalidateTag(`user-${userId}`)
+        lib.revalidateTag(`user-${userId}`, "max")
 
         return {success: true}
     } catch (error) {
