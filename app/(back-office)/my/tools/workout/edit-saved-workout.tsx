@@ -101,7 +101,7 @@ export function EditSavedWorkout({
                         <Pencil className="size-4" />
                     </Button>
                 </DialogTrigger>
-                <DialogContent maxHeight="max-h-130">
+                <DialogContent maxHeight="max-h-150">
                     <form onSubmit={handleSave} className={"space-y-4 mx-auto w-full max-w-[calc(100vw-5.25rem)] overflow-y-auto sm:max-w-[462px] lg:max-w-[718px] flex flex-col justify-between"}>
                         <div>
                             <DialogHeader className="flex flex-row justify-between items-center">

@@ -32,7 +32,7 @@ function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     if (diffDays === 0) return "Today"
     if (diffDays === 1) return "Yesterday"
 
-    const weekday = date.toLocaleDateString(locale, {weekday: 'long'})
+    const weekday = new Date(date).toLocaleDateString(locale, {weekday: 'long'})
 
     if (diffDays <= 6) {
         // Within the last week but not yesterday

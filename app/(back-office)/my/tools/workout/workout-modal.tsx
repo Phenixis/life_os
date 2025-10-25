@@ -1,13 +1,6 @@
 "use client"
 
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
+import {Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger,} from "@/components/ui/dialog"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,6 +32,7 @@ import {ExerciseSearchInput} from "./exercise-search-input"
 import {DifficultySelector} from "./difficulty-selector"
 import {DatePicker} from "./date-picker"
 import type {PastWorkout} from "@/lib/db/queries/workout/past-workout"
+import {InvisibleInput} from "@/components/ui/invisible-input";
 
 type Exercice = {
     name: string,
@@ -152,9 +146,10 @@ export function WorkoutModal(
             }],
         })
         setExercices(newExercices)
-        // Wait for carousel to update, then scroll to the new exercise with animation
+
         setTimeout(() => {
-            carouselApi?.scrollTo(index, true) // Scroll to new position with animation
+            carouselApi?.scrollTo(index + 1, true)
+            carouselApi?.scrollTo(index)
         }, 50)
     }
 
@@ -169,9 +164,8 @@ export function WorkoutModal(
             }],
         })
         setExercices(newExercices)
-        // Wait for carousel to update, then scroll to the new exercise with animation
         setTimeout(() => {
-            carouselApi?.scrollTo(index + 1, true) // Scroll to new position with animation
+            carouselApi?.scrollTo(index + 1)
         }, 50)
     }
 
@@ -190,22 +184,27 @@ export function WorkoutModal(
 
     const removeExercise = (index: number) => {
         const newExercices = [...exercices.slice(0, index), ...exercices.slice(index + 1)]
-        setExercices(newExercices)
-        
-        // Animate carousel transition
-        setTimeout(() => {
-            if (index < exercices.length - 1) {
-                // There is an exercise after the one we're deleting
-                // Jump to previous without animation, then animate to next
-                carouselApi?.scrollTo(index - 1, false) // Jump without animation
-                setTimeout(() => {
-                    carouselApi?.scrollTo(index, true) // Animate to what is now the next exercise
-                }, 10)
-            } else {
-                // No exercise after, just animate to previous
-                carouselApi?.scrollTo(index - 1, true) // Animate to previous
-            }
-        }, 50)
+        if (index == exercices.length - 1) {
+            carouselApi?.scrollTo(index - 1)
+
+            setTimeout(() => {
+                setExercices(newExercices)
+            }, 1000)
+        } else if (index === 0) {
+            carouselApi?.scrollTo(index + 1)
+
+            setTimeout(() => {
+                setExercices(newExercices)
+                carouselApi?.scrollTo(index, true)
+            }, 1000)
+        } else {
+            setExercices(newExercices)
+
+            setTimeout(() => {
+                carouselApi?.scrollTo(index - 1, true)
+                carouselApi?.scrollTo(index)
+            }, 50)
+        }
     }
 
     const handleDelete = async () => {
@@ -322,38 +321,20 @@ export function WorkoutModal(
                         className="space-y-4 mx-auto w-full max-w-[calc(100vw-5.25rem)] overflow-y-auto sm:max-w-[462px] lg:max-w-[718px] flex flex-col justify-between"
                     >
                         <div>
-                            <DialogHeader className="flex flex-row justify-between items-center">
-                                <DialogTitle>
-                                    {mode === 'edit' ? 'Edit Workout' : 'Create New Workout'}
-                                </DialogTitle>
-                            </DialogHeader>
+                            <DialogTitle className="hidden">
+                                {workoutName}
+                            </DialogTitle>
                             <DialogDescription className="hidden">
                                 {mode === 'edit' ? 'Edit your workout' : 'Add a new workout'}
                             </DialogDescription>
-                            <div className="mx-2 flex gap-4">
-                                <div className="space-y-2 w-full">
-                                    <Label htmlFor="workout-name">Workout Name</Label>
-                                    <Input
-                                        id="workout-name"
-                                        value={workoutName}
-                                        onChange={(e) => setWorkoutName(e.target.value)}
-                                        placeholder="Enter workout name"
-                                    />
-                                </div>
-                                <div className="space-y-2 flex-1">
-                                    <Label htmlFor="workout-date">Date</Label>
-                                    <DatePicker
-                                        value={workoutDate}
-                                        onChange={setWorkoutDate}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Difficulty</Label>
-                                    <DifficultySelector
-                                        value={difficulty}
-                                        onChange={setDifficulty}
-                                    />
-                                </div>
+                            <div className="m-2">
+                                <InvisibleInput
+                                    id="workout-name"
+                                    value={workoutName}
+                                    onChange={(e) => setWorkoutName(e.target.value)}
+                                    placeholder="Enter workout name"
+                                    className={"font-semibold text-base md:text-lg"}
+                                />
                             </div>
                             <Carousel setApi={setCarouselApi} className="my-2 mx-auto lg:w-[80%] pb-12 lg:pb-0">
                                 <CarouselContent>
@@ -421,7 +402,12 @@ export function WorkoutModal(
                                                             <TableCell className="flex justify-between items-center">
                                                                 <input type="hidden"
                                                                        id={`exercice-${index}-set-id-${set.id}`}/>
-                                                                {setIndex + 1}
+                                                                <div
+                                                                    className="min-h-10 flex justify-center items-center">
+                                                                    <p className={""}>
+                                                                        {setIndex + 1}
+                                                                    </p>
+                                                                </div>
                                                                 {exercice.sets.length > 1 && (
                                                                     <Button
                                                                         size="icon"
@@ -449,6 +435,7 @@ export function WorkoutModal(
                                                                         newSets[setIndex].weight = parseInt(e.target.value) || 0
                                                                         setExercices([...exercices])
                                                                     }}
+                                                                    min={0}
                                                                 />
                                                             </TableCell>
                                                             <TableCell className="w-2/6">
@@ -462,6 +449,7 @@ export function WorkoutModal(
                                                                         newSets[setIndex].nb_rep = parseInt(e.target.value) || 0
                                                                         setExercices([...exercices])
                                                                     }}
+                                                                    min={0}
                                                                 />
                                                             </TableCell>
                                                         </TableRow>
@@ -556,40 +544,58 @@ export function WorkoutModal(
                                 )}
                             </Carousel>
                         </div>
-                        <footer className="flex justify-between items-center gap-2">
-                            <Button
-                                variant="outline"
-                                type="button"
-                                disabled={isSaving}
-                                onClick={handleSaveAsTemplate}
-                            >
-                                <Save className="size-4 mr-2"/>
-                                Save as Template
-                            </Button>
-                            <div className="flex gap-2">
-                                {mode === 'edit' && (
-                                    <Button
-                                        variant="outline"
-                                        type="button"
-                                        disabled={isSaving}
-                                        onClick={() => setShowDeleteDialog(true)}
-                                        className="text-destructive"
-                                    >
-                                        <Trash2 className="size-4 mr-2"/>
-                                        Delete
-                                    </Button>
-                                )}
+                        <footer className="w-full space-y-6">
+                            <div className={"flex justify-center items-center gap-4"}>
+                                <div className="space-y-2">
+                                    <Label>Date</Label>
+                                    <DatePicker
+                                        value={workoutDate}
+                                        onChange={setWorkoutDate}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Difficulty</Label>
+                                    <DifficultySelector
+                                        value={difficulty}
+                                        onChange={setDifficulty}
+                                    />
+                                </div>
+                            </div>
+                            <div className={"w-full flex justify-between items-center gap-2"}>
                                 <Button
                                     variant="outline"
                                     type="button"
                                     disabled={isSaving}
-                                    onClick={() => setShowDialog(false)}
+                                    onClick={handleSaveAsTemplate}
                                 >
-                                    Cancel
+                                    <Save className="size-4 mr-2"/>
+                                    Save as Template
                                 </Button>
-                                <Button type="submit" disabled={isSaving}>
-                                    {isSaving ? "Saving..." : mode === 'edit' ? "Update Workout" : "Complete Workout"}
-                                </Button>
+                                <div className="flex gap-2">
+                                    {mode === 'edit' && (
+                                        <Button
+                                            variant="outline"
+                                            type="button"
+                                            disabled={isSaving}
+                                            onClick={() => setShowDeleteDialog(true)}
+                                            className="text-destructive"
+                                        >
+                                            <Trash2 className="size-4 mr-2"/>
+                                            Delete
+                                        </Button>
+                                    )}
+                                    <Button
+                                        variant="outline"
+                                        type="button"
+                                        disabled={isSaving}
+                                        onClick={() => setShowDialog(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" disabled={isSaving}>
+                                        {isSaving ? "Saving..." : mode === 'edit' ? "Update Workout" : "Complete Workout"}
+                                    </Button>
+                                </div>
                             </div>
                         </footer>
                     </form>

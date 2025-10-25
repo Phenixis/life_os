@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-const heights = ["h-1", "h-2", "h-3", "h-4", "h-5"]
+const heights = ["h-1", "h-2", "h-3", "h-4", "h-5", "h-6", "h-7", "h-8", "h-9", "h-10"]
 const difficulties = ["Too Easy", "Easy", "Challenging", "Hard", "Too Hard"]
 const colors = [{
     active: "bg-blue-500/70",
@@ -48,7 +48,7 @@ export function DifficultySelector({
                                 >
                                     <div
                                         className={cn(
-                                            heights[index],
+                                            heights[index*2],
                                             "w-3 rounded-sm transition-all",
                                             isActive
                                                 ? colors[index].active

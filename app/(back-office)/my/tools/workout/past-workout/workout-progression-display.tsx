@@ -97,12 +97,10 @@ interface ExerciseBestSetDisplayProps {
     sets: { weight: number; nb_rep: number }[]
 }
 
-export function ExerciseBestSetDisplay({ exerciseName, sets }: ExerciseBestSetDisplayProps) {
+export function ExerciseBestSetDisplay({ sets }: ExerciseBestSetDisplayProps) {
     if (!sets || sets.length === 0) {
         return null
     }
-
-    console.log(exerciseName)
 
     // Calculate best set
     let bestSet = sets[0]
@@ -121,7 +119,7 @@ export function ExerciseBestSetDisplay({ exerciseName, sets }: ExerciseBestSetDi
     return (
         <div className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 ml-2">
             <span className="font-mono">
-                Best: {bestSet.weight}kg × {bestSet.nb_rep} = {bestScore}
+                Best: {bestSet.weight}kg × {bestSet.nb_rep}
             </span>
         </div>
     )
