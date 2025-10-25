@@ -8,7 +8,6 @@ import {ChevronDown} from "lucide-react"
 import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
-import {EditSavedWorkout} from "@/app/(back-office)/my/tools/workout/edit-saved-workout"
 
 export type SavedWorkoutProps = {
     id: number
@@ -42,8 +41,8 @@ export function SavedWorkoutDisplay(
                             {workout.title}
                         </h3>
                         <div className="flex gap-2 lg:opacity-0 lg:group-hover/workout:opacity-100">
-                            <EditSavedWorkout 
-                                savedWorkout={workout}
+                            <WorkoutModal 
+                                data={workout}
                             />
                             <WorkoutModal
                                 data={workout.exercices}
