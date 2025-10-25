@@ -1,7 +1,7 @@
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
-import {WorkoutModal} from "./workout-modal"
-import {SavedWorkoutsAsync} from "@/app/(back-office)/my/tools/workout/saved-workout/saved-workout";
-import {PastWorkouts} from "@/app/(back-office)/my/tools/workout/past-workout/past-workouts";
+import {WorkoutModal} from "../../../../../components/big/workout/workout-modal"
+import {SavedWorkoutsAsync} from "@/components/big/workout/saved-workout/saved-workout";
+import {PastWorkouts} from "@/components/big/workout/past-workout/past-workouts";
 
 export default async function WorkoutPage() {
     return (

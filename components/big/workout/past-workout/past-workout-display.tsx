@@ -8,7 +8,7 @@ import {ChevronDown} from "lucide-react"
 import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
-import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
+import {WorkoutModal} from "@/components/big/workout/workout-modal"
 import {WorkoutProgressionDisplay} from "./workout-progression-display"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {

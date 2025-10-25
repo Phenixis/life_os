@@ -2,7 +2,7 @@
 
 import {useWorkouts} from "@/hooks/use-workouts"
 import {PastWorkoutDisplay} from "./past-workout-display"
-import {PastWorkoutsSkeleton} from "@/app/(back-office)/my/tools/workout/past-workout/past-workouts-skeleton";
+import {PastWorkoutsSkeleton} from "@/components/big/workout/past-workout/past-workouts-skeleton";
 
 export function PastWorkouts() {
     const {workouts, isLoading} = useWorkouts()

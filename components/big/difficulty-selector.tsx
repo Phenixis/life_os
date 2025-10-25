@@ -2,7 +2,7 @@
 
 import {cn} from "@/lib/utils"
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip"
-import {colors, difficulties, heights} from "@/app/(back-office)/my/tools/workout/past-workout/difficulty";
+import {colors, difficulties, heights} from "@/components/big/workout/past-workout/difficulty";
 
 export function DifficultySelector(
     {

@@ -1,4 +1,4 @@
-import {SavedWorkoutDisplay} from "@/app/(back-office)/my/tools/workout/saved-workout/saved-workout-display";
+import {SavedWorkoutDisplay} from "@/components/big/workout/saved-workout/saved-workout-display";
 
 export function SavedWorkoutSkeleton(
     {

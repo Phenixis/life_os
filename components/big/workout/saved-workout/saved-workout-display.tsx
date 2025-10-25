@@ -7,7 +7,7 @@ import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/
 import {ChevronDown} from "lucide-react"
 import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
-import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
+import {WorkoutModal} from "@/components/big/workout/workout-modal"
 
 export type SavedWorkoutProps = {
     id: number
