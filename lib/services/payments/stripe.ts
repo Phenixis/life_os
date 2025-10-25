@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import {
     getUser
 } from '@/lib/db/queries/user/user';
-import { GetActive, Update, Create } from '@/lib/db/queries/user/subscription';
+import { GetActive, Update, Create, HasAnActive } from '@/lib/db/queries/user/subscription';
 import { User } from '@/lib/db/schema';
 
 const stripeApiKey = process.env.STRIPE_API_KEY;
@@ -40,6 +40,10 @@ export async function createCheckoutSession({
 
     if (!user) {
         redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
+    }
+
+    if (await HasAnActive(user.id)) {
+        redirect('/my');
     }
 
     const session = await stripe.checkout.sessions.create({

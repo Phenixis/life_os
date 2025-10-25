@@ -17,7 +17,6 @@ export function useFilteredData<T>({
   const { user } = useUser()
 
   const resolvedKey = user?.api_key || ""
-
   
   const searchParams = new URLSearchParams()
   if (params) {

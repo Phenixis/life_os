@@ -21,7 +21,6 @@ import PricingCard from '@/components/big/pricing/pricing_card'
 import {basic, free, pro} from "@/app/(back-office)/my/settings/subscription/plans";
 
 export default function LandingPage() {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const {scrollYProgress} = useScroll({
         target: containerRef as React.RefObject<HTMLElement>,
@@ -48,22 +47,6 @@ export default function LandingPage() {
             opacity: 1,
             y: 0,
             transition: {duration: 0.5, ease: "easeOut"}
-        }
-    }
-
-    const navigationItems = [
-        {name: 'Problems', href: '#problems'},
-        {name: 'Features', href: '#features'},
-        {name: 'Benefits', href: '#benefits'},
-        {name: 'Pricing', href: '#pricing'}
-    ]
-
-    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-        e.preventDefault()
-        const element = document.querySelector(href) as HTMLElement
-        if (element) {
-            const offsetTop = element.offsetTop - 80 // Account for sticky nav
-            window.scrollTo({top: offsetTop, behavior: 'smooth'})
         }
     }
 
