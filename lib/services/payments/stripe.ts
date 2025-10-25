@@ -42,7 +42,7 @@ export async function createCheckoutSession({
         redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
     }
 
-    if (await HasAnActive(user.id)) {
+    if ((await GetActive(user.id))?.stripe_price_id === priceId) {
         redirect('/my');
     }
 
