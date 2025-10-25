@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { signUp } from "@/lib/auth/actions"
 import { useActionState, useState, useRef, useEffect } from "react"
-import type { ActionState } from "@/middleware"
+import type { ActionState } from "@/proxy"
 import { Loader } from "lucide-react"
 import {
     Card,

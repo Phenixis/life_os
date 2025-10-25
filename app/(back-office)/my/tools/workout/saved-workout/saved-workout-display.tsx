@@ -33,7 +33,7 @@ export function SavedWorkoutDisplay(
 
     return (
         <div
-            className={"h-fit w-full lg:hover:bg-gray-50 dark:lg:hover:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
+            className={"h-fit w-full lg:hover:bg-gray-100 dark:lg:hover:bg-gray-900 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
             <header className={"flex justify-between items-center space-x-12"}>
                 {workout ? (
                     <>

@@ -13,7 +13,7 @@ const unaccessibleWhenLoggedIn = ["/login", "/sign-up"]
 const apiRoutes = ["/api"]
 const apiRoutesWithoutAPIKey = ["/api/auth", "/api/stripe/checkout"]
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl
 
 	// Handle API routes

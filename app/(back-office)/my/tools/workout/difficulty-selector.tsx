@@ -1,40 +1,24 @@
 "use client"
 
-import { cn } from "@/lib/utils"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {cn} from "@/lib/utils"
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip"
+import {colors, difficulties, heights} from "@/app/(back-office)/my/tools/workout/past-workout/difficulty";
 
-const heights = ["h-1", "h-2", "h-3", "h-4", "h-5", "h-6", "h-7", "h-8", "h-9", "h-10"]
-const difficulties = ["Too Easy", "Easy", "Challenging", "Hard", "Too Hard"]
-const colors = [{
-    active: "bg-blue-500/70",
-    passive: "bg-blue-500/20"
-}, {
-    active: "bg-cyan-500/70",
-    passive: "bg-cyan-500/20"
-}, {
-    active: "bg-green-500/70",
-    passive: "bg-green-500/20"
-}, {
-    active: "bg-amber-500/70",
-    passive: "bg-amber-500/20"
-}, {
-    active: "bg-red-500/70",
-    passive: "bg-red-500/20"
-}]
-
-export function DifficultySelector({
-    value,
-    onChange,
-    className
-}: {
-    value: 1 | 2 | 3 | 4 | 5
-    onChange: (value: 1 | 2 | 3 | 4 | 5) => void
-    className?: string
-}) {
+export function DifficultySelector(
+    {
+        value,
+        onChange,
+        className
+    }: {
+        value: 1 | 2 | 3 | 4 | 5
+        onChange: (value: 1 | 2 | 3 | 4 | 5) => void
+        className?: string
+    }
+) {
     return (
         <TooltipProvider>
             <div className={cn("flex justify-start items-end gap-2", className)}>
-                {Array.from({ length: 5 }).map((_, index) => {
+                {Array.from({length: 5}).map((_, index) => {
                     const difficultyLevel = (index + 1) as 1 | 2 | 3 | 4 | 5
                     const isActive = value === difficultyLevel
 
@@ -48,7 +32,7 @@ export function DifficultySelector({
                                 >
                                     <div
                                         className={cn(
-                                            heights[index*2],
+                                            heights[index * 2],
                                             "w-3 rounded-sm transition-all",
                                             isActive
                                                 ? colors[index].active

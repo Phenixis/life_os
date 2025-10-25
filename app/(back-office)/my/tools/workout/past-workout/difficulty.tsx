@@ -1,12 +1,12 @@
 "use client"
 
-import {Tooltip, TooltipTrigger, TooltipContent} from "@/components/ui/tooltip";
+import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip";
 import {cn} from "@/lib/utils";
 import {useState} from "react";
 
-const heights = ["h-1", "h-2", "h-3", "h-4", "h-5"];
-const difficulties = ["Too Easy", "Easy", "Challenging", "Hard", "Too Hard"];
-const colors = [{
+export const heights = ["h-1", "h-2", "h-3", "h-4", "h-5", "h-6", "h-7", "h-8", "h-9", "h-10"]
+export const difficulties = ["Too Easy", "Easy", "Challenging", "Hard", "Too Hard"];
+export const colors = [{
     active: "bg-blue-500/70",
     passive: "bg-blue-500/20"
 }, {
@@ -28,7 +28,8 @@ export function Difficulty(
         value
     }: {
         value: 1 | 2 | 3 | 4 | 5
-    }) {
+    }
+) {
     const [tooltip, setTooltip] = useState<string | null>(null)
 
     return (

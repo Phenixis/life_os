@@ -1,42 +1,26 @@
 "use client"
 
-import useSWR, { mutate } from "swr"
-import { useUser } from "@/hooks/use-user"
-import { fetcher } from "@/lib/fetcher"
-import type { PastWorkout } from "@/lib/db/queries/workout/past-workout"
-import type { SavedWorkout } from "@/lib/db/queries/workout/saved-workout"
-import type { 
-    CreateWorkoutRequest, 
-    UpdateWorkoutRequest,
+import useSWR, {mutate} from "swr"
+import {useUser} from "@/hooks/use-user"
+import {fetcher} from "@/lib/fetcher"
+import type {PastWorkout} from "@/lib/db/queries/workout/past-workout"
+import type {SavedWorkout} from "@/lib/db/queries/workout/saved-workout"
+import type {
     CreateSavedWorkoutRequest,
+    CreateWorkoutRequest,
     UpdateSavedWorkoutRequest,
+    UpdateWorkoutRequest,
     WorkoutProgression
 } from "@/lib/types/workout"
-import { analyzeWorkoutProgression } from "@/lib/utils/workout-progression"
-
-interface WorkoutsApiResponse {
-    workouts: PastWorkout[]
-}
-
-interface SavedWorkoutsApiResponse {
-    savedWorkouts: SavedWorkout[]
-}
-
-interface ExerciseSearchResult {
-    name: string
-}
-
-interface ExerciseSearchApiResponse {
-    exercises: ExerciseSearchResult[]
-}
+import {analyzeWorkoutProgression} from "@/lib/utils/workout-progression"
 
 // Hook to fetch past workouts
 export function useWorkouts(limit?: number) {
-    const { user } = useUser()
-    
+    const {user} = useUser()
+
     const url = limit ? `/api/workout?limit=${limit}` : '/api/workout'
-    
-    const { data, error, isLoading } = useSWR(
+
+    const {data, error, isLoading} = useSWR(
         user ? url : null,
         (url) => fetcher(url, user!.api_key)
     )
@@ -50,9 +34,9 @@ export function useWorkouts(limit?: number) {
 
 // Hook to fetch saved workout templates
 export function useSavedWorkouts() {
-    const { user } = useUser()
-    
-    const { data, error, isLoading } = useSWR(
+    const {user} = useUser()
+
+    const {data, error, isLoading} = useSWR(
         user ? '/api/workout/saved' : null,
         (url) => fetcher(url, user!.api_key)
     )
@@ -66,7 +50,7 @@ export function useSavedWorkouts() {
 
 // Hook for workout actions
 export function useWorkoutActions() {
-    const { user } = useUser()
+    const {user} = useUser()
 
     const createWorkout = async (workoutData: CreateWorkoutRequest) => {
         if (!user) throw new Error('User not authenticated')
@@ -87,7 +71,7 @@ export function useWorkoutActions() {
 
         // Invalidate workout cache
         mutate((key) => typeof key === 'string' && key.startsWith('/api/workout'))
-        
+
         return response.json()
     }
 
@@ -110,7 +94,7 @@ export function useWorkoutActions() {
 
         // Invalidate workout cache
         mutate((key) => typeof key === 'string' && key.startsWith('/api/workout'))
-        
+
         return response.json()
     }
 
@@ -131,7 +115,7 @@ export function useWorkoutActions() {
 
         // Invalidate workout cache
         mutate((key) => typeof key === 'string' && key.startsWith('/api/workout'))
-        
+
         return response.json()
     }
 
@@ -154,7 +138,7 @@ export function useWorkoutActions() {
 
         // Invalidate saved workout cache
         mutate((key) => typeof key === 'string' && key.startsWith('/api/workout/saved'))
-        
+
         return response.json()
     }
 
@@ -177,7 +161,7 @@ export function useWorkoutActions() {
 
         // Invalidate saved workout cache
         mutate((key) => typeof key === 'string' && key.startsWith('/api/workout/saved'))
-        
+
         return response.json()
     }
 
@@ -198,7 +182,7 @@ export function useWorkoutActions() {
 
         // Invalidate saved workout cache
         mutate((key) => typeof key === 'string' && key.startsWith('/api/workout/saved'))
-        
+
         return response.json()
     }
 
@@ -215,7 +199,7 @@ export function useWorkoutActions() {
 /**
  * Hook to analyze workout progression
  * Compares exercises in a workout against previous workouts
- * 
+ *
  * @param workoutId - ID of the workout to analyze
  * @returns Progression analysis or null if workout not found
  */
@@ -224,16 +208,16 @@ export function useWorkoutProgression(workoutId: number | null): {
     isLoading: boolean;
     error: unknown;
 } {
-    const { workouts, isLoading, error } = useWorkouts()
+    const {workouts, isLoading, error} = useWorkouts()
 
     if (isLoading || !workoutId) {
-        return { progression: null, isLoading, error }
+        return {progression: null, isLoading, error}
     }
 
     const currentWorkout = workouts.find(w => w.id === workoutId)
 
     if (!currentWorkout) {
-        return { progression: null, isLoading: false, error: null }
+        return {progression: null, isLoading: false, error: null}
     }
 
     const progression = analyzeWorkoutProgression(currentWorkout, workouts)
@@ -247,23 +231,23 @@ export function useWorkoutProgression(workoutId: number | null): {
 
 /**
  * Hook to search for exercises by name
- * 
+ *
  * @param query - Search query for exercise name
  * @param limit - Maximum number of results to return
  * @returns List of matching exercise names
  */
 export function useExerciseSearch(query: string, limit: number = 10): {
-    exercises: ExerciseSearchResult[];
+    exercises: { name: string }[];
     isLoading: boolean;
     error: unknown;
 } {
-    const { user } = useUser()
-    
-    const url = query.trim() 
+    const {user} = useUser()
+
+    const url = query.trim()
         ? `/api/workout/exercises/search?q=${encodeURIComponent(query)}&limit=${limit}`
         : null
-    
-    const { data, error, isLoading } = useSWR(
+
+    const {data, error, isLoading} = useSWR(
         user && url ? url : null,
         (url) => fetcher(url, user!.api_key)
     )

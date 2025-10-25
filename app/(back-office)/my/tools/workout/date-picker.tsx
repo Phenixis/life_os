@@ -1,21 +1,23 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { Minus, Plus } from "lucide-react"
-import { format } from "date-fns"
-import { useState } from "react"
+import {Button} from "@/components/ui/button"
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
+import {Calendar} from "@/components/ui/calendar"
+import {Minus, Plus} from "lucide-react"
+import {format} from "date-fns"
+import {useState} from "react"
 
-export function DatePicker({
-    value,
-    onChange,
-    minDate,
-}: {
-    value: Date
-    onChange: (date: Date) => void
-    minDate?: Date
-}) {
+export function DatePicker(
+    {
+        value,
+        onChange,
+        minDate,
+    }: {
+        value: Date
+        onChange: (date: Date) => void
+        minDate?: Date
+    }
+) {
     const [showCalendar, setShowCalendar] = useState(false)
 
     const handleDateChange = (newDate: Date | undefined) => {
@@ -46,7 +48,7 @@ export function DatePicker({
                     }
                 }}
             >
-                <Minus />
+                <Minus/>
             </Button>
 
             <Popover open={showCalendar} onOpenChange={setShowCalendar}>
@@ -85,7 +87,7 @@ export function DatePicker({
                     onChange(nextDate)
                 }}
             >
-                <Plus />
+                <Plus/>
             </Button>
         </div>
     )

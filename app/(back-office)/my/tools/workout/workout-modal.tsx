@@ -98,9 +98,9 @@ export function WorkoutModal(
                 ...ex,
                 sets: ex.sets.map((s, idx) => ({...s, id: idx}))
             }))
-        : isTemplateStart
-            ? data
-            : defaultExercice
+            : isTemplateStart
+                ? data
+                : defaultExercice
 
     const [exercices, setExercices] = useState<Exercice[]>(initialExercises)
     const [workoutName, setWorkoutName] = useState(
@@ -116,7 +116,14 @@ export function WorkoutModal(
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
     const [carouselApi, setCarouselApi] = useState<CarouselApi>(undefined)
 
-    const {createWorkout, updateWorkout, deleteWorkout, createSavedWorkout, updateSavedWorkout, deleteSavedWorkout} = useWorkoutActions()
+    const {
+        createWorkout,
+        updateWorkout,
+        deleteWorkout,
+        createSavedWorkout,
+        updateSavedWorkout,
+        deleteSavedWorkout
+    } = useWorkoutActions()
 
     useEffect(() => {
         if (!carouselApi) return
@@ -601,18 +608,18 @@ export function WorkoutModal(
                                 </div>
                             )}
                             <div className={"w-full flex justify-between items-center gap-2"}>
-                                {mode !== 'edit-saved' && (
-                                    <Button
-                                        variant="outline"
-                                        type="button"
-                                        disabled={isSaving}
-                                        onClick={handleSaveAsTemplate}
-                                    >
-                                        <Save className="size-4 mr-2"/>
-                                        Save as Template
-                                    </Button>
-                                )}
-                                <div className="flex gap-2">
+                                <div className={"flex gap-2"}>
+                                    {mode !== 'edit-saved' && (
+                                        <Button
+                                            variant="outline"
+                                            type="button"
+                                            disabled={isSaving}
+                                            onClick={handleSaveAsTemplate}
+                                        >
+                                            <Save className="size-4 mr-2"/>
+                                            Save as Template
+                                        </Button>
+                                    )}
                                     {(mode === 'edit-past' || mode === 'edit-saved') && (
                                         <Button
                                             variant="outline"
@@ -625,6 +632,8 @@ export function WorkoutModal(
                                             Delete
                                         </Button>
                                     )}
+                                </div>
+                                <div className="flex gap-2">
                                     <Button
                                         variant="outline"
                                         type="button"
@@ -634,10 +643,10 @@ export function WorkoutModal(
                                         Cancel
                                     </Button>
                                     <Button type="submit" disabled={isSaving}>
-                                        {isSaving 
-                                            ? "Saving..." 
-                                            : mode === 'edit-past' 
-                                                ? "Update Workout" 
+                                        {isSaving
+                                            ? "Saving..."
+                                            : mode === 'edit-past'
+                                                ? "Update Workout"
                                                 : mode === 'edit-saved'
                                                     ? "Update Template"
                                                     : "Complete Workout"
@@ -658,7 +667,7 @@ export function WorkoutModal(
                             {mode === 'edit-saved' ? 'Delete Workout Template' : 'Delete Workout'}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            {mode === 'edit-saved' 
+                            {mode === 'edit-saved'
                                 ? 'Are you sure you want to delete this workout template? This action cannot be undone.'
                                 : 'Are you sure you want to delete this workout? This action cannot be undone.'
                             }

@@ -5,9 +5,6 @@ const withPWA = require('next-pwa')({
 })
 
 module.exports = withPWA({
-    experimental: {
-        ppr: 'incremental',
-    },
     images: {
         remotePatterns: [
             { protocol: 'https', hostname: 'openweathermap.org', pathname: '/img/wn/**' },

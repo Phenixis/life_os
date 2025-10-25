@@ -9,7 +9,7 @@ import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
 import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
-import {ExerciseBestSetDisplay, WorkoutProgressionDisplay} from "./workout-progression-display"
+import {WorkoutProgressionDisplay} from "./workout-progression-display"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
@@ -72,7 +72,7 @@ export function PastWorkoutDisplay(
 
     return (
         <div
-            className={"h-fit w-full lg:hover:bg-gray-50 dark:lg:hover:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
+            className={"h-fit w-full lg:hover:bg-gray-100 dark:lg:hover:bg-gray-900 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
             <header className={"flex justify-between items-center gap-4"}>
                 {workout ? (
                     <>
@@ -144,10 +144,6 @@ export function PastWorkoutDisplay(
                                                         <TableCaption>
                                                             <div className="flex items-center justify-center gap-2">
                                                                 <span>{exercice.name}</span>
-                                                                <ExerciseBestSetDisplay
-                                                                    exerciseName={exercice.name}
-                                                                    sets={exercice.sets}
-                                                                />
                                                             </div>
                                                         </TableCaption>
                                                         <TableHeader>
@@ -176,7 +172,7 @@ export function PastWorkoutDisplay(
                                     <CarouselNext className={"lg:hidden lg:group-hover/workout:flex"}/>
                                     <CarouselPrevious className={"lg:hidden lg:group-hover/workout:flex"}/>
                                 </Carousel>
-                                <WorkoutProgressionDisplay workoutId={workout.id} />
+                                <WorkoutProgressionDisplay workoutId={workout.id}/>
                             </>
                         ) : (
                             <p>

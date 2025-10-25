@@ -1,6 +1,6 @@
 "use server";
 
-import {ActionState} from '@/middleware';
+import {ActionState} from '@/proxy';
 import {redirect} from 'next/navigation'
 import {removeSession, setSession} from '@/lib/auth/session';
 import {db} from "@/lib/db/drizzle"
