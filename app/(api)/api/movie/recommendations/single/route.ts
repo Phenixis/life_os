@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/auth/api';
-import MovieQueries from '@/lib/db/queries/movies';
+import * as MovieQueries from '@/lib/db/queries/movie/movie';
+import * as MovieNotInterestedQueries from '@/lib/db/queries/movie/not-interested';
 import TMDbService, { TMDbMovie, TMDbTVShow } from '@/lib/services/tmdb';
 
 function isMovie(item: TMDbMovie | TMDbTVShow): item is TMDbMovie {
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
         const userMovieIds = new Set(allUserMovies.map(movie => movie.tmdb_id));
 
         // Get all not interested movies to exclude from recommendations
-        const notInterestedMovieIds = await MovieQueries.getNotInterestedMovieIds(userId);
+        const notInterestedMovieIds = await MovieNotInterestedQueries.getNotInterestedMovieIds(userId);
         const notInterestedIds = new Set(notInterestedMovieIds);
 
         // Combined exclusion function (including additional exclude IDs from params)

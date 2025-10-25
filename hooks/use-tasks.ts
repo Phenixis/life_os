@@ -1,31 +1,36 @@
 "use client"
 
-import type { Task, TaskWithRelations } from "@/lib/db/schema"
+import { Task } from "@/lib/db/schema"
 import { useFilteredData } from "./use-filtered-data"
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
-// hooks/use-tasks.ts
-export function useTasks({
-  completed,
-  orderBy,
-  limit,
-  orderingDirection,
-  withProject,
-  projectTitles,
-  excludedProjectTitles,
-  dueBefore,
-  dueAfter,
-}: {
+interface UseTasksParams {
   completed?: boolean
-  orderBy?: keyof Task
+  orderBy?: keyof Task.Task.Select
   limit?: number
   orderingDirection?: "asc" | "desc"
   withProject?: boolean
-  projectTitles?: string[]
-  excludedProjectTitles?: string[]
+  projects?: number[]
+  excludedProjects?: number[]
   dueBefore?: Date
   dueAfter?: Date
-}) {
-  const { data, isLoading, isError, mutate } = useFilteredData<Task[]>({
+}
+
+// hooks/use-tasks.ts
+export function useTasks(params: UseTasksParams = {}) {
+  const {
+    completed,
+    orderBy,
+    limit,
+    orderingDirection,
+    withProject,
+    projects,
+    excludedProjects,
+    dueBefore,
+    dueAfter,
+  } = params
+
+  const { data, isLoading, isError, mutate } = useFilteredData<Task.Task.Select[]>({
     endpoint: "/api/task",
     params: {
       completed,
@@ -33,17 +38,18 @@ export function useTasks({
       limit: limit ? limit + 1 : undefined,
       orderingDirection,
       withProject: withProject ? "true" : "false",
-      projectTitles: projectTitles?.join(","),
-      excludedProjectTitles: excludedProjectTitles?.join(","),
+      projectIds: projects?.join(","),
+      excludedProjectIds: excludedProjects?.join(","),
       dueBefore: dueBefore ? dueBefore.toISOString() : undefined,
       dueAfter: dueAfter ? dueAfter.toISOString() : undefined,
     },
   })
 
   return {
-    tasks: (data as TaskWithRelations[]) || [],
+    data: (data as Task.Task.TaskWithRelations[]) || [],
     isLoading,
     isError,
+    tasks: (data as Task.Task.TaskWithRelations[]) || [], // Keep backward compatibility
     mutate,
   }
 }

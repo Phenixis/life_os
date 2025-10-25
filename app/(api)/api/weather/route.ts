@@ -1,10 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getMeteoByDay, createMeteo, updateMeteo } from "@/lib/db/queries";
-import {
-    type Meteo
-} from "@/lib/db/schema";
+import {NextRequest, NextResponse} from "next/server";
+import {MeteoQueries} from "@/lib/db/queries";
 import dotenv from 'dotenv';
-import { verifyRequest } from "@/lib/auth/api";
+import {verifyRequest} from "@/lib/auth/api";
 
 export async function GET(request: NextRequest) {
     const verification = await verifyRequest(request)
@@ -18,7 +15,7 @@ export async function GET(request: NextRequest) {
         throw new Error("Missing day parameter");
     }
 
-    const savedMeteo = await getMeteoByDay(verification.userId, day);
+    const savedMeteo = await MeteoQueries.getMeteoByDay(verification.userId, day);
 
     const oneHourAgo = new Date(Date.now() - 3600 * 1000);
 
@@ -42,21 +39,14 @@ export async function GET(request: NextRequest) {
         const data = await result.json();
 
         if (savedMeteo.length === 0) {
-            await createMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
+            await MeteoQueries.createMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
         } else {
-            await updateMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
+            await MeteoQueries.updateMeteo(verification.userId, day, parseInt(data.daily[0].feels_like.day as string), data.daily[0].summary, data.daily[0].weather[0].icon, lat, lon);
         }
 
-        return NextResponse.json({
-            user_id: verification.userId,
-            day: day,
-            temperature: data.daily[0].feels_like.day,
-            summary: data.daily[0].summary,
-            icon: data.daily[0].weather[0].icon,
-            updated_at: new Date(),
-            latitude: lat,
-            longitude: lon,
-        } as Meteo);
+        // Fetch the updated/created meteo record to get the complete data with ID
+        const updatedMeteo = await MeteoQueries.getMeteoByDay(verification.userId, day);
+        return NextResponse.json(updatedMeteo[0]);
     } else {
         return NextResponse.json(savedMeteo[0]);
     }

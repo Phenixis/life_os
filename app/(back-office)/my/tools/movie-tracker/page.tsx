@@ -26,9 +26,9 @@ export default function MovieTrackerPage() {
     const pathname = usePathname();
     
     // Simple approach: directly use searchParams for active tab
-    const currentTab = searchParams.get('tab') || 'movies';
-    const validTabs = ['movies', 'watchlist', 'discover'];
-    const activeTab = validTabs.includes(currentTab) ? currentTab : 'movies';
+    const currentTab = searchParams.get('tab') || 'watchlist';
+    const validTabs = ['watchlist', 'movies', 'discover'];
+    const activeTab = validTabs.includes(currentTab) ? currentTab : 'watchlist';
 
     // Tab change handler - clear params and only keep relevant ones for the new tab
     const handleTabChange = (newTab: string) => {
@@ -75,7 +75,8 @@ export default function MovieTrackerPage() {
                             Add Movie
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogContent maxHeight='max-h-130' className="">
+                        <div className="flex flex-col justify-start gap-4">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <Search className="w-5 h-5" />
@@ -83,6 +84,7 @@ export default function MovieTrackerPage() {
                             </DialogTitle>
                         </DialogHeader>
                         <MovieSearch onMovieAdded={handleMovieAdded} />
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
@@ -113,7 +115,7 @@ export default function MovieTrackerPage() {
                             <CardTitle>Watched Movies</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <MovieList status="watched" />
+                            <MovieList />
                         </CardContent>
                     </Card>
                 </TabsContent>

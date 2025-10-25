@@ -19,6 +19,7 @@
 .DS_Store
 *.pem
 .vscode
+.idea
 
 # debug
 npm-debug.log*
@@ -28,6 +29,8 @@ yarn-error.log*
 
 # env files
 .env
+.env.local
+.env.*.local
 
 # vercel
 .vercel
@@ -39,3 +42,6 @@ next-env.d.ts
 # blog posts
 /app/blog/posts
 /.husky/*.log
+
+# lock files (using pnpm)
+package-lock.json

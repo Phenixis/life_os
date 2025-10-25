@@ -9,11 +9,9 @@ import {
   use,
 } from 'react';
 import { User } from '@/lib/db/schema';
-import { getUser } from '@/lib/db/queries/user';
-import { getServerSession } from '@/lib/auth/session';
 
 type UserContextType = {
-    user: User | null;
+    user: User.User.Select | null;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -31,10 +29,10 @@ export function UserProvider({
   userPromise,
 }: {
   children: ReactNode;
-  userPromise: Promise<User | null>;
+  userPromise: Promise<User.User.Select | null>;
 }) {
   let initialUser = use(userPromise)
-  const [user, setUser] = useState<User | null>(initialUser)
+  const [user, setUser] = useState<User.User.Select | null>(initialUser)
 
   useEffect(() => {
     setUser(initialUser)

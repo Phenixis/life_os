@@ -1,6 +1,5 @@
 import {
-    getUncompletedAndDueInTheNextThreeDaysOrLessTasks,
-    getTasksCompletedTheDayBefore
+    TaskQueries
 } from "@/lib/db/queries"
 import {
     type NextRequest,
@@ -10,7 +9,7 @@ import {
     sendEmail
 } from "@/components/utils/send_email"
 import { verifyRequest } from "@/lib/auth/api"
-import { getAllUsers } from "@/lib/db/queries/user"
+import { getAllUsers } from "@/lib/db/queries/user/user"
 
 export async function GET(request: NextRequest) {
     const verification = await verifyRequest(request)
@@ -28,9 +27,15 @@ export async function GET(request: NextRequest) {
         if (verification.userId === "00000000" && user.id !== "00000000") {
             continue
         }
+        
+        // Skip sending email if user has disabled daily recap emails
+        if (!user.daily_recap_email_enabled) {
+            continue
+        }
+        
         try {
-            const tasksToDo = await getUncompletedAndDueInTheNextThreeDaysOrLessTasks(user.id);
-            const tasksDone = await getTasksCompletedTheDayBefore(user.id);
+            const tasksToDo = await TaskQueries.Task.getUncompletedAndDueInTheNextThreeDaysOrLessTasks(user.id);
+            const tasksDone = await TaskQueries.Task.getTasksCompletedTheDayBefore(user.id);
 
             // Sort tasksToDo by due date in ascending order
             const sortedTasksToDo = tasksToDo.sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());
@@ -45,7 +50,7 @@ export async function GET(request: NextRequest) {
 
             // Group tasksDone by projects
             const groupedTasksDone = tasksDone.reduce((acc: Record<string, typeof tasksDone>, task) => {
-                const project = task.project_title || "No Project";
+                const project = task.project?.title || "No Project";
                 if (!acc[project]) {
                     acc[project] = [];
                 }
@@ -66,7 +71,7 @@ export async function GET(request: NextRequest) {
             // Group tasksToDo by projects within each relative day
             const groupedByProjects = Object.entries(groupedByDays).reduce((acc: Record<string, Record<string, typeof sortedTasksToDo>>, [day, tasksToDo]) => {
                 acc[day] = tasksToDo.reduce((projectAcc: Record<string, typeof sortedTasksToDo>, task) => {
-                    const project = task.project_title || "No Project";
+                    const project = task.project?.title || "No Project";
                     if (!projectAcc[project]) {
                         projectAcc[project] = [];
                     }

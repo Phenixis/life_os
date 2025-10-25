@@ -16,7 +16,8 @@ import {
     Tv,
     Check,
     X,
-    ExternalLink
+    ExternalLink,
+    RotateCcw
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -34,12 +35,13 @@ import {
 } from '@/components/ui/dialog';
 import { useMovieActions } from '@/hooks/use-movies';
 import TMDbService from '@/lib/services/tmdb';
-import type { Movie } from '@/lib/db/schema';
+import { Movie } from '@/lib/db/schema';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import Tooltip from '../tooltip';
 
 interface MovieCardProps {
-    movie: Movie;
+    movie: Movie.Movie.Select;
 }
 
 export function MovieCard({ movie }: MovieCardProps) {
@@ -84,6 +86,9 @@ export function MovieCard({ movie }: MovieCardProps) {
             await updateMovie(movie.id, {
                 user_rating: editRating > 0 ? editRating : null,
                 user_comment: editComment.trim() || null
+            }, {
+                optimistic: true,
+                originalMovie: movie
             });
             setIsEditing(false);
             toast.success('Rating and comment updated!');
@@ -111,6 +116,9 @@ export function MovieCard({ movie }: MovieCardProps) {
             await updateMovie(movie.id, {
                 watch_status: newStatus,
                 watched_date: newStatus === 'watched' ? new Date().toISOString() : undefined
+            }, {
+                optimistic: true,
+                originalMovie: movie
             });
             toast.success(`Moved to ${newStatus === 'watched' ? 'watched' : 'watchlist'}!`);
         } catch (error: unknown) {
@@ -119,9 +127,28 @@ export function MovieCard({ movie }: MovieCardProps) {
         }
     };
 
+    const handleWatchAgain = async () => {
+        try {
+            await updateMovie(movie.id, {
+                watch_status: 'watch_again',
+                watched_date: new Date().toISOString()
+            }, {
+                optimistic: true,
+                originalMovie: movie
+            });
+            toast.success('Marked to watch again! Added to watchlist.');
+        } catch (error: unknown) {
+            console.error('Failed to mark watch again:', error);
+            toast.error('Failed to mark watch again');
+        }
+    };
+
     const handleDelete = async () => {
         try {
-            await deleteMovie(movie.id);
+            await deleteMovie(movie.id, {
+                optimistic: true,
+                originalMovie: movie
+            });
             setShowDeleteDialog(false);
             toast.success('Movie removed from your list');
         } catch (error: unknown) {
@@ -133,12 +160,12 @@ export function MovieCard({ movie }: MovieCardProps) {
     return (
         <>
             <Card className="group overflow-hidden lg:hover:shadow-md transition-all duration-200 border-0 bg-card/50">
-                <CardContent className="p-4">
+                <CardContent className="">
                     <div className={`flex ${isEditing ? "" : "gap-4"} `}>
                         {/* Poster */}
                         {/* Poster - slides out when editing */}
                         <div
-                            className={`flex-shrink-0 flex justify-center items-center transition-all duration-200
+                            className={`shrink-0 flex justify-center items-center transition-all duration-200
                                 ${isEditing ? '-translate-x-24 opacity-0 pointer-events-none w-0' : 'translate-x-0 opacity-100 w-16'}
                             `}
                             style={{ minWidth: isEditing ? 0 : '4rem', width: isEditing ? 0 : '4rem' }}
@@ -148,7 +175,7 @@ export function MovieCard({ movie }: MovieCardProps) {
                                 <img
                                     src={posterUrl}
                                     alt={movie.title}
-                                    className="w-16 h-24 object-cover rounded-md shadow-sm transition-transform lg:group-hover:scale-105"
+                                    className="w-16 h-24 object-cover rounded-md shadow-xs transition-transform lg:group-hover:scale-105"
                                 />
                             ) : (
                                 <div className="w-16 h-24 bg-muted rounded-md flex items-center justify-center transition-colors lg:group-hover:bg-muted/80">
@@ -175,6 +202,13 @@ export function MovieCard({ movie }: MovieCardProps) {
                                         </a>
                                     </h3>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        {movie.watch_status === 'watch_again' && (
+                                            <Tooltip tooltip="Marked as Watch Again" cursor="cursor-default">
+                                                <Badge variant="outline" className="text-xs h-5 shrink-0 border-orange-300 text-orange-700">
+                                                    <RotateCcw className="size-3" />
+                                                </Badge>
+                                            </Tooltip>
+                                        )}
                                         <Badge variant="secondary" className="text-xs h-5">
                                             {movie.media_type === 'tv' ? 'TV' : 'Movie'}
                                         </Badge>
@@ -195,6 +229,12 @@ export function MovieCard({ movie }: MovieCardProps) {
                                             <Eye className="mr-2 h-4 w-4" />
                                             Mark as {movie.watch_status === 'watched' ? 'Watchlist' : 'Watched'}
                                         </DropdownMenuItem>
+                                        {movie.watch_status === 'watched' && (
+                                            <DropdownMenuItem onClick={handleWatchAgain}>
+                                                <RotateCcw className="mr-2 h-4 w-4" />
+                                                Mark to watch again
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                             onClick={() => setShowDeleteDialog(true)}
@@ -224,21 +264,9 @@ export function MovieCard({ movie }: MovieCardProps) {
                                             value={editComment}
                                             onChange={(e) => {
                                                 setEditComment(e.target.value);
-                                                // Auto-resize the textarea
-                                                if (e.target) {
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = `${e.target.scrollHeight}px`;
-                                                }
                                             }}
                                             placeholder="Share your thoughts..."
                                             className="min-h-20 text-sm resize-none overflow-hidden"
-                                            // Set initial height on mount and when value changes
-                                            ref={el => {
-                                                if (el) {
-                                                    el.style.height = 'auto';
-                                                    el.style.height = `${el.scrollHeight}px`;
-                                                }
-                                            }}
                                         />
                                     </div>
                                     <div className="flex gap-2 pt-1">

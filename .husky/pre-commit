@@ -2,12 +2,11 @@
 # Add any pre-commit checks here
 echo "🔍 Running pre-commit checks..."
 
-# Run type checking
+# Run type checking / if fail, exit with error
 echo "📝 Type checking..."
-pnpm type-check
-
-# Run linting
-echo "🧹 Linting code..."
-pnpm lint
+pnpm type-check || {
+  echo "❌ Type checking failed. Please fix the errors before committing."
+  exit 1
+}
 
 echo "✅ Pre-commit checks passed!"

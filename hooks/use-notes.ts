@@ -1,24 +1,28 @@
 "use client"
 
-import { Note } from "@/lib/db/schema"
-import { useFilteredData } from "./use-filtered-data"
 import { NotesAndData } from "@/lib/db/queries/note"
+import { useFilteredData } from "./use-filtered-data"
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
-export function useNotes({
-    title,
-    projectTitle,
-    limit,
-    page,
-    projectTitles,
-    excludedProjectTitles
-}: {
+interface UseNotesParams {
     title?: string
     projectTitle?: string
     limit?: number
     page?: number
-    projectTitles?: string[]
-    excludedProjectTitles?: string[]
-}) {
+    projects?: simplifiedProject[]
+    excludedProjects?: simplifiedProject[]
+}
+
+export function useNotes(params: UseNotesParams = {}) {
+    const {
+        title,
+        projectTitle,
+        limit,
+        page,
+        projects,
+        excludedProjects
+    } = params
+
     const { data, isLoading, isError, mutate } = useFilteredData<NotesAndData>({
         endpoint: "/api/note",
         params: {
@@ -26,8 +30,8 @@ export function useNotes({
             projectTitle,
             limit: limit ? limit + 1 : undefined,
             page,
-            projectTitles: projectTitles?.join(","),
-            excludedProjectTitles: excludedProjectTitles?.join(",")
+            projectTitles: projects?.join(","),
+            excludedProjectTitles: excludedProjects?.join(",")
         },
     })
 
@@ -36,5 +40,6 @@ export function useNotes({
         isLoading,
         isError,
         mutate,
+        notes: data as NotesAndData, // Keep backward compatibility
     }
 }

@@ -1,24 +1,22 @@
 import './globals.css'
-import type { Metadata } from 'next'
-import { Domine, Geist_Mono, Ubuntu_Sans_Mono } from 'next/font/google';
-import {
-    TooltipProvider
-} from "@/components/ui/tooltip"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Analytics } from '@vercel/analytics/next';
-import { Toaster } from "@/components/ui/sonner"
-import { darkMode } from "@/lib/flags"
+import type {Metadata} from 'next'
+import {Inter, Space_Grotesk} from 'next/font/google';
+import {TooltipProvider} from "@/components/ui/tooltip"
+import {SpeedInsights} from "@vercel/speed-insights/next"
+import {Analytics} from '@vercel/analytics/next';
+import {Toaster} from "@/components/ui/sonner"
+import {darkMode} from "@/lib/flags"
 
-const domine = Domine({
+const spaceGrotesk = Space_Grotesk({
     subsets: ['latin'],
+    variable: '--font-space-grotesk',
+    display: 'swap',
 })
 
-const geistMono = Geist_Mono({
+const inter = Inter({
     subsets: ['latin'],
-})
-
-const ubuntuSansMono = Ubuntu_Sans_Mono({
-    subsets: ['latin'],
+    variable: '--font-inter',
+    display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -51,35 +49,48 @@ export const metadata: Metadata = {
 
 const cx = (...classes: string[]) => classes.filter(Boolean).join(' ')
 
-export default async function RootLayout({
-    children,
-}: {
-    children: React.ReactNode
-}) {
+export default async function RootLayout(
+    {
+        children,
+    }: {
+        children: React.ReactNode
+    }
+) {
     const isDarkMode = await darkMode()
     return (
         <html
             lang="en"
-            className={"overflow-x-hidden" + (isDarkMode ? 'dark' : '')}
+            className={"overflow-x-hidden " + (isDarkMode ? 'dark' : '')}
+            suppressHydrationWarning
         >
-            <head>
-                <link rel="icon" href="/favicon.png" sizes='any' />
-                <link rel="manifest" href="/manifest.json" />
-                <link rel="apple-touch-icon" href="/favicon.png" />
-            </head>
-            <body className={cx(
-                'antialiased text-black bg-white dark:text-white dark:bg-black h-full min-h-screen w-full min-w-screen max-w-screen',
-                domine.className,
-                geistMono.className,
-                ubuntuSansMono.className,
-            )}>
-                <TooltipProvider>
-                    {children}
-                </TooltipProvider>
-                <SpeedInsights />
-                <Analytics />
-                <Toaster />
-            </body>
+        <head>
+            <link rel="icon" href="/favicon.png" sizes='any'/>
+            <link rel="manifest" href="/manifest.json"/>
+            <link rel="apple-touch-icon" href="/favicon.png"/>
+            {
+                (process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && false) ?
+                    (
+                        <script
+                            crossOrigin="anonymous"
+                            src="//unpkg.com/react-scan/dist/auto.global.js"
+                            defer
+                        />
+                    ) : null
+            }
+        </head>
+        <body className={cx(
+            'antialiased text-black bg-white dark:text-white dark:bg-black h-full min-h-screen w-full min-w-screen max-w-screen',
+            spaceGrotesk.variable,
+            inter.variable,
+            inter.className,
+        )}>
+        <TooltipProvider>
+            {children}
+        </TooltipProvider>
+        <SpeedInsights/>
+        <Analytics/>
+        <Toaster/>
+        </body>
         </html>
     )
 }

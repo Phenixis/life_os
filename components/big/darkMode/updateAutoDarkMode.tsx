@@ -11,10 +11,8 @@ import {
 import { type DarkModeCookie } from "@/lib/flags"
 import { Checkbox } from '@/components/ui/checkbox'
 import { useState } from 'react'
-import { updateDarkModeCookie } from '@/lib/cookies'
-import { getUser } from '@/lib/auth/session'
-import { updateDarkModePreferences } from '@/lib/db/queries/user'
 import { useDebouncedCallback } from 'use-debounce'
+import { useDarkMode } from '@/hooks/use-dark-mode'
 
 export default function UpdateAutoDarkMode({
     darkModeCookie
@@ -24,6 +22,8 @@ export default function UpdateAutoDarkMode({
     const [autoDarkMode, setAutoDarkMode] = useState(darkModeCookie.auto_dark_mode)
     const [startTime, setStartTime] = useState((darkModeCookie.startHour < 10 ? "0" + darkModeCookie.startHour : darkModeCookie.startHour) + ":" + (darkModeCookie.startMinute < 10 ? "0" + darkModeCookie.startMinute : darkModeCookie.startMinute) + ":00")
     const [endTime, setEndTime] = useState((darkModeCookie.endHour < 10 ? "0" + darkModeCookie.endHour : darkModeCookie.endHour) + ":" + (darkModeCookie.endMinute < 10 ? "0" + darkModeCookie.endMinute : darkModeCookie.endMinute) + ":00")
+    
+    const { updateDarkModeSettings } = useDarkMode()
 
     const updateCookie = useDebouncedCallback(async () => {
         const newCookie = {
@@ -45,14 +45,10 @@ export default function UpdateAutoDarkMode({
 
         if (!hasChanges) return
 
-        await updateDarkModeCookie(newCookie)
-        const user = await getUser()
-        if (user) {
-            await updateDarkModePreferences({
-                userId: user.id,
-                darkModeCookie: newCookie
-            })
-        }
+        await updateDarkModeSettings(newCookie, () => {
+            // Update the initial cookie reference for future comparisons
+            Object.assign(darkModeCookie, newCookie)
+        })
     }, 1000)
 
     return (

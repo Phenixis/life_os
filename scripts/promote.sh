@@ -23,7 +23,7 @@ if ! git fetch origin main; then
     exit 1
 fi
 
-if ! git diff --quiet origin/main..dev; then
+if ! git merge-base --is-ancestor origin/main dev; then
     echo "❌ Your dev branch is not up to date with main. Please merge main into dev first."
     exit 1
 fi

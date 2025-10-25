@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MovieCard } from './movie-card';
 import { useMovies } from '@/hooks/use-movies';
+import type { Movie } from '@/lib/db/schema';
 import { useDebounce } from 'use-debounce';
 import { ChevronLeft, ChevronRight, Search, SortAsc, SortDesc, Star } from 'lucide-react';
 import {
@@ -32,11 +33,7 @@ type RatingFilter = 'all' | '1' | '2' | '3' | '4' | '5' | 'no_rating';
 
 const ITEMS_PER_PAGE = 30;
 
-interface MovieListProps {
-    status?: 'watched';
-}
-
-export function MovieList({ status }: MovieListProps) {
+export function MovieList() {
     // Initialize states from cookies
     const [isClient, setIsClient] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -93,13 +90,26 @@ export function MovieList({ status }: MovieListProps) {
         updateFilters({ currentPage });
     }, [currentPage, updateFilters, isClient]);
 
-    // Since this component is only used for watched movies, we only need the watched movies
-    const { movies: watchedMovies, isLoading } = useMovies(status || 'watched');
-    const { movies: searchMovies, isLoading: isLoadingSearch } = useMovies(status || 'watched', debouncedQuery);
+    // Since this component is used for watched movies, we need both watched and watch_again movies
+    const { movies: watchedMovies, isLoading } = useMovies('watched');
+    const { movies: watchAgainMovies, isLoading: isLoadingWatchAgain } = useMovies('watch_again');
+    const { movies: searchMovies, isLoading: isLoadingSearch } = useMovies(undefined, debouncedQuery);
 
-    // Use search results if there's a query, otherwise use watched movies
-    const movies = debouncedQuery ? searchMovies : watchedMovies;
-    const actualIsLoading = debouncedQuery ? isLoadingSearch : isLoading;
+    // Determine which movies to show
+    let movies: Movie.Movie.Select[] = [];
+    let actualIsLoading = false;
+
+    if (debouncedQuery) {
+        // Filter search results to show both watched and watch_again movies
+        movies = searchMovies.filter(movie => 
+            movie.watch_status === 'watched' || movie.watch_status === 'watch_again'
+        );
+        actualIsLoading = isLoadingSearch;
+    } else {
+        // Combine watched and watch_again movies
+        movies = [...watchedMovies, ...watchAgainMovies];
+        actualIsLoading = isLoading || isLoadingWatchAgain;
+    }
 
     // Reset to first page when search changes
     useEffect(() => {

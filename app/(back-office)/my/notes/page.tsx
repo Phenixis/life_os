@@ -49,7 +49,7 @@ export default function NotesPage() {
         const params = new URLSearchParams(searchParams.toString())
         params.set(NOTE_PARAMS["PAGE"], newPage.toString())
         router.push(`?${params.toString()}`)
-    }, [router, searchParams])
+    }, [router])
 
     return (
         <div className="flex flex-col gap-4">
@@ -87,8 +87,8 @@ export default function NotesPage() {
                             />
                             <div className="w-full lg:w-1/3">
                                 <SearchProjectsInput
-                                    project={projectTitle}
-                                    setProject={setProjectTitle}
+                                    project={{ title: projectTitle, id: -1 }}
+                                    setProject={(project) => setProjectTitle(project.title)}
                                     defaultValue={projectTitle}
                                     label="Search notes by project title"
                                 />
@@ -184,7 +184,7 @@ export default function NotesPage() {
                             }
                             {
                                 Array.from({ length: 3 }).map((_, index) => (
-                                    <div className="hidden flex-col gap-4 w-full lg:flex" key={index}>
+                                    <div className="hidden md:flex flex-col gap-4 w-full lg:hidden" key={index}>
                                         {Array.from({ length: 3 }).map((_, index) => (
                                             <NoteDisplay
                                                 key={index}
@@ -213,8 +213,8 @@ export default function NotesPage() {
                                 Array.from({ length: 5 }).map((_, index) => (
                                     <div className="hidden flex-col gap-4 w-full lg:flex" key={index}>
                                         {notesData.notes.filter(
-                                            (note: Note, idx: number) => idx % 5 === index
-                                        ).map((note: Note) => (
+                                            (note: Note.Note.Select, idx: number) => idx % 5 === index
+                                        ).map((note: Note.Note.Select) => (
                                             <NoteDisplay
                                                 key={note.id}
                                                 note={note}
@@ -227,8 +227,8 @@ export default function NotesPage() {
                                 Array.from({ length: 3 }).map((_, index) => (
                                     <div className="hidden flex-col gap-4 w-full md:flex lg:hidden" key={index}>
                                         {notesData.notes.filter(
-                                            (note: Note, idx: number) => idx % 3 === index
-                                        ).map((note: Note) => (
+                                            (note: Note.Note.Select, idx: number) => idx % 3 === index
+                                        ).map((note: Note.Note.Select) => (
                                             <NoteDisplay
                                                 key={note.id}
                                                 note={note}
@@ -239,7 +239,7 @@ export default function NotesPage() {
                             }
                             {
                                 <div className="flex flex-col gap-4 w-full md:hidden">
-                                    {notesData.notes.map((note: Note) => (
+                                    {notesData.notes.map((note: Note.Note.Select) => (
                                         <NoteDisplay
                                             key={note.id}
                                             note={note}

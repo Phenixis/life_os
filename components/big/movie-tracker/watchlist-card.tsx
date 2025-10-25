@@ -11,7 +11,10 @@ import {
     Film,
     Tv,
     Calendar,
-    ExternalLink
+    ExternalLink,
+    RotateCcw,
+    Star,
+    X
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -28,19 +31,23 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { useMovieActions } from '@/hooks/use-movies';
+import { StarRating } from '@/components/ui/star-rating';
 import TMDbService from '@/lib/services/tmdb';
-import type { Movie } from '@/lib/db/schema';
+import { Movie } from '@/lib/db/schema';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import Tooltip from '@/components/big/tooltip';
 
 interface WatchlistCardProps {
-    movie: Movie;
+    movie: Movie.Movie.Select;
 }
 
 export function WatchlistCard({ movie }: WatchlistCardProps) {
     const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
     const [shouldShowSeeMore, setShouldShowSeeMore] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showRatingDialog, setShowRatingDialog] = useState(false);
+    const [currentRating, setCurrentRating] = useState<number>(0);
 
     const overviewRef = useRef<HTMLParagraphElement>(null);
     const { updateMovie, deleteMovie } = useMovieActions();
@@ -76,6 +83,9 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
             await updateMovie(movie.id, {
                 watch_status: 'watched',
                 watched_date: new Date().toISOString()
+            }, {
+                optimistic: true,
+                originalMovie: movie
             });
             toast.success('Marked as watched!');
         } catch (error) {
@@ -86,13 +96,50 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
 
     const handleDelete = async () => {
         try {
-            await deleteMovie(movie.id);
+            await deleteMovie(movie.id, {
+                optimistic: true,
+                originalMovie: movie
+            });
             setShowDeleteDialog(false);
             toast.success('Removed from watchlist');
         } catch (error) {
             console.log(error)
             toast.error('Failed to remove from watchlist');
         }
+    };
+
+    const handleShowRatingDialog = () => {
+        setShowRatingDialog(true);
+        setCurrentRating(0);
+    };
+
+    const handleRateAndWatch = async () => {
+        if (currentRating === 0) {
+            toast.error('Please select a rating');
+            return;
+        }
+
+        try {
+            await updateMovie(movie.id, {
+                watch_status: 'watched',
+                watched_date: new Date().toISOString(),
+                user_rating: currentRating
+            }, {
+                optimistic: true,
+                originalMovie: movie
+            });
+            setShowRatingDialog(false);
+            setCurrentRating(0);
+            toast.success(`Rated ${currentRating}/5 and marked as watched!`);
+        } catch (error) {
+            console.log(error);
+            toast.error('Failed to rate and watch');
+        }
+    };
+
+    const handleCancelRating = () => {
+        setShowRatingDialog(false);
+        setCurrentRating(0);
     };
 
     return (
@@ -105,10 +152,10 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                             <img
                                 src={posterUrl}
                                 alt={movie.title}
-                                className="w-full aspect-[2/3] object-cover"
+                                className="w-full aspect-2/3 object-cover"
                             />
                         ) : (
-                            <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center">
+                            <div className="w-full aspect-2/3 bg-muted flex items-center justify-center">
                                 {movie.media_type === 'tv' ? (
                                     <Tv className="w-8 h-8 text-muted-foreground" />
                                 ) : (
@@ -118,15 +165,71 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                         )}
 
                         {/* Hover overlay with action button */}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 lg:group-hover/Poster:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button
-                                onClick={handleMarkAsWatched}
-                                size="sm"
-                                className="gap-2"
-                            >
-                                <Eye className="w-3 h-3" />
-                                Mark as Watched
-                            </Button>
+                        <div className="absolute inset-0 bg-black/60 opacity-0 lg:group-hover/Poster:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                            {showRatingDialog ? (
+                                // Rating Dialog
+                                <div className="bg-black/80 rounded-lg p-3 w-[90%] max-w-[200px]">
+                                    <div className="space-y-3">
+                                        <p className="text-white text-sm font-medium text-center">Rate this {movie.media_type === 'tv' ? 'TV show' : 'movie'}</p>
+                                        <div className="flex justify-center">
+                                            <StarRating
+                                                rating={currentRating}
+                                                onRatingChange={setCurrentRating}
+                                                size="sm"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                onClick={handleRateAndWatch}
+                                                disabled={currentRating === 0}
+                                                className="text-xs px-2 py-1 h-auto flex-1"
+                                            >
+                                                <Star className="w-3 h-3 mr-1" />
+                                                Rate & Watch
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={handleCancelRating}
+                                                className="text-xs px-2 py-1 h-auto"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                // Regular Buttons
+                                <>
+                                    <Button
+                                        onClick={handleMarkAsWatched}
+                                        size="sm"
+                                        className="gap-2 w-[80%]"
+                                    >
+                                        <Eye className="w-3 h-3" />
+                                        Mark as Watched
+                                    </Button>
+                                    <Button
+                                        onClick={handleShowRatingDialog}
+                                        size="sm"
+                                        variant="secondary"
+                                        className="gap-2 w-[80%]"
+                                    >
+                                        <Star className="w-3 h-3" />
+                                        Rate & Watch
+                                    </Button>
+                                    <Button
+                                        onClick={() => setShowDeleteDialog(true)}
+                                        size="sm"
+                                        variant="destructive"
+                                        className="gap-2 w-[80%]"
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Remove
+                                    </Button>
+                                </>
+                            )}
                         </div>
 
                         {/* TMDb rating badge */}
@@ -151,6 +254,10 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                                         <Eye className="mr-2 h-4 w-4" />
                                         Mark as Watched
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleShowRatingDialog}>
+                                        <Star className="mr-2 h-4 w-4" />
+                                        Rate & Watch
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         onClick={() => setShowDeleteDialog(true)}
@@ -165,10 +272,17 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                     </div>
 
                     {/* Content */}
-                    <div className="p-4">
+                    <div className="py-2">
                         {/* Header with badges */}
-                        <div className="flex items-start gap-2 mb-2">
-                            <Badge variant="outline" className="text-xs h-5 flex-shrink-0">
+                        <div className="flex items-center gap-2 mb-2">
+                            {movie.watch_status === 'watch_again' && (
+                                <Tooltip tooltip="Marked as Watch Again" cursor="cursor-default">
+                                    <Badge variant="outline" className="text-xs h-5 shrink-0 border-orange-300 text-orange-700">
+                                        <RotateCcw className="size-3" />
+                                    </Badge>
+                                </Tooltip>
+                            )}
+                            <Badge variant="outline" className="text-xs h-5 shrink-0">
                                 {movie.media_type === 'tv' ? 'TV' : 'Movie'}
                             </Badge>
                             {releaseYear && (

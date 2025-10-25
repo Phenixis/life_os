@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { signUp } from "@/lib/auth/actions"
 import { useActionState, useState, useRef, useEffect } from "react"
-import type { ActionState } from "@/middleware"
+import type { ActionState } from "@/proxy"
 import { Loader } from "lucide-react"
 import {
     Card,
@@ -24,14 +24,25 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import { useSearchParams } from "next/navigation"
 
 export default function SignUp() {
+    const searchParams = useSearchParams()
     const firstNameRef = useRef<HTMLInputElement>(null)
     const lastNameRef = useRef<HTMLInputElement>(null)
     const emailRef = useRef<HTMLInputElement>(null)
     const [state, formAction, pending] = useActionState<ActionState, FormData>(signUp, { error: "" })
     const [formFilled, setFormFilled] = useState(false)
     const [showDialog, setShowDialog] = useState(false)
+    const [redirectTo, setRedirectTo] = useState("/my")
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const redirectParam = params.get("redirectTo")
+        if (redirectParam) {
+            setRedirectTo(redirectParam)
+        }
+    }, [])
 
     useEffect(() => {
         if (state?.success) {
@@ -64,6 +75,16 @@ export default function SignUp() {
                     <CardTitle>Welcome</CardTitle>
                 </CardHeader>
                 <CardContent className="w-full">
+                    {
+                        Array.from(searchParams.entries()).map(([key, value]) => (
+                            <input
+                                key={key}
+                                type="hidden"
+                                name={key}
+                                value={value}
+                            />
+                        ))
+                    }
                     <div className="flex space-x-4">
                         <div>
                             <Label required>First Name</Label>
@@ -72,6 +93,7 @@ export default function SignUp() {
                                 name="first_name"
                                 className="text-center"
                                 ref={firstNameRef}
+                                autoFocus
                                 onChange={verifyFormFilled}
                             />
                         </div>
@@ -99,12 +121,12 @@ export default function SignUp() {
                         }}
                     />
                 </CardContent>
-                <CardFooter className={`${pending ? "flex justify-between" : "flex justify-end"}`}>
+                <CardFooter className={`flex ${pending || state?.error ? "justify-between" : "justify-end"} items-end`}>
                     {
                         pending ? (
                             <Loader className="animate-spin size-4" />
                         ) : (
-                            state?.error && <p className="text-red-500">{state.error}</p>
+                            state?.error && <p className="text-red-500 max-w-64">{state.error}</p>
                         )
                     }
                     <Button
@@ -113,20 +135,32 @@ export default function SignUp() {
                     >Request an account</Button>
                 </CardFooter>
             </Card>
-            <Link href="/login" className="text-sm text-gray-300 lg:text-gray-500 lg:hover:text-gray-300 underline lg:no-underline lg:hover:underline">Already have an account?</Link>
+            {/* Preserve all search params when linking to login */}
+            <Link
+                href={{
+                    pathname: "/login",
+                    query: Object.fromEntries(searchParams.entries()),
+                }}
+                className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline"
+            >
+                Already have an account?
+            </Link>
 
             {showDialog && (
                 <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                    <DialogContent>
+                    <DialogContent maxHeight="max-h-64">
                         <DialogHeader>
                             <DialogTitle>Account created</DialogTitle>
                         </DialogHeader>
                         <p>Your account has been created !</p>
                         <DialogDescription>
-                            You should have received an email with your credentials. These credentials are unique and this is the only time you will see them, please save them in a secure location.
+                            You should have received an email with a link to set up your password. Please check your inbox and follow the instructions to complete your account setup.
                         </DialogDescription>
                         <DialogFooter>
-                            <Button onClick={() => redirect("/login")}>Login</Button>
+                            <Button onClick={() => {
+                                const loginUrl = redirectTo !== "/my" ? `/login?redirectTo=${encodeURIComponent(redirectTo)}` : "/login"
+                                redirect(loginUrl)
+                            }}>Login</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

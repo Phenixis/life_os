@@ -1,5 +1,5 @@
 export default async function sitemap() {
-  const routes = [''].map((route) => ({
+  const routes = ['', '/privacy', '/terms', '/contact'].map((route) => ({
     url: `${process.env.NEXT_PUBLIC_APP_URL}${route}`,
     lastModified: new Date().toISOString().split('T')[0],
   }))

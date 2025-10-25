@@ -1,5 +1,5 @@
 import {
-    searchProjects
+    ProjectQueries
 } from "@/lib/db/queries"
 import {
     type NextRequest,
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const limit = limitParam ? Number.parseInt(limitParam) : undefined
 
     try {
-        const projects = await searchProjects(verification.userId, query, limit)
+        const projects = await ProjectQueries.searchProjects(verification.userId, query, limit)
         return NextResponse.json(projects)
     } catch (error) {
         console.error("Error fetching projects:", error)

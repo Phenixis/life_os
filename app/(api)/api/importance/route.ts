@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
     try {
-        const importance = await db.select().from(Schema.importance)
+        const importance = await db.select().from(Schema.Task.Importance.table)
         return NextResponse.json(importance)
     } catch (error) {
         console.error("Error fetching importance:", error);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/auth/api';
-import MovieQueries from '@/lib/db/queries/movies';
+import * as MovieQueries from '@/lib/db/queries/movie/movie';
 
 /**
  * GET /api/movie/list
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
         const userId = verification.userId;
         const { searchParams } = new URL(request.url);
-        const status = searchParams.get('status') as 'will_watch' | 'watched' | null;
+        const status = searchParams.get('status') as 'will_watch' | 'watched' | "watch_again" | null;
         const search = searchParams.get('search');
 
         let movies;

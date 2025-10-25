@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "daily_recap_email_enabled" boolean DEFAULT false NOT NULL;

@@ -1,5 +1,5 @@
 import {
-    searchTasksByTitle
+    TaskQueries
 } from "@/lib/db/queries"
 import {
     type NextRequest,
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const limit = limitParam ? Number.parseInt(limitParam) : undefined
 
     try {
-        const tasks = await searchTasksByTitle(verification.userId, query, limit)
+        const tasks = await TaskQueries.Task.searchTasksByTitle(verification.userId, query, limit)
 
         // Filter out tasks with excluded IDs
         const filteredTasks = tasks.filter((task) => !excludeIds.includes(task.id))

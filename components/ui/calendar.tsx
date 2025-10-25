@@ -11,11 +11,11 @@ import type { DailyMood } from "@/lib/db/schema"
 export const DailyMoodColors: {
     [key: number]: string
 } = {
-    0: "bg-red-700/30 dark:bg-red-700",
-    1: "bg-blue-400/30 dark:bg-blue-600",
-    2: "bg-amber-300/30 dark:bg-amber-600",
-    3: "bg-green-400/30 dark:bg-green-400",
-    4: "bg-green-800/30 dark:bg-green-800",
+    0: "bg-red-700/30 border border-red-500 dark:bg-red-700",
+    1: "bg-blue-400/30 border border-blue-500 dark:bg-blue-600",
+    2: "bg-amber-300/30 border border-amber-500 dark:bg-amber-600",
+    3: "bg-green-400/30 border border-green-500 dark:bg-green-400",
+    4: "bg-green-800/30 border border-green-500 dark:bg-green-800",
 }
 
 export type TaskCount = {
@@ -26,7 +26,7 @@ export type TaskCount = {
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
     taskCounts?: TaskCount[]
-    dailyMoods?: DailyMood[]
+    dailyMoods?: DailyMood.Select[]
 }
 
 function Calendar({
@@ -140,7 +140,7 @@ function Calendar({
                             {/* Mood indicator as background */}
                             {mood !== -1 && (
                                 <div
-                                    className={`absolute inset-0.5 rounded-sm opacity-30 ${moodColorClass}`}
+                                    className={`absolute inset-0.5 rounded opacity-30 ${moodColorClass}`}
                                     aria-hidden="true"
                                     style={{ pointerEvents: "none" }}
                                 />

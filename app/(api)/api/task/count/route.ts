@@ -1,5 +1,5 @@
 import { verifyRequest } from "@/lib/auth/api"
-import { getNumberOfTasks } from "@/lib/db/queries"
+import { TaskQueries } from "@/lib/db/queries"
 import { NextRequest, NextResponse } from "next/server"
 
 // GET - Récupérer les count de tasks
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 			dueBefore.setHours(23, 59, 59, 999)
 		}
 
-		const result = await getNumberOfTasks(verification.userId, projectTitles, excludedProjectTitles, dueAfter, dueBefore)
+		const result = await TaskQueries.Task.getNumberOfTasks(verification.userId, projectTitles, excludedProjectTitles, dueAfter, dueBefore)
 		
 		return NextResponse.json(result.map((task) => ({
 			...task,

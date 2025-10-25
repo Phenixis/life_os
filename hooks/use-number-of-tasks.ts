@@ -1,28 +1,33 @@
 "use client"
 
-import type { Task, TaskWithRelations } from "@/lib/db/schema"
-import { useFilteredData } from "./use-filtered-data"
 import { TaskCount } from "@/components/ui/calendar"
+import type { Task } from "@/lib/db/schema"
+import { useFilteredData } from "./use-filtered-data"
+import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 
-// hooks/use--number-of-tasks.ts
-export function useNumberOfTasks({
-    projectTitles,
-    excludedProjectTitles,
-    dueAfter,
-    dueBefore,
-    enabled = true
-}: {
-    projectTitles?: string[]
-    excludedProjectTitles?: string[]
+interface UseNumberOfTasksParams {
+    projects?: simplifiedProject[]
+    excludedProjects?: simplifiedProject[]
     dueAfter?: Date
     dueBefore?: Date
     enabled?: boolean
-}) {
-    const { data, isLoading, isError, mutate } = useFilteredData<Task[]>({
+}
+
+// hooks/use-number-of-tasks.ts
+export function useNumberOfTasks(params: UseNumberOfTasksParams = {}) {
+    const {
+        projects,
+        excludedProjects,
+        dueAfter,
+        dueBefore,
+        enabled = true
+    } = params
+
+    const { data, isLoading, isError, mutate } = useFilteredData<Task.Task.Select[]>({
         endpoint: "/api/task/count",
         params: {
-            projectTitles: projectTitles?.join(","),
-            excludedProjectTitles: excludedProjectTitles?.join(","),
+            projectTitles: projects?.map(p => p.title).join(","),
+            excludedProjectTitles: excludedProjects?.map(p => p.title).join(","),
             dueAfter: dueAfter ? dueAfter.toISOString() : undefined,
             dueBefore: dueBefore ? dueBefore.toISOString() : undefined,
         },
@@ -34,5 +39,6 @@ export function useNumberOfTasks({
         isLoading,
         isError,
         mutate,
+        taskCounts: (data as TaskCount[]) || [], // Keep backward compatibility
     }
 }

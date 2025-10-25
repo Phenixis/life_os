@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
     try {
-        const durations = await db.select().from(Schema.duration)
+        const durations = await db.select().from(Schema.Task.Duration.table)
         return NextResponse.json(durations)
     } catch (error) {
         console.error("Error fetching durations:", error);

@@ -1,59 +1,45 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
-import { verifyCredentials } from "@/lib/auth/actions"
-import { useActionState, useEffect, useState, useRef, startTransition } from "react"
-import type { ActionState } from "@/middleware"
-import { Loader } from "lucide-react"
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from "@/components/ui/input-otp"
-import {
-    REGEXP_ONLY_DIGITS
-} from "input-otp"
+import {Label} from "@/components/ui/label"
+import {Input} from "@/components/ui/input"
+import {startTransition, useActionState, useEffect, useRef, useState} from "react"
+import type {ActionState} from "@/proxy"
+import {Loader} from "lucide-react"
+import {Card, CardContent, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card"
+import {Button} from "@/components/ui/button"
+import {InputOTP, InputOTPGroup, InputOTPSlot,} from "@/components/ui/input-otp"
+import {REGEXP_ONLY_DIGITS} from "input-otp"
 import Link from "next/link"
-import { toast } from "sonner"
+import {toast} from "sonner"
+import {ForgotPasswordForm} from "@/components/big/auth/forgot-password-form"
+import {ForgotIdentifierForm} from "@/components/big/auth/forgot-identifier-form"
+import {useSearchParams} from "next/navigation"
+import {login} from "@/lib/auth/actions"
 
 export default function Login() {
-    const [redirectTo, setRedirectTo] = useState("/my")
+    const searchParams = useSearchParams()
     const [identifier, setIdentifier] = useState("")
     const [password, setPassword] = useState("")
-    const [hiddenPassword, setHiddenPassword] = useState("")
 
     const formRef = useRef<HTMLFormElement>(null)
     const identifierRef = useRef<HTMLInputElement>(null)
     const passwordRef = useRef<HTMLInputElement>(null)
-    
+
     const [state, formAction, pending] = useActionState<ActionState, FormData>(async (prevState, formData) => {
-        formData.append("redirectTo", redirectTo)
-        formData.append("identifier", identifier)
-        formData.append("password", password)
-        const result = await verifyCredentials(prevState, formData)
-        if (result.error) {
-            toast.error(result.error)
-        } else if (result.success) {
-            toast.success("Login successful")
+        const result = await login(prevState, formData)
+        if (result) {
+            if (result.error) {
+                toast.error(result.error)
+            } else if (result.success) {
+                toast.success("Login successful")
+            }
+            return result
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        return result
-    }, { error: "" })
+        return null
+    }, {error: ""})
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search)
-        const redirectParam = params.get("redirectTo")
-        if (redirectParam) {
-            setRedirectTo(redirectParam)
-        }
+        toast.dismiss("logout")
     }, [])
 
     useEffect(() => {
@@ -86,16 +72,6 @@ export default function Login() {
         }
     }, [identifier])
 
-    useEffect(() => {
-        if (password.length === 8) {
-            startTransition(() => {
-                if (formRef.current) {
-                    formAction(new FormData(formRef.current))
-                }
-            })
-        }
-    }, [password, formAction])
-
     return (
         <form
             action={formAction}
@@ -107,7 +83,18 @@ export default function Login() {
                     <CardTitle>Hello</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <input type="text" name="redirectTo" className="hidden" value={redirectTo} readOnly />
+                    {
+                        Array.from(searchParams.entries()).map(([key, value]) => (
+                            <input
+                                key={key}
+                                type="hidden"
+                                name={key}
+                                value={value}
+                            />
+                        ))
+                    }
+                    <input type="hidden" name="identifier" value={identifier}/>
+                    <input type="hidden" name="password" value={password}/>
                     <Label required>Enter your identifier</Label>
                     <InputOTP
                         maxLength={8}
@@ -115,54 +102,34 @@ export default function Login() {
                         onChange={(value) => setIdentifier(value)}
                         pattern={REGEXP_ONLY_DIGITS}
                         ref={identifierRef}
+                        autoFocus
                     >
                         <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                            <InputOTPSlot index={6} />
-                            <InputOTPSlot index={7} />
+                            <InputOTPSlot index={0}/>
+                            <InputOTPSlot index={1}/>
+                            <InputOTPSlot index={2}/>
+                            <InputOTPSlot index={3}/>
+                            <InputOTPSlot index={4}/>
+                            <InputOTPSlot index={5}/>
+                            <InputOTPSlot index={6}/>
+                            <InputOTPSlot index={7}/>
                         </InputOTPGroup>
                     </InputOTP>
                     <Label required>Enter your password</Label>
-                    <InputOTP
+                    <Input
                         type="password"
-                        maxLength={8}
-                        value={hiddenPassword}
+                        value={password}
                         ref={passwordRef}
-                        onChange={(value) => {
-                            if (value.length > password.length) {
-                                const realValue = password + value.slice(-1)
-                                const regex = /^\d*$/
-                                if (regex.test(realValue)) {
-                                    setPassword(realValue)
-                                    setHiddenPassword("*".repeat(realValue.length))
-                                }
-                            } else {
-                                setPassword(password.slice(0, value.length))
-                                setHiddenPassword(value)
-                            }
-                        }}
-                    >
-                        <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                            <InputOTPSlot index={6} />
-                            <InputOTPSlot index={7} />
-                        </InputOTPGroup>
-                    </InputOTP>
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={pending}
+                        required
+                        className="text-center"
+                    />
                 </CardContent>
                 <CardFooter className={`${pending || state?.error ? "flex justify-between" : "flex justify-end"}`}>
                     {
                         pending ? (
-                            <Loader className="animate-spin size-4" />
+                            <Loader className="animate-spin size-4"/>
                         ) : (
                             state?.error && <p className="text-red-500">{state.error}</p>
                         )
@@ -172,7 +139,20 @@ export default function Login() {
                         disabled={pending}
                     >Login</Button>
                 </CardFooter>
-            </Card>                <Link href="/sign-up" className="text-sm text-gray-300 lg:text-gray-500 lg:hover:text-gray-300 underline lg:no-underline lg:hover:underline">Don&apos;t have an account?</Link>
+            </Card>
+            <div className="flex gap-4 items-center justify-center">
+                <ForgotIdentifierForm/>
+                <ForgotPasswordForm/>
+            </div>
+            <Link
+                href={{
+                    pathname: "/sign-up",
+                    query: Object.fromEntries(searchParams.entries()),
+                }}
+                className="text-sm text-gray-700 lg:text-gray-500 lg:hover:text-gray-700 underline lg:no-underline lg:hover:underline"
+            >
+                Don&apos;t have an account?
+            </Link>
         </form>
     )
 }

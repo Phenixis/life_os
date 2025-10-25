@@ -97,15 +97,18 @@ export function WatchlistGrid() {
     }, [mediaFilter, updateFilters, isClient]);
 
     const { movies: willWatchMovies, isLoading: isLoadingWillWatch } = useMovies('will_watch');
+    const { movies: watchAgainMovies, isLoading: isLoadingWatchAgain } = useMovies('watch_again');
     const { movies: searchMovies, isLoading: isLoadingSearch } = useMovies(undefined, debouncedQuery);
 
     // Determine which movies to show
-    let movies = willWatchMovies;
-    let isLoading = isLoadingWillWatch;
+    let movies = [...willWatchMovies, ...watchAgainMovies];
+    let isLoading = isLoadingWillWatch || isLoadingWatchAgain;
 
     if (debouncedQuery) {
-        // Filter search results to only show will_watch movies
-        movies = searchMovies.filter(movie => movie.watch_status === 'will_watch');
+        // Filter search results to show both will_watch and watch_again movies
+        movies = searchMovies.filter(movie => 
+            movie.watch_status === 'will_watch' || movie.watch_status === 'watch_again'
+        );
         isLoading = isLoadingSearch;
     }
 
@@ -298,7 +301,7 @@ export function WatchlistGrid() {
             {isLoading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {Array.from({ length: 12 }).map((_, i) => (
-                        <div key={i} className="aspect-[2/3] bg-muted rounded-lg animate-pulse"></div>
+                        <div key={i} className="aspect-2/3 bg-muted rounded-lg animate-pulse"></div>
                     ))}
                 </div>
             ) : paginatedMovies.length > 0 ? (

@@ -1,4 +1,4 @@
-import { getUserPreferences, updateDarkModePreferences } from "@/lib/db/queries/user"
+import { getUserPreferences, updateDarkModePreferences } from "@/lib/db/queries/user/user"
 import { NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
 import { DarkModeCookie } from "@/lib/flags"

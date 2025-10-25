@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/auth/api';
-import MovieQueries from '@/lib/db/queries/movies';
+import * as MovieNotInterestedQueries from '@/lib/db/queries/movie/not-interested';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * POST /api/movie/not-interested
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Mark as not interested
-        const notInterestedMovie = await MovieQueries.markAsNotInterested(
+        const notInterestedMovie = await MovieNotInterestedQueries.markAsNotInterested(
             userId,
             tmdb_id,
             media_type,
@@ -90,7 +90,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Remove from not interested
-        await MovieQueries.removeFromNotInterested(userId, tmdb_id, media_type);
+        await MovieNotInterestedQueries.removeFromNotInterested(userId, tmdb_id, media_type);
 
         return NextResponse.json({
             success: true

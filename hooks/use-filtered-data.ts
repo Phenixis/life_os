@@ -35,9 +35,11 @@ export function useFilteredData<T>({
   const { data, error, isLoading, mutate } = useSWR(swrKey, (url) => fetcher(url, resolvedKey), {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
-    dedupingInterval: 10000, // Increased from 5000 to reduce duplicate requests
-    revalidateIfStale: false,
+    dedupingInterval: 5000, // Reduced back to allow better reactivity
+    revalidateIfStale: true, // Allow revalidation when data is stale
     refreshInterval: 0, // Disable automatic polling
+    errorRetryCount: 3,
+    errorRetryInterval: 1000,
   })
 
 

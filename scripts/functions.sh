@@ -91,11 +91,11 @@ update_changelog() {
             local section_text="## [$version] - $release_date"
             
             # Find the first existing version section and insert before it
-            if ! awk -v new_section="$section_text" -v commit_msg="$commit_message" '
+            if ! awk -v new_section="$section_text" -v commit_msg="$commit_message" -v version="$version" '
                 /^## \[/ && !inserted {
                     print new_section
                     datetime = strftime("%Y-%m-%d %H:%M:%S")
-                    print "- [" datetime "] " commit_msg
+                    print "- [V" version " - " datetime "] " commit_msg
                     print ""
                     inserted = 1
                 }
@@ -158,12 +158,16 @@ update_changelog() {
         local datetime
         datetime=$(date +"%Y-%m-%d %H:%M:%S")
         
+        # Get current version from package.json
+        local current_version
+        current_version=$(jq -r '.version' package.json 2>/dev/null || echo "unknown")
+        
         # Escape special characters in commit message for sed
         local escaped_commit_message
         escaped_commit_message=$(printf '%s\n' "$commit_message" | sed 's/[[\.*^$()+?{|]/\\&/g')
         
-        # Insert commit message with date and time under [NOT RELEASED] section
-        if ! sed -i "/## \[NOT RELEASED\]/a - [$datetime] $escaped_commit_message" CHANGELOG.md; then
+        # Insert commit message with version, date and time under [NOT RELEASED] section
+        if ! sed -i "/## \[NOT RELEASED\]/a - [V$current_version - $datetime] $escaped_commit_message" CHANGELOG.md; then
             echo "❌ Failed to update CHANGELOG.md"
             mv CHANGELOG.md.backup CHANGELOG.md
             return 1

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Plus, Save, Download, Upload, FileUp, Edit, Info, Trophy } from "lucide-react";
+import { Trash, Plus, Save, Edit, Info, Trophy, Copy, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     Dialog,
@@ -36,6 +36,14 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import {
+    getUserMatrices,
+    getMatrix,
+    saveMatrix,
+    removeMatrix,
+    duplicateMatrix,
+    type DecisionMatrix
+} from "@/lib/auth/wmcdm-actions";
 
 // Types definition for our WMCDM components
 type Option = {
@@ -51,17 +59,57 @@ type Criterion = {
     description: string;
 };
 
-type DecisionMatrix = {
-    criteria: Criterion[];
-    options: Option[];
-};
+// Memoized ScoreSelect component to prevent unnecessary re-renders
+const ScoreSelect = React.memo(({
+    score,
+    onScoreChange
+}: {
+    score: number;
+    onScoreChange: (value: number) => void;
+}) => (
+    <Select
+        value={score.toString()}
+        onValueChange={(value) => onScoreChange(parseInt(value))}
+    >
+        <SelectTrigger className="h-8 w-14">
+            <SelectValue placeholder="0" />
+        </SelectTrigger>
+        <SelectContent>
+            {[...Array(11)].map((_, i) => (
+                <SelectItem key={i} value={i.toString()}>
+                    {i}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
+));
+
+ScoreSelect.displayName = "ScoreSelect"; // Set display name for better debugging
 
 export default function Page() {
+    // Refs for focusing inputs and preventing double submissions
+    const criterionNameRef = useRef<HTMLInputElement>(null);
+    const optionNameRef = useRef<HTMLInputElement>(null);
+    const isSubmittingCriterion = useRef(false);
+    const isSubmittingOption = useRef(false);
+
     // State for the decision matrix - simplified to just criteria and options
     const [matrix, setMatrix] = useState<DecisionMatrix>({
+        name: "",
         criteria: [],
         options: []
     });
+
+    // State for saved matrices
+    const [savedMatrices, setSavedMatrices] = useState<Array<{ id: number; name: string; description?: string; created_at: Date; updated_at: Date }>>([]);
+    const [currentMatrixId, setCurrentMatrixId] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // State for matrix management
+    const [showMatrixDialog, setShowMatrixDialog] = useState(false);
+    const [showLoadDialog, setShowLoadDialog] = useState(false);
+    const [matrixName, setMatrixName] = useState("");
+    const [matrixDescription, setMatrixDescription] = useState("");
 
     // State for new criterion or option
     const [newCriterionName, setNewCriterionName] = useState("");
@@ -73,18 +121,88 @@ export default function Page() {
     const [editingCriterion, setEditingCriterion] = useState<Criterion | null>(null);
     const [showCriterionDialog, setShowCriterionDialog] = useState(false);
 
+    // State for save status notifications
+    const [localSaveStatus, setLocalSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+    const [onlineSaveStatus, setOnlineSaveStatus] = useState<'saved' | 'saving' | 'not-saved'>('not-saved');
+
+    // Client-side cookie utilities
+    // const setCookie = useCallback((name: string, value: string, days: number = 30) => {
+    //     const expires = new Date();
+    //     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    //     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+    // }, []);
+
+    // const getCookie = useCallback((name: string): string | null => {
+    //     const nameEQ = name + "=";
+    //     const ca = document.cookie.split(';');
+    //     for (let i = 0; i < ca.length; i++) {
+    //         let c = ca[i];
+    //         while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    //         if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    //     }
+    //     return null;
+    // }, []);
+
+    // Utility function to load matrix from local storage
+    const loadFromLocalStorage = useCallback((): DecisionMatrix | null => {
+        try {
+            const stored = localStorage.getItem("wmcdm-matrix");
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                // Basic validation to ensure structure
+                if (parsed && typeof parsed === "object" && Array.isArray(parsed.criteria) && Array.isArray(parsed.options)) {
+                    return parsed as DecisionMatrix;
+                }
+            }
+        } catch (error) {
+            console.error("Failed to load matrix from local storage:", error);
+        }
+        return null;
+    }, []);
+
+    // Load from local storage on component mount (only once)
+    useEffect(() => {
+        const localMatrix = loadFromLocalStorage();
+        if (localMatrix) {
+            setMatrix(localMatrix);
+            setLocalSaveStatus('saved');
+        }
+    }, [loadFromLocalStorage]);
+
+    // Load user matrices from database
+    const loadUserMatrices = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const result = await getUserMatrices();
+            if (result.success && result.matrices) {
+                setSavedMatrices(result.matrices);
+            } else {
+                toast.error(result.error || "Failed to load matrices");
+            }
+        } catch (error) {
+            console.error("Error loading matrices:", error);
+            toast.error("Failed to load matrices");
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     // Function to add a new criterion
-    const addCriterion = () => {
-        if (!newCriterionName) {
+    const addCriterion = useCallback(() => {
+        if (isSubmittingCriterion.current) return;
+
+        if (!newCriterionName.trim()) {
             toast.error("Criterion name cannot be empty");
             return;
         }
 
+        isSubmittingCriterion.current = true;
+
         const newCriterion: Criterion = {
-            id: `criterion-${Date.now()}`,
-            name: newCriterionName,
+            id: `criterion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: newCriterionName.trim(),
             weight: newCriterionWeight,
-            description: newCriterionDescription
+            description: newCriterionDescription.trim()
         };
 
         setMatrix(prev => {
@@ -111,19 +229,29 @@ export default function Page() {
         setNewCriterionWeight(1);
         setNewCriterionDescription("");
 
+        // Focus back on the criterion name input
+        setTimeout(() => {
+            criterionNameRef.current?.focus();
+            isSubmittingCriterion.current = false;
+        }, 100);
+
         toast.success("Criterion added successfully");
-    };
+    }, [newCriterionName, newCriterionWeight, newCriterionDescription]);
 
     // Function to update a criterion
-    const updateCriterion = () => {
-        if (!editingCriterion || !editingCriterion.name) {
+    const updateCriterion = useCallback(() => {
+        if (!editingCriterion || !editingCriterion.name.trim()) {
             toast.error("Criterion name cannot be empty");
             return;
         }
 
         setMatrix(prev => {
             const updatedCriteria = prev.criteria.map(criterion =>
-                criterion.id === editingCriterion.id ? editingCriterion : criterion
+                criterion.id === editingCriterion.id ? {
+                    ...editingCriterion,
+                    name: editingCriterion.name.trim(),
+                    description: editingCriterion.description.trim()
+                } : criterion
             );
 
             return {
@@ -135,18 +263,22 @@ export default function Page() {
         setEditingCriterion(null);
         setShowCriterionDialog(false);
         toast.success("Criterion updated successfully");
-    };
+    }, [editingCriterion]);
 
     // Function to add a new option
-    const addOption = () => {
-        if (!newOptionName) {
+    const addOption = useCallback(() => {
+        if (isSubmittingOption.current) return;
+
+        if (!newOptionName.trim()) {
             toast.error("Option name cannot be empty");
             return;
         }
 
+        isSubmittingOption.current = true;
+
         const newOption: Option = {
-            id: `option-${Date.now()}`,
-            name: newOptionName,
+            id: `option-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: newOptionName.trim(),
             scores: {}
         };
 
@@ -163,11 +295,34 @@ export default function Page() {
         // Reset the form field
         setNewOptionName("");
 
-        toast.success("Option added successfully");
-    };
+        // Focus back on the option name input
+        setTimeout(() => {
+            optionNameRef.current?.focus();
+            isSubmittingOption.current = false;
+        }, 100);
 
-    // Function to update a score
-    const updateScore = (optionId: string, criterionId: string, score: number) => {
+        toast.success("Option added successfully");
+    }, [newOptionName, matrix.criteria]);
+
+    // Handle keyboard shortcuts for criterion dialog
+    const handleCriterionKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            addCriterion();
+            criterionNameRef.current?.focus();
+        }
+    }, [addCriterion]);
+
+    // Handle keyboard shortcuts for option dialog
+    const handleOptionKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            addOption();
+        }
+    }, [addOption]);
+
+    // Function to update a score - optimized with useCallback
+    const updateScore = useCallback((optionId: string, criterionId: string, score: number) => {
         // Make sure the score is between 0 and 10
         const validScore = Math.min(Math.max(score, 0), 10);
 
@@ -190,7 +345,7 @@ export default function Page() {
                 options: updatedOptions
             };
         });
-    };
+    }, []);
 
     // Function to remove a criterion
     const removeCriterion = (criterionId: string) => {
@@ -232,7 +387,7 @@ export default function Page() {
      * Calculate weighted scores for each option and criterion
      * @returns Record of weighted scores for each option and criterion
      */
-    const calculateWeightedScores = () => {
+    const calculateWeightedScores = useMemo(() => {
         // Calculate weighted score for each option and criterion
         const weightedScores: Record<string, Record<string, number>> = {};
 
@@ -246,19 +401,18 @@ export default function Page() {
         });
 
         return weightedScores;
-    };
+    }, [matrix.options, matrix.criteria]);
 
     /**
      * Calculate totals for each option
      * @returns Record containing total and normalized scores for each option
      */
-    const calculateTotals = () => {
-        const weightedScores = calculateWeightedScores();
+    const calculateTotals = useMemo(() => {
         const totals: Record<string, { total: number, normalized: number }> = {};
         const totalWeight = matrix.criteria.reduce((sum, criterion) => sum + criterion.weight, 0);
 
         matrix.options.forEach(option => {
-            const total = Object.values(weightedScores[option.id]).reduce((sum, score) => sum + score, 0);
+            const total = Object.values(calculateWeightedScores[option.id] || {}).reduce((sum, score) => sum + score, 0);
             // Normalize to a score out of 10
             const normalized = totalWeight > 0 ? (total / totalWeight) * 10 : 0;
 
@@ -269,14 +423,14 @@ export default function Page() {
         });
 
         return totals;
-    };
+    }, [calculateWeightedScores, matrix.criteria, matrix.options]);
 
     /**
      * Find the winner option for a specific criterion
      * @param criterionId The ID of the criterion to evaluate
      * @returns The winning option or null if no options
      */
-    const findWinnerForCriterion = (criterionId: string): Option | null => {
+    const findWinnerForCriterion = useCallback((criterionId: string): Option | null => {
         if (matrix.options.length === 0) return null;
 
         return matrix.options.reduce((winner, current) => {
@@ -285,111 +439,185 @@ export default function Page() {
 
             return currentScore > winnerScore ? current : winner;
         }, null as Option | null);
-    };
+    }, [matrix.options]);
 
-    // Save decision matrix to local storage
-    const saveMatrix = () => {
+    // Save current matrix to database
+    const saveCurrentMatrix = async () => {
+        if (!matrixName.trim()) {
+            toast.error("Please enter a name for the matrix");
+            return;
+        }
+
+        if (matrix.criteria.length === 0 && matrix.options.length === 0) {
+            toast.error("Cannot save an empty matrix. Please add criteria or options first.");
+            return;
+        }
+
+        setIsLoading(true);
+        setOnlineSaveStatus('saving');
         try {
-            localStorage.setItem("decisionMatrix", JSON.stringify(matrix));
-            toast.success("Decision matrix saved successfully");
+            const matrixToSave: DecisionMatrix = {
+                ...matrix,
+                id: currentMatrixId || undefined,
+                name: matrixName,
+                description: matrixDescription
+            };
+
+            const result = await saveMatrix(matrixToSave);
+
+            if (result.success) {
+                setCurrentMatrixId(result.matrixId || null);
+                setOnlineSaveStatus('saved');
+                toast.success("Saved online");
+                setShowMatrixDialog(false);
+                setMatrixName("");
+                setMatrixDescription("");
+                await loadUserMatrices(); // Refresh the list
+            } else {
+                setOnlineSaveStatus('not-saved');
+                toast.error(result.error || "Failed to save matrix");
+            }
         } catch (error) {
             console.error("Error saving matrix:", error);
-            toast.error("Failed to save decision matrix");
+            setOnlineSaveStatus('not-saved');
+            toast.error("Failed to save matrix");
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Load decision matrix from local storage
-    const loadMatrix = () => {
+    // Load a matrix from database
+    const loadMatrixFromDatabase = async (matrixId: number) => {
+        setIsLoading(true);
         try {
-            const savedMatrix = localStorage.getItem("decisionMatrix");
-            if (savedMatrix) {
-                setMatrix(JSON.parse(savedMatrix));
-                toast.success("Decision matrix loaded successfully");
+            const result = await getMatrix(matrixId);
+
+            if (result.success && result.matrix) {
+                setMatrix(result.matrix);
+                setCurrentMatrixId(matrixId);
+                // Pre-populate the save dialog fields with loaded matrix data
+                setMatrixName(result.matrix.name || "");
+                setMatrixDescription(result.matrix.description || "");
+                setOnlineSaveStatus('saved'); // Matrix loaded from online is considered saved
+                setShowLoadDialog(false);
+                toast.success("Matrix loaded successfully");
             } else {
-                toast.error("No saved matrix found");
+                toast.error(result.error || "Failed to load matrix");
             }
         } catch (error) {
             console.error("Error loading matrix:", error);
-            toast.error("Failed to load decision matrix");
+            toast.error("Failed to load matrix");
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Export matrix as JSON file
-    const exportMatrix = () => {
-        // Prevent export if the matrix is empty (no criteria or options)
-        if (matrix.criteria.length === 0 && matrix.options.length === 0) {
-            toast.error("Cannot export an empty matrix. Please add criteria or options first.");
+    // Delete a matrix from database
+    const deleteMatrixFromDatabase = async (matrixId: number) => {
+        setIsLoading(true);
+        try {
+            const result = await removeMatrix(matrixId);
+
+            if (result.success) {
+                toast.success("Matrix deleted successfully");
+                await loadUserMatrices(); // Refresh the list
+
+                // If we deleted the currently loaded matrix, reset the current state
+                if (currentMatrixId === matrixId) {
+                    setMatrix({ name: "", criteria: [], options: [] });
+                    setCurrentMatrixId(null);
+                }
+            } else {
+                toast.error(result.error || "Failed to delete matrix");
+            }
+        } catch (error) {
+            console.error("Error deleting matrix:", error);
+            toast.error("Failed to delete matrix");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Duplicate a matrix
+    const duplicateMatrixFromDatabase = async (matrixId: number, originalName: string) => {
+        const newName = prompt(`Enter a name for the duplicated matrix:`, `${originalName} (Copy)`);
+
+        if (!newName || !newName.trim()) {
             return;
         }
-        const dataStr = JSON.stringify(matrix, null, 2);
-        const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
 
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', `wmcdm-matrix-${new Date().toISOString().split('T')[0]}.json`);
-        linkElement.click();
+        setIsLoading(true);
+        try {
+            const result = await duplicateMatrix(matrixId, newName.trim());
 
-        toast.success("Matrix exported successfully");
-    };
-
-    // Import matrix from JSON file
-    const importMatrix = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedMatrix = JSON.parse(e.target?.result as string);
-                if (
-                    importedMatrix &&
-                    typeof importedMatrix === 'object' &&
-                    'criteria' in importedMatrix &&
-                    'options' in importedMatrix
-                ) {
-                    setMatrix(importedMatrix);
-                    toast.success("Matrix imported successfully");
-                } else {
-                    toast.error("Invalid matrix format");
-                }
-            } catch (error) {
-                console.error("Error parsing imported file:", error);
-                toast.error("Failed to import matrix");
+            if (result.success) {
+                toast.success("Matrix duplicated successfully");
+                await loadUserMatrices(); // Refresh the list
+            } else {
+                toast.error(result.error || "Failed to duplicate matrix");
             }
-        };
-        reader.readAsText(file);
+        } catch (error) {
+            console.error("Error duplicating matrix:", error);
+            toast.error("Failed to duplicate matrix");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Reset the entire matrix
     const resetMatrix = () => {
         setMatrix({
+            name: "",
             criteria: [],
             options: []
         });
+        setCurrentMatrixId(null);
+        setMatrixName("");
+        setMatrixDescription("");
+        setLocalSaveStatus('saved'); // Empty matrix is considered saved
+        setOnlineSaveStatus('not-saved'); // Reset to not saved online
         toast.success("Matrix reset successfully");
     };
 
-    // Calculate weighted scores and totals
-    const weightedScores = calculateWeightedScores();
-    const totals = calculateTotals();
-    const totalWeight = matrix.criteria.reduce((sum, criterion) => sum + criterion.weight, 0);
+    // Open save dialog with current matrix data pre-populated
+    const openSaveDialog = () => {
+        // If we have a current matrix loaded, pre-populate with its data
+        if (currentMatrixId && matrix.name) {
+            setMatrixName(matrix.name);
+            setMatrixDescription(matrix.description || "");
+        } else if (!matrixName && matrix.name) {
+            // If no saved matrix but matrix has a name, use it
+            setMatrixName(matrix.name);
+            setMatrixDescription(matrix.description || "");
+        }
+        setShowMatrixDialog(true);
+    };
 
-    // Find the best overall option (highest normalized score)
-    const bestOption = matrix.options.length > 0
-        ? matrix.options.reduce((best, current) => {
+    // Calculate weighted scores and totals - memoized for performance
+    const weightedScores = calculateWeightedScores;
+    const totals = calculateTotals;
+    const totalWeight = useMemo(() => matrix.criteria.reduce((sum, criterion) => sum + criterion.weight, 0), [matrix.criteria]);
+
+    // Find the best overall option (highest normalized score) - memoized
+    const bestOption = useMemo(() => {
+        if (matrix.options.length === 0) return null;
+
+        return matrix.options.reduce((best, current) => {
             const currentScore = totals[current.id]?.normalized || 0;
             const bestScore = best ? totals[best.id]?.normalized || 0 : -1;
             return currentScore > bestScore ? current : best;
-        }, null as Option | null)
-        : null;
+        }, null as Option | null);
+    }, [matrix.options, totals]);
 
-    // Sort criteria by their weight in descending order
-    const sortedCriteria = [...matrix.criteria].sort((a, b) => b.weight - a.weight);
+    // Sort criteria by their weight in descending order - memoized
+    const sortedCriteria = useMemo(() => {
+        return [...matrix.criteria].sort((a, b) => b.weight - a.weight);
+    }, [matrix.criteria]);
 
-    // Sort options by their name alphabetically for consistent ordering
-    const sortedOptions = [...matrix.options].sort((a, b) => {
-        return a.name.localeCompare(b.name);
-    });
+    // Sort options by their name alphabetically for consistent ordering - memoized
+    const sortedOptions = useMemo(() => {
+        return [...matrix.options].sort((a, b) => a.name.localeCompare(b.name));
+    }, [matrix.options]);
 
     return (
         <div className="container mx-auto py-8 space-y-8">
@@ -399,6 +627,36 @@ export default function Page() {
                     A decision-making tool that helps evaluate multiple options against various criteria,
                     with each criterion having a different level of importance (weight).
                 </p>
+
+                {/* Save Status Indicators */}
+                <div className="flex gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                        <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            localSaveStatus === 'saved' && "bg-green-500",
+                            localSaveStatus === 'saving' && "bg-yellow-500 animate-pulse",
+                            localSaveStatus === 'unsaved' && "bg-red-500"
+                        )} />
+                        <span className="text-muted-foreground">
+                            {localSaveStatus === 'saved' && "Saved locally"}
+                            {localSaveStatus === 'saving' && "Saving locally..."}
+                            {localSaveStatus === 'unsaved' && "Not saved locally"}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            onlineSaveStatus === 'saved' && "bg-green-500",
+                            onlineSaveStatus === 'saving' && "bg-yellow-500 animate-pulse",
+                            onlineSaveStatus === 'not-saved' && "bg-gray-400"
+                        )} />
+                        <span className="text-muted-foreground">
+                            {onlineSaveStatus === 'saved' && "Saved online"}
+                            {onlineSaveStatus === 'saving' && "Saving online..."}
+                            {onlineSaveStatus === 'not-saved' && "Not saved online"}
+                        </span>
+                    </div>
+                </div>
             </section>
 
             <div className="flex flex-wrap gap-4 justify-between mb-8">
@@ -409,54 +667,61 @@ export default function Page() {
                                 <Plus className="mr-2 h-4 w-4" /> Add Criterion
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add New Criterion</DialogTitle>
-                                <DialogDescription>
-                                    Define a criterion for evaluating your options.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="criterion-name">Criterion Name</Label>
-                                    <Input
-                                        id="criterion-name"
-                                        value={newCriterionName}
-                                        onChange={(e) => setNewCriterionName(e.target.value)}
-                                        placeholder="e.g., Cost, Quality, etc."
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="criterion-weight">Weight (1-5)</Label>
-                                    <Select
-                                        value={newCriterionWeight.toString()}
-                                        onValueChange={(value) => setNewCriterionWeight(parseInt(value))}
-                                    >
-                                        <SelectTrigger id="criterion-weight">
-                                            <SelectValue placeholder="Weight" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="1">1 - Least Important</SelectItem>
-                                            <SelectItem value="2">2 - Somewhat Important</SelectItem>
-                                            <SelectItem value="3">3 - Important</SelectItem>
-                                            <SelectItem value="4">4 - Very Important</SelectItem>
-                                            <SelectItem value="5">5 - Critical</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="criterion-description">Description (Optional)</Label>
-                                    <Textarea
-                                        id="criterion-description"
-                                        value={newCriterionDescription}
-                                        onChange={(e) => setNewCriterionDescription(e.target.value)}
-                                        placeholder="Describe what this criterion means..."
-                                    />
-                                </div>
+                        <DialogContent maxHeight="max-h-110" onKeyDown={handleCriterionKeyDown}>
+                            <div className="h-full flex flex-col gap-4 justify-between">
+                                <main>
+                                    <DialogHeader>
+                                        <DialogTitle>Add New Criterion</DialogTitle>
+                                        <DialogDescription>
+                                            Define a criterion for evaluating your options. Press Ctrl+Enter to quickly add.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="criterion-name">Criterion Name</Label>
+                                            <Input
+                                                ref={criterionNameRef}
+                                                id="criterion-name"
+                                                value={newCriterionName}
+                                                onChange={(e) => setNewCriterionName(e.target.value)}
+                                                placeholder="e.g., Cost, Quality, etc."
+                                                onKeyDown={handleCriterionKeyDown}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="criterion-weight">Weight (1-5)</Label>
+                                            <Select
+                                                value={newCriterionWeight.toString()}
+                                                onValueChange={(value) => setNewCriterionWeight(parseInt(value))}
+                                            >
+                                                <SelectTrigger id="criterion-weight">
+                                                    <SelectValue placeholder="Weight" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="1">1 - Least Important</SelectItem>
+                                                    <SelectItem value="2">2 - Somewhat Important</SelectItem>
+                                                    <SelectItem value="3">3 - Important</SelectItem>
+                                                    <SelectItem value="4">4 - Very Important</SelectItem>
+                                                    <SelectItem value="5">5 - Critical</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="criterion-description">Description (Optional)</Label>
+                                            <Textarea
+                                                id="criterion-description"
+                                                value={newCriterionDescription}
+                                                onChange={(e) => setNewCriterionDescription(e.target.value)}
+                                                placeholder="Describe what this criterion means..."
+                                                onKeyDown={handleCriterionKeyDown}
+                                            />
+                                        </div>
+                                    </div>
+                                </main>
+                                <DialogFooter>
+                                    <Button onClick={addCriterion}>Add Criterion</Button>
+                                </DialogFooter>
                             </div>
-                            <DialogFooter>
-                                <Button onClick={addCriterion}>Add Criterion</Button>
-                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
 
@@ -466,53 +731,174 @@ export default function Page() {
                                 <Plus className="mr-2 h-4 w-4" /> Add Option
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add New Option</DialogTitle>
-                                <DialogDescription>
-                                    Add an option to evaluate against your criteria.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="option-name">Option Name</Label>
-                                    <Input
-                                        id="option-name"
-                                        value={newOptionName}
-                                        onChange={(e) => setNewOptionName(e.target.value)}
-                                        placeholder="e.g., Option A, Plan 1, etc."
-                                    />
-                                </div>
+                        <DialogContent onKeyDown={handleOptionKeyDown} maxHeight="max-h-64">
+                            <div className="h-full flex flex-col gap-4 justify-between">
+                                <main>
+
+                                    <DialogHeader>
+                                        <DialogTitle>Add New Option</DialogTitle>
+                                        <DialogDescription>
+                                            Add an option to evaluate against your criteria. Press Ctrl+Enter to quickly add.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="option-name">Option Name</Label>
+                                            <Input
+                                                ref={optionNameRef}
+                                                id="option-name"
+                                                value={newOptionName}
+                                                onChange={(e) => setNewOptionName(e.target.value)}
+                                                placeholder="e.g., Option A, Plan 1, etc."
+                                                onKeyDown={handleOptionKeyDown}
+                                            />
+                                        </div>
+                                    </div>
+                                </main>
+                                <DialogFooter>
+                                    <Button onClick={addOption}>Add Option</Button>
+                                </DialogFooter>
                             </div>
-                            <DialogFooter>
-                                <Button onClick={addOption}>Add Option</Button>
-                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                    <Button onClick={saveMatrix} variant="outline" className="flex items-center">
-                        <Save className="mr-2 h-4 w-4" /> Save
-                    </Button>
-                    <Button onClick={loadMatrix} variant="outline" className="flex items-center">
-                        <Upload className="mr-2 h-4 w-4" /> Load
-                    </Button>
-                    <Button onClick={exportMatrix} variant="outline" className="flex items-center">
-                        <Download className="mr-2 h-4 w-4" /> Export
-                    </Button>
-                    <div className="relative">
-                        <Button variant="outline" className="flex items-center" onClick={() => document.getElementById('import-file')?.click()}>
-                            <FileUp className="mr-2 h-4 w-4" /> Import
-                        </Button>
-                        <Input
-                            id="import-file"
-                            type="file"
-                            accept=".json"
-                            onChange={importMatrix}
-                            className="hidden"
-                        />
-                    </div>
+                    <Dialog open={showMatrixDialog} onOpenChange={setShowMatrixDialog}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="flex items-center" onClick={openSaveDialog}>
+                                <Save className="mr-2 h-4 w-4" /> Save Matrix
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    {currentMatrixId ? "Update Matrix" : "Save Matrix"}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    {currentMatrixId
+                                        ? "Update your existing decision matrix in the database."
+                                        : "Save your decision matrix to the database for later use."
+                                    }
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="matrix-name">Matrix Name</Label>
+                                    <Input
+                                        id="matrix-name"
+                                        value={matrixName}
+                                        onChange={(e) => setMatrixName(e.target.value)}
+                                        placeholder="Enter a name for your matrix"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="matrix-description">Description (Optional)</Label>
+                                    <Textarea
+                                        id="matrix-description"
+                                        value={matrixDescription}
+                                        onChange={(e) => setMatrixDescription(e.target.value)}
+                                        placeholder="Describe what this matrix is for..."
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setShowMatrixDialog(false)}>Cancel</Button>
+                                <Button onClick={saveCurrentMatrix} disabled={isLoading}>
+                                    {isLoading
+                                        ? (currentMatrixId ? "Updating..." : "Saving...")
+                                        : (currentMatrixId ? "Update Matrix" : "Save Matrix")
+                                    }
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="flex items-center">
+                                <FolderOpen className="mr-2 h-4 w-4" /> Load Matrix
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>Load Saved Matrix</DialogTitle>
+                                <DialogDescription>
+                                    Choose a matrix to load from your saved matrices.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                                {isLoading ? (
+                                    <div className="text-center py-8">Loading matrices...</div>
+                                ) : savedMatrices.length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        No saved matrices found. Create and save a matrix first.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                                        {savedMatrices.map((savedMatrix) => (
+                                            <div key={savedMatrix.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium">{savedMatrix.name}</h4>
+                                                    {savedMatrix.description && (
+                                                        <p className="text-sm text-muted-foreground">{savedMatrix.description}</p>
+                                                    )}
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Created: {new Date(savedMatrix.created_at).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => loadMatrixFromDatabase(savedMatrix.id)}
+                                                        disabled={isLoading}
+                                                    >
+                                                        Load
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => duplicateMatrixFromDatabase(savedMatrix.id, savedMatrix.name)}
+                                                        disabled={isLoading}
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button size="sm" variant="destructive">
+                                                                <Trash className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Matrix</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Are you sure you want to delete &quot;{savedMatrix.name}&quot;? This action cannot be undone.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    onClick={() => deleteMatrixFromDatabase(savedMatrix.id)}
+                                                                    className="bg-destructive text-destructive-foreground"
+                                                                >
+                                                                    Delete
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setShowLoadDialog(false)}>Close</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive">Reset</Button>
@@ -619,7 +1005,7 @@ export default function Page() {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => removeOption(option.id)}
-                                                    className="h-7 w-7 p-0 lg:opacity-0 lg:group-hover/Option:opacity-100 transition-opacity duration-200 flex-shrink-0"
+                                                    className="h-7 w-7 p-0 lg:opacity-0 lg:group-hover/Option:opacity-100 transition-opacity duration-200 shrink-0"
                                                     aria-label={`Remove ${option.name}`}
                                                 >
                                                     <Trash className="h-3.5 w-3.5 text-destructive" />
@@ -686,6 +1072,11 @@ export default function Page() {
                                                 const weightedScore = weightedScores[option.id]?.[criterion.id] || 0;
                                                 const isWinner = winner && winner.id === option.id && score > 0;
 
+                                                // Create callback for this specific score update
+                                                const handleScoreChange = (value: number) => {
+                                                    updateScore(option.id, criterion.id, value);
+                                                };
+
                                                 return (
                                                     <TableCell
                                                         key={`${criterion.id}-${option.id}`}
@@ -695,23 +1086,10 @@ export default function Page() {
                                                         )}
                                                     >
                                                         <div className="flex flex-col items-center">
-                                                            <Select
-                                                                value={score.toString()}
-                                                                onValueChange={(value) => {
-                                                                    updateScore(option.id, criterion.id, parseInt(value))
-                                                                }}
-                                                            >
-                                                                <SelectTrigger className="h-8 w-14">
-                                                                    <SelectValue placeholder="0" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {[...Array(11)].map((_, i) => (
-                                                                        <SelectItem key={i} value={i.toString()}>
-                                                                            {i}
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
+                                                            <ScoreSelect
+                                                                score={score}
+                                                                onScoreChange={handleScoreChange}
+                                                            />
                                                             <span className="text-xs text-muted-foreground mt-1">
                                                                 {weightedScore.toFixed(1)}
                                                             </span>
