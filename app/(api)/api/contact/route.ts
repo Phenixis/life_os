@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { name, email, subject, category, message } = body;
 
+        console.log(body);
+
         // Validate required fields and trim whitespace
         if (!name?.trim() || !email?.trim() || !subject?.trim() || !message?.trim()) {
             return NextResponse.json(

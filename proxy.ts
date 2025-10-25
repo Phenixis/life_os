@@ -11,7 +11,7 @@ export type ActionState = {
 const protectedRoutes = ["/my"]
 const unaccessibleWhenLoggedIn = ["/login", "/sign-up"]
 const apiRoutes = ["/api"]
-const apiRoutesWithoutAPIKey = ["/api/auth", "/api/stripe/checkout"]
+const apiRoutesWithoutAPIKey = ["/api/auth", "/api/stripe/checkout", "/api/contact"]
 
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl
