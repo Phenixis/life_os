@@ -999,12 +999,11 @@ function FeatureCard({
                         transition={{ duration: 0.6, delay: delay + 0.4 }}
                         whileHover={{ scale: 1.02 }}
                     >
-                        <div className="flex items-start">
+                        <div className="flex items-center">
                             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-4 mt-1 flex-shrink-0">
                                 <Sparkles className="h-4 w-4 text-white" />
                             </div>
                             <div>
-                                <h4 className="font-semibold text-lg mb-2 text-blue-700 dark:text-blue-300">Key Value</h4>
                                 <p className="text-gray-700 dark:text-gray-300 font-medium">
                                     {valueProposition}
                                 </p>

@@ -72,57 +72,6 @@ export default function MultiProfileChatbot() {
 
     return (
         <div className="flex h-screen bg-gray-50">
-            {/* Sidebar */}
-            <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-                {/* Profile Selection */}
-                <div className="p-4 border-b border-gray-200">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">AI Profiles</h2>
-                        <Button size="sm" onClick={() => setIsCreatingProfile(true)}>
-                            Add Profile
-                        </Button>
-                    </div>
-
-                    {profilesLoading ? (
-                        <ProfileSkeleton />
-                    ) : profiles.length === 0 ? (
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 mb-3">Get started with these recommended profiles:</p>
-                            {defaultProfiles.map((profile, index) => (
-                                <Button
-                                    key={index}
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full justify-start text-left h-auto p-3"
-                                    onClick={() => handleCreateDefaultProfile(profile)}
-                                >
-                                    <div>
-                                        <div className="font-medium">{profile.name}</div>
-                                        <div className="text-xs text-gray-500">{profile.description}</div>
-                                    </div>
-                                </Button>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            {profiles.map((profile) => (
-                                <Button
-                                    key={profile.id}
-                                    variant="outline"
-                                    className="w-full justify-start text-left h-auto p-3"
-                                    onClick={() => handleProfileSelect(profile)}
-                                >
-                                    <div>
-                                        <div className="font-medium">{profile.name}</div>
-                                        <div className="text-xs opacity-70">{profile.description}</div>
-                                    </div>
-                                </Button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">
                 <div className="flex-1 flex items-center justify-center">
@@ -132,53 +81,6 @@ export default function MultiProfileChatbot() {
                     </div>
                 </div>
             </div>
-
-            {/* Create Profile Modal */}
-            {isCreatingProfile && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                    <Card className="w-full max-w-md">
-                        <CardHeader>
-                            <CardTitle>Create New Profile</CardTitle>
-                            <CardDescription>Define a new AI persona for conversations</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium">Name</label>
-                                <Input
-                                    value={newProfile.name}
-                                    onChange={(e) => setNewProfile((prev) => ({ ...prev, name: e.target.value }))}
-                                    placeholder="e.g., Career Coach"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium">Description</label>
-                                <Input
-                                    value={newProfile.description}
-                                    onChange={(e) => setNewProfile((prev) => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Brief description of this persona"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium">System Prompt</label>
-                                <Textarea
-                                    value={newProfile.system_prompt}
-                                    onChange={(e) => setNewProfile((prev) => ({ ...prev, system_prompt: e.target.value }))}
-                                    placeholder="Define how this AI persona should behave..."
-                                    rows={4}
-                                />
-                            </div>
-                            <div className="flex space-x-2">
-                                <Button onClick={handleCreateProfile} className="flex-1">
-                                    Create Profile
-                                </Button>
-                                <Button variant="outline" onClick={() => setIsCreatingProfile(false)} className="flex-1">
-                                    Cancel
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
         </div>
     )
 }
