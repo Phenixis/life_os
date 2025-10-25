@@ -49,7 +49,7 @@ export default function NotesPage() {
         const params = new URLSearchParams(searchParams.toString())
         params.set(NOTE_PARAMS["PAGE"], newPage.toString())
         router.push(`?${params.toString()}`)
-    }, [router, searchParams])
+    }, [router])
 
     return (
         <div className="flex flex-col gap-4">
