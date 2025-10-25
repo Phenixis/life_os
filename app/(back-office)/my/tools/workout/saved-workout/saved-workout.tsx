@@ -1,11 +1,26 @@
-import {Suspense} from "react";
-import {SavedWorkouts} from "./saved-workout-async";
-import {SavedWorkoutSkeleton} from "./saved-workout-skeleton";
+"use client"
 
-export function SavedWorkout() {
+import {useSavedWorkouts} from "@/hooks/use-workouts"
+import {SavedWorkoutDisplay} from "./saved-workout-display"
+import {SavedWorkoutSkeleton} from "@/app/(back-office)/my/tools/workout/saved-workout/saved-workout-skeleton";
+
+export function SavedWorkoutsAsync() {
+    const {savedWorkouts, isLoading} = useSavedWorkouts()
+
+    if (isLoading) {
+        return (
+            <SavedWorkoutSkeleton/>
+        )
+    }
+
     return (
-        <Suspense fallback={<SavedWorkoutSkeleton/>}>
-            <SavedWorkouts/>
-        </Suspense>
+        <>
+            {savedWorkouts.map((workout) => (
+                <SavedWorkoutDisplay
+                    key={workout.id}
+                    workout={workout}
+                />
+            ))}
+        </>
     )
 }

@@ -1,15 +1,16 @@
 "use client"
 
-import {Button} from "@/components/ui/button";
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
-import {useState} from "react";
-import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
-import {ChevronDown} from "lucide-react";
-import {Skeleton} from "@/components/ui/skeleton";
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from "@/components/ui/carousel"
-import {NewWorkout} from "@/app/(back-office)/my/tools/workout/new-workout";
+import {Button} from "@/components/ui/button"
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
+import {useState} from "react"
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible"
+import {ChevronDown} from "lucide-react"
+import {Skeleton} from "@/components/ui/skeleton"
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
+import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
 
 export type SavedWorkoutProps = {
+    id: number
     title: string
     exercices: {
         name: string,
@@ -32,17 +33,21 @@ export function SavedWorkoutDisplay(
 
     return (
         <div
-            className={"h-fit w-full lg:hover:bg-gray-50 dark:lg:hover:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
+            className={"h-fit w-full lg:hover:bg-gray-100 dark:lg:hover:bg-gray-900 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
             <header className={"flex justify-between items-center space-x-12"}>
                 {workout ? (
                     <>
                         <h3 className={"text-xl font-bold"}>
                             {workout.title}
                         </h3>
-                        <NewWorkout
-                            className={"lg:opacity-0 lg:group-hover/workout:opacity-100"}
-                            defaultExercices={workout.exercices}
-                        />
+                        <div className="flex gap-2 lg:opacity-0 lg:group-hover/workout:opacity-100">
+                            <WorkoutModal 
+                                data={workout}
+                            />
+                            <WorkoutModal
+                                data={workout.exercices}
+                            />
+                        </div>
                     </>
                 ) : (
                     <>
@@ -67,7 +72,7 @@ export function SavedWorkoutDisplay(
                                         ))
                                     }
                                 </p>
-                                <CollapsibleTrigger asChild className={"lg:hidden lg:group-hover/workout:flex"}>
+                                <CollapsibleTrigger asChild className={"lg:opacity-0 lg:group-hover/workout:opacity-100"}>
                                     <Button size="sm" variant="ghost">
                                         Details
                                         <ChevronDown

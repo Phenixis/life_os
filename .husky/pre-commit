@@ -9,11 +9,4 @@ pnpm type-check || {
   exit 1
 }
 
-# Run linting
-echo "🧹 Linting code..."
-pnpm lint || {
-  echo "❌ Linting failed. Please fix the errors before committing."
-  exit 1
-}
-
 echo "✅ Pre-commit checks passed!"

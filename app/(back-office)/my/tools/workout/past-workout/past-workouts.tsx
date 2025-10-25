@@ -1,11 +1,26 @@
-import {Suspense} from "react";
-import {PastWorkoutsAsync} from "./past-workouts-async";
-import {PastWorkoutsSkeleton} from "./past-workouts-skeleton";
+"use client"
+
+import {useWorkouts} from "@/hooks/use-workouts"
+import {PastWorkoutDisplay} from "./past-workout-display"
+import {PastWorkoutsSkeleton} from "@/app/(back-office)/my/tools/workout/past-workout/past-workouts-skeleton";
 
 export function PastWorkouts() {
+    const {workouts, isLoading} = useWorkouts()
+
+    if (isLoading) {
+        return (
+            <PastWorkoutsSkeleton nb={5}/>
+        )
+    }
+
     return (
-        <Suspense fallback={<PastWorkoutsSkeleton/>}>
-            <PastWorkoutsAsync/>
-        </Suspense>
+        <>
+            {workouts.map((workout) => (
+                <PastWorkoutDisplay
+                    key={workout.id}
+                    workout={workout}
+                />
+            ))}
+        </>
     )
 }

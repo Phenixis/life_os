@@ -3,7 +3,7 @@
 import {Label} from "@/components/ui/label"
 import {Input} from "@/components/ui/input"
 import {startTransition, useActionState, useEffect, useRef, useState} from "react"
-import type {ActionState} from "@/middleware"
+import type {ActionState} from "@/proxy"
 import {Loader} from "lucide-react"
 import {Card, CardContent, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card"
 import {Button} from "@/components/ui/button"

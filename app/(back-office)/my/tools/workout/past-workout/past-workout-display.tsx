@@ -1,13 +1,15 @@
 "use client"
 
-import {Button} from "@/components/ui/button";
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
-import {useState} from "react";
-import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
-import {ChevronDown} from "lucide-react";
-import {Skeleton} from "@/components/ui/skeleton";
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from "@/components/ui/carousel"
+import {Button} from "@/components/ui/button"
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
+import {useState} from "react"
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible"
+import {ChevronDown} from "lucide-react"
+import {Skeleton} from "@/components/ui/skeleton"
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
+import {WorkoutModal} from "@/app/(back-office)/my/tools/workout/workout-modal"
+import {WorkoutProgressionDisplay} from "./workout-progression-display"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
@@ -30,7 +32,7 @@ function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     if (diffDays === 0) return "Today"
     if (diffDays === 1) return "Yesterday"
 
-    const weekday = date.toLocaleDateString(locale, {weekday: 'long'})
+    const weekday = new Date(date).toLocaleDateString(locale, {weekday: 'long'})
 
     if (diffDays <= 6) {
         // Within the last week but not yesterday
@@ -46,6 +48,7 @@ function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
 }
 
 export type PastWorkoutProps = {
+    id: number
     title: string
     date: Date
     difficulty: 1 | 2 | 3 | 4 | 5
@@ -69,11 +72,11 @@ export function PastWorkoutDisplay(
 
     return (
         <div
-            className={"h-fit w-full lg:hover:bg-gray-50 dark:lg:hover:bg-gray-950 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
+            className={"h-fit w-full lg:hover:bg-gray-100 dark:lg:hover:bg-gray-900 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
             <header className={"flex justify-between items-center gap-4"}>
                 {workout ? (
                     <>
-                        <h3 className={"line-clamp-1"}>
+                        <h3 className={"line-clamp-1 flex-1"}>
                             <span className={"inline-block text-xl font-bold"}>
                                 {workout.title}
                             </span>
@@ -81,7 +84,10 @@ export function PastWorkoutDisplay(
                                 {formatRelativeDate(workout.date)}
                             </span>
                         </h3>
-                        <Difficulty value={workout.difficulty}/>
+                        <div className="flex items-center gap-2">
+                            <WorkoutModal data={workout}/>
+                            <Difficulty value={workout.difficulty}/>
+                        </div>
                     </>
                 ) : (
                     <>
@@ -127,40 +133,47 @@ export function PastWorkoutDisplay(
                 <CollapsibleContent className={"my-2"}>
                     {
                         workout ? (
-                            <Carousel className={"my-2 mx-auto w-[70%] lg:w-[80%]"}>
-                                <CarouselContent>
-                                    {
-                                        workout.exercices.map((exercice, index) => (
-                                            <CarouselItem key={index}
-                                                          className={"flex flex-col items-center justify-start"}>
-                                                <Table className={"mx-auto"}>
-                                                    <TableCaption>{exercice.name}</TableCaption>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>N° Set</TableHead>
-                                                            <TableHead>Weight</TableHead>
-                                                            <TableHead>Nb Rep</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody className={"w-full"}>
-                                                        {
-                                                            exercice.sets.map((exercice, index) => (
-                                                                <TableRow key={index} className={"w-full"}>
-                                                                    <TableCell>{index + 1}</TableCell>
-                                                                    <TableCell>{exercice.weight}</TableCell>
-                                                                    <TableCell>{exercice.nb_rep}</TableCell>
-                                                                </TableRow>
-                                                            ))
-                                                        }
-                                                    </TableBody>
-                                                </Table>
-                                            </CarouselItem>
-                                        ))
-                                    }
-                                </CarouselContent>
-                                <CarouselNext className={"lg:hidden lg:group-hover/workout:flex"}/>
-                                <CarouselPrevious className={"lg:hidden lg:group-hover/workout:flex"}/>
-                            </Carousel>
+                            <>
+                                <Carousel className={"my-2 mx-auto w-[70%] lg:w-[80%]"}>
+                                    <CarouselContent>
+                                        {
+                                            workout.exercices.map((exercice, index) => (
+                                                <CarouselItem key={index}
+                                                              className={"flex flex-col items-center justify-start"}>
+                                                    <Table className={"mx-auto"}>
+                                                        <TableCaption>
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <span>{exercice.name}</span>
+                                                            </div>
+                                                        </TableCaption>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>N° Set</TableHead>
+                                                                <TableHead>Weight</TableHead>
+                                                                <TableHead>Nb Rep</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody className={"w-full"}>
+                                                            {
+                                                                exercice.sets.map((exercice, index) => (
+                                                                    <TableRow key={index} className={"w-full"}>
+                                                                        <TableCell>{index + 1}</TableCell>
+                                                                        <TableCell>{exercice.weight}</TableCell>
+                                                                        <TableCell>{exercice.nb_rep}</TableCell>
+                                                                    </TableRow>
+                                                                ))
+                                                            }
+                                                        </TableBody>
+                                                    </Table>
+                                                </CarouselItem>
+                                            ))
+                                        }
+                                    </CarouselContent>
+                                    <CarouselNext className={"lg:hidden lg:group-hover/workout:flex"}/>
+                                    <CarouselPrevious className={"lg:hidden lg:group-hover/workout:flex"}/>
+                                </Carousel>
+                                <WorkoutProgressionDisplay workoutId={workout.id}/>
+                            </>
                         ) : (
                             <p>
                                 skeleton

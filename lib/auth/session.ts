@@ -83,7 +83,7 @@ export async function getServerSession() {
 	}
 }
 
-// For middleware - only verifies, doesn't extend
+// For proxy - only verifies, doesn't extend
 export async function verifySession(sessionCookie: string | undefined) {
 	if (!sessionCookie) {
 		return null
