@@ -92,16 +92,16 @@ export const basic: Plan = {
     price: {
         monthly: {
             amount: 2000,
-            priceId: "price_1RixYOEEBVavDyUcTY40nPGx",
+            priceId: "price_1SMAYEE9V9u2VaxP2sQiUiIK",
             currency: "eur"
         },
         yearly: {
             amount: 16000,
-            priceId: "price_1RixZ0EEBVavDyUcfcll7er5",
+            priceId: "price_1SMAYEE9V9u2VaxPazh9PYKm",
             currency: "eur"
         }
     },
-    stripe_product_id: "prod_SeG4Y7jaQ1iVtF",
+    stripe_product_id: "prod_TIm6pw2j9FLwxu",
     features: {
         enabled: [
             ...(getFeaturesFromPlan(free).enabled),
