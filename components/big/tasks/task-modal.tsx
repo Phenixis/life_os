@@ -1,7 +1,6 @@
 "use client"
 
 import React, {useCallback, useEffect, useRef, useState} from "react"
-
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import {Button} from "@/components/ui/button"
 import {Input} from "@/components/ui/input"
@@ -17,15 +16,7 @@ import {useDebouncedCallback} from "use-debounce"
 import {useSearchTasks} from "@/hooks/use-search-tasks"
 import {useImportanceAndDuration} from "@/hooks/use-importance-and-duration"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
 import Tooltip from "../tooltip"
@@ -36,6 +27,7 @@ import SearchProjectsInput from "../projects/search-projects-input"
 import Help from "../help"
 import {Checkbox} from "@/components/ui/checkbox";
 import {useTaskModal} from "@/contexts/modal-commands-context";
+import {DatePicker} from "@/components/big/date-picker";
 
 export default function TaskModal() {
     const user = useUser().user;
@@ -581,65 +573,16 @@ export default function TaskModal() {
                                 <div>
                                     <Label htmlFor="dueDate" required>Due date</Label>
                                     <div className="flex gap-1 items-center">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="px-2"
-                                            onClick={() => {
-                                                const newDate = new Date(dueDate.getTime() - 24 * 60 * 60 * 1000)
-                                                const today = new Date()
-                                                today.setHours(0, 0, 0, 0)
-                                                if (newDate >= today) {
-                                                    setDueDate(newDate)
-                                                } else {
-                                                    setDueDate(today)
-                                                }
+                                        <DatePicker
+                                            value={dueDate}
+                                            onChange={(date: Date) => {
+                                                setDueDate(date)
                                                 setFormChanged(
-                                                    (mode === "edit" && task && newDate.toDateString() !== new Date(task.due).toDateString()) || newDate.toDateString() !== new Date().toDateString()
+                                                    (mode === "edit" && task && date.toDateString() !== new Date(task.due).toDateString()) || date.toDateString() !== new Date().toDateString()
                                                 )
                                             }}
-                                        >
-                                            <Minus/>
-                                        </Button>
-                                        
-                                        <Popover open={showCalendar} onOpenChange={setShowCalendar}>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className="w-full"
-                                                >
-                                                    {format(dueDate, "dd/MM/yyyy")}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-3" align="start" side="bottom">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={dueDate}
-                                                    onSelect={handleDateChange}
-                                                    disabled={(date) => {
-                                                        const today = new Date()
-                                                        today.setHours(0, 0, 0, 0)
-                                                        return date < today
-                                                    }}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="px-2"
-                                            onClick={() => {
-                                                const nextDate = new Date(dueDate.getTime() + 24 * 60 * 60 * 1000)
-                                                setDueDate(nextDate)
-                                                setFormChanged(
-                                                    (mode === "edit" && task && nextDate.toDateString() !== new Date(task.due).toDateString()) || nextDate.toDateString() !== new Date().toDateString()
-                                                )
-                                            }}
-                                        >
-                                            <Plus/>
-                                        </Button>
+                                            minDate={new Date()}
+                                        />
                                     </div>
                                 </div>
                                 <div className="w-full">
