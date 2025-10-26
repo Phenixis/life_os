@@ -518,7 +518,7 @@ export default function TaskDisplay(
                                             Score: <span className="text-black dark:text-white">{task.score}</span>
                                         </p>
                                     </Tooltip>
-                                    {task.project && (
+                                    {task.project && task.project.title !== "" && (
                                         <p className="text-muted-foreground">
                                             Project: <span
                                             className="text-black dark:text-white">{task.project.title}</span>
