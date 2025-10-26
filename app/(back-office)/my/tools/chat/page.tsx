@@ -71,13 +71,13 @@ export default function MultiProfileChatbot() {
     }
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Multi-Profile AI Chatbot</h2>
-                        <p className="text-gray-600">Select a profile to start chatting</p>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Multi-Profile AI Chatbot</h2>
+                        <p className="text-gray-600 dark:text-gray-400">Select a profile to start chatting</p>
                     </div>
                 </div>
             </div>

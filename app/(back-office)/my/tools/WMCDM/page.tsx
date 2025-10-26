@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Plus, Save, Edit, Info, Trophy, Copy, FolderOpen } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Textarea} from "@/components/ui/textarea";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Copy, Edit, FolderOpen, Info, Plus, Save, Trash, Trophy} from "lucide-react";
+import {cn} from "@/lib/utils";
 import {
     Dialog,
     DialogContent,
@@ -30,19 +30,15 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip";
+import {toast} from "sonner";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import {
-    getUserMatrices,
-    getMatrix,
-    saveMatrix,
-    removeMatrix,
+    type DecisionMatrix,
     duplicateMatrix,
-    type DecisionMatrix
+    getMatrix,
+    getUserMatrices,
+    removeMatrix,
+    saveMatrix
 } from "@/lib/auth/wmcdm-actions";
 
 // Types definition for our WMCDM components
@@ -61,9 +57,9 @@ type Criterion = {
 
 // Memoized ScoreSelect component to prevent unnecessary re-renders
 const ScoreSelect = React.memo(({
-    score,
-    onScoreChange
-}: {
+                                    score,
+                                    onScoreChange
+                                }: {
     score: number;
     onScoreChange: (value: number) => void;
 }) => (
@@ -72,7 +68,7 @@ const ScoreSelect = React.memo(({
         onValueChange={(value) => onScoreChange(parseInt(value))}
     >
         <SelectTrigger className="h-8 w-14">
-            <SelectValue placeholder="0" />
+            <SelectValue placeholder="0"/>
         </SelectTrigger>
         <SelectContent>
             {[...Array(11)].map((_, i) => (
@@ -101,7 +97,13 @@ export default function Page() {
     });
 
     // State for saved matrices
-    const [savedMatrices, setSavedMatrices] = useState<Array<{ id: number; name: string; description?: string; created_at: Date; updated_at: Date }>>([]);
+    const [savedMatrices, setSavedMatrices] = useState<Array<{
+        id: number;
+        name: string;
+        description?: string;
+        created_at: Date;
+        updated_at: Date
+    }>>([]);
     const [currentMatrixId, setCurrentMatrixId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -124,24 +126,6 @@ export default function Page() {
     // State for save status notifications
     const [localSaveStatus, setLocalSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
     const [onlineSaveStatus, setOnlineSaveStatus] = useState<'saved' | 'saving' | 'not-saved'>('not-saved');
-
-    // Client-side cookie utilities
-    // const setCookie = useCallback((name: string, value: string, days: number = 30) => {
-    //     const expires = new Date();
-    //     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    //     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-    // }, []);
-
-    // const getCookie = useCallback((name: string): string | null => {
-    //     const nameEQ = name + "=";
-    //     const ca = document.cookie.split(';');
-    //     for (let i = 0; i < ca.length; i++) {
-    //         let c = ca[i];
-    //         while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    //         if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-    //     }
-    //     return null;
-    // }, []);
 
     // Utility function to load matrix from local storage
     const loadFromLocalStorage = useCallback((): DecisionMatrix | null => {
@@ -356,7 +340,7 @@ export default function Page() {
             // Remove this criterion's scores from all options
             const updatedOptions = prev.options.map(option => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { [criterionId]: _, ...remainingScores } = option.scores;
+                const {[criterionId]: _, ...remainingScores} = option.scores;
                 return {
                     ...option,
                     scores: remainingScores
@@ -524,7 +508,7 @@ export default function Page() {
 
                 // If we deleted the currently loaded matrix, reset the current state
                 if (currentMatrixId === matrixId) {
-                    setMatrix({ name: "", criteria: [], options: [] });
+                    setMatrix({name: "", criteria: [], options: []});
                     setCurrentMatrixId(null);
                 }
             } else {
@@ -620,51 +604,48 @@ export default function Page() {
     }, [matrix.options]);
 
     return (
-        <div className="container mx-auto py-8 space-y-8">
-            <section className="page">
-                <h1 className="page-title">Weighted Multi-Criteria Decision Matrix</h1>
-                <p className="page-description">
-                    A decision-making tool that helps evaluate multiple options against various criteria,
-                    with each criterion having a different level of importance (weight).
-                </p>
+        <section className="page">
+            <h1 className="page-title">Weighted Multi-Criteria Decision Matrix</h1>
+            <p className="page-description">
+                A decision-making tool that helps evaluate multiple options against various criteria,
+                with each criterion having a different level of importance (weight).
+            </p>
 
-                {/* Save Status Indicators */}
-                <div className="flex gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                        <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            localSaveStatus === 'saved' && "bg-green-500",
-                            localSaveStatus === 'saving' && "bg-yellow-500 animate-pulse",
-                            localSaveStatus === 'unsaved' && "bg-red-500"
-                        )} />
-                        <span className="text-muted-foreground">
+            {/* Save Status Indicators */}
+            <div className="flex gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                    <div className={cn(
+                        "w-2 h-2 rounded-full",
+                        localSaveStatus === 'saved' && "bg-green-500",
+                        localSaveStatus === 'saving' && "bg-yellow-500 animate-pulse",
+                        localSaveStatus === 'unsaved' && "bg-red-500"
+                    )}/>
+                    <span className="text-muted-foreground">
                             {localSaveStatus === 'saved' && "Saved locally"}
-                            {localSaveStatus === 'saving' && "Saving locally..."}
-                            {localSaveStatus === 'unsaved' && "Not saved locally"}
+                        {localSaveStatus === 'saving' && "Saving locally..."}
+                        {localSaveStatus === 'unsaved' && "Not saved locally"}
                         </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            onlineSaveStatus === 'saved' && "bg-green-500",
-                            onlineSaveStatus === 'saving' && "bg-yellow-500 animate-pulse",
-                            onlineSaveStatus === 'not-saved' && "bg-gray-400"
-                        )} />
-                        <span className="text-muted-foreground">
-                            {onlineSaveStatus === 'saved' && "Saved online"}
-                            {onlineSaveStatus === 'saving' && "Saving online..."}
-                            {onlineSaveStatus === 'not-saved' && "Not saved online"}
-                        </span>
-                    </div>
                 </div>
-            </section>
-
+                <div className="flex items-center gap-2">
+                    <div className={cn(
+                        "w-2 h-2 rounded-full",
+                        onlineSaveStatus === 'saved' && "bg-green-500",
+                        onlineSaveStatus === 'saving' && "bg-yellow-500 animate-pulse",
+                        onlineSaveStatus === 'not-saved' && "bg-gray-400"
+                    )}/>
+                    <span className="text-muted-foreground">
+                            {onlineSaveStatus === 'saved' && "Saved online"}
+                        {onlineSaveStatus === 'saving' && "Saving online..."}
+                        {onlineSaveStatus === 'not-saved' && "Not saved online"}
+                        </span>
+                </div>
+            </div>
             <div className="flex flex-wrap gap-4 justify-between mb-8">
                 <div className="flex flex-wrap gap-2">
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" /> Add Criterion
+                                <Plus className="mr-2 h-4 w-4"/> Add Criterion
                             </Button>
                         </DialogTrigger>
                         <DialogContent maxHeight="max-h-110" onKeyDown={handleCriterionKeyDown}>
@@ -673,7 +654,8 @@ export default function Page() {
                                     <DialogHeader>
                                         <DialogTitle>Add New Criterion</DialogTitle>
                                         <DialogDescription>
-                                            Define a criterion for evaluating your options. Press Ctrl+Enter to quickly add.
+                                            Define a criterion for evaluating your options. Press Ctrl+Enter to quickly
+                                            add.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4 py-4">
@@ -695,7 +677,7 @@ export default function Page() {
                                                 onValueChange={(value) => setNewCriterionWeight(parseInt(value))}
                                             >
                                                 <SelectTrigger id="criterion-weight">
-                                                    <SelectValue placeholder="Weight" />
+                                                    <SelectValue placeholder="Weight"/>
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="1">1 - Least Important</SelectItem>
@@ -728,7 +710,7 @@ export default function Page() {
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" /> Add Option
+                                <Plus className="mr-2 h-4 w-4"/> Add Option
                             </Button>
                         </DialogTrigger>
                         <DialogContent onKeyDown={handleOptionKeyDown} maxHeight="max-h-64">
@@ -738,7 +720,8 @@ export default function Page() {
                                     <DialogHeader>
                                         <DialogTitle>Add New Option</DialogTitle>
                                         <DialogDescription>
-                                            Add an option to evaluate against your criteria. Press Ctrl+Enter to quickly add.
+                                            Add an option to evaluate against your criteria. Press Ctrl+Enter to quickly
+                                            add.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4 py-4">
@@ -767,7 +750,7 @@ export default function Page() {
                     <Dialog open={showMatrixDialog} onOpenChange={setShowMatrixDialog}>
                         <DialogTrigger asChild>
                             <Button variant="outline" className="flex items-center" onClick={openSaveDialog}>
-                                <Save className="mr-2 h-4 w-4" /> Save Matrix
+                                <Save className="mr-2 h-4 w-4"/> Save Matrix
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -817,7 +800,7 @@ export default function Page() {
                     <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
                         <DialogTrigger asChild>
                             <Button variant="outline" className="flex items-center">
-                                <FolderOpen className="mr-2 h-4 w-4" /> Load Matrix
+                                <FolderOpen className="mr-2 h-4 w-4"/> Load Matrix
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl">
@@ -837,7 +820,8 @@ export default function Page() {
                                 ) : (
                                     <div className="space-y-2 max-h-96 overflow-y-auto">
                                         {savedMatrices.map((savedMatrix) => (
-                                            <div key={savedMatrix.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                            <div key={savedMatrix.id}
+                                                 className="flex items-center justify-between p-3 border rounded-lg">
                                                 <div className="flex-1">
                                                     <h4 className="font-medium">{savedMatrix.name}</h4>
                                                     {savedMatrix.description && (
@@ -861,19 +845,21 @@ export default function Page() {
                                                         onClick={() => duplicateMatrixFromDatabase(savedMatrix.id, savedMatrix.name)}
                                                         disabled={isLoading}
                                                     >
-                                                        <Copy className="h-4 w-4" />
+                                                        <Copy className="h-4 w-4"/>
                                                     </Button>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
                                                             <Button size="sm" variant="destructive">
-                                                                <Trash className="h-4 w-4" />
+                                                                <Trash className="h-4 w-4"/>
                                                             </Button>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle>Delete Matrix</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    Are you sure you want to delete &quot;{savedMatrix.name}&quot;? This action cannot be undone.
+                                                                    Are you sure you want to
+                                                                    delete &quot;{savedMatrix.name}&quot;? This action
+                                                                    cannot be undone.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
@@ -933,7 +919,10 @@ export default function Page() {
                                     <Input
                                         id="edit-criterion-name"
                                         value={editingCriterion.name}
-                                        onChange={(e) => setEditingCriterion({ ...editingCriterion, name: e.target.value })}
+                                        onChange={(e) => setEditingCriterion({
+                                            ...editingCriterion,
+                                            name: e.target.value
+                                        })}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -946,7 +935,7 @@ export default function Page() {
                                         })}
                                     >
                                         <SelectTrigger id="edit-criterion-weight">
-                                            <SelectValue placeholder="Weight" />
+                                            <SelectValue placeholder="Weight"/>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="1">1 - Least Important</SelectItem>
@@ -984,7 +973,8 @@ export default function Page() {
                     <CardHeader>
                         <CardTitle>Decision Matrix</CardTitle>
                         <CardDescription>
-                            Score each option against each criterion (0-10). Options are sorted from least to most interesting based on weighted scores.
+                            Score each option against each criterion (0-10). Options are sorted from least to most
+                            interesting based on weighted scores.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto" fullPadding>
@@ -997,7 +987,7 @@ export default function Page() {
                                         <TableHead
                                             key={option.id}
                                             className="text-center min-w-[120px] group/Option"
-                                            style={{ width: sortedOptions.length > 0 ? `${(100 - 25) / sortedOptions.length}%` : 'auto' }}
+                                            style={{width: sortedOptions.length > 0 ? `${(100 - 25) / sortedOptions.length}%` : 'auto'}}
                                         >
                                             <div className="flex items-center justify-center gap-2">
                                                 <span className="truncate">{option.name}</span>
@@ -1008,7 +998,7 @@ export default function Page() {
                                                     className="h-7 w-7 p-0 lg:opacity-0 lg:group-hover/Option:opacity-100 transition-opacity duration-200 shrink-0"
                                                     aria-label={`Remove ${option.name}`}
                                                 >
-                                                    <Trash className="h-3.5 w-3.5 text-destructive" />
+                                                    <Trash className="h-3.5 w-3.5 text-destructive"/>
                                                 </Button>
                                             </div>
                                         </TableHead>
@@ -1030,7 +1020,8 @@ export default function Page() {
                                                         {criterion.description && (
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
-                                                                    <Info className="inline ml-1 h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                                                    <Info
+                                                                        className="inline ml-1 h-3.5 w-3.5 text-muted-foreground cursor-help"/>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent className="max-w-[300px] text-xs">
                                                                     {criterion.description}
@@ -1038,7 +1029,8 @@ export default function Page() {
                                                             </Tooltip>
                                                         )}
                                                     </div>
-                                                    <div className="flex gap-1 lg:group-hover/Criterion:opacity-100 lg:opacity-0 transition-opacity duration-200">
+                                                    <div
+                                                        className="flex gap-1 lg:group-hover/Criterion:opacity-100 lg:opacity-0 transition-opacity duration-200">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
@@ -1049,7 +1041,7 @@ export default function Page() {
                                                             className="h-7 w-7 p-0"
                                                             aria-label={`Edit ${criterion.name}`}
                                                         >
-                                                            <Edit className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            <Edit className="h-3.5 w-3.5 text-muted-foreground"/>
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
@@ -1058,7 +1050,7 @@ export default function Page() {
                                                             className="h-7 w-7 p-0"
                                                             aria-label={`Remove ${criterion.name}`}
                                                         >
-                                                            <Trash className="h-3.5 w-3.5 text-destructive" />
+                                                            <Trash className="h-3.5 w-3.5 text-destructive"/>
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -1103,8 +1095,9 @@ export default function Page() {
                                                 {winner && winner.scores[criterion.id] > 0 ? (
                                                     <div className="flex flex-col items-center">
                                                         <span className="font-semibold">{winner.name}</span>
-                                                        <div className="flex items-center text-xs text-amber-600 dark:text-amber-500">
-                                                            <Trophy className="h-3 w-3 mr-1" />
+                                                        <div
+                                                            className="flex items-center text-xs text-amber-600 dark:text-amber-500">
+                                                            <Trophy className="h-3 w-3 mr-1"/>
                                                             <span>{winner.scores[criterion.id]}</span>
                                                         </div>
                                                     </div>
@@ -1162,7 +1155,8 @@ export default function Page() {
                     <CardFooter>
                         <div className="text-sm text-muted-foreground">
                             <span className="font-medium">Legend: </span>
-                            The top value in each cell is the raw score (0-10) and the bottom value is the weighted score.
+                            The top value in each cell is the raw score (0-10) and the bottom value is the weighted
+                            score.
                             Criteria are sorted by weight importance (highest first) and options alphabetically.
                         </div>
                     </CardFooter>
@@ -1172,11 +1166,12 @@ export default function Page() {
                     <CardContent fullPadding>
                         <div className="text-center space-y-4">
                             <h3 className="text-lg font-semibold">No criteria or options yet</h3>
-                            <p className="text-muted-foreground">Add criteria and options to build your decision matrix.</p>
+                            <p className="text-muted-foreground">Add criteria and options to build your decision
+                                matrix.</p>
                         </div>
                     </CardContent>
                 </Card>
             )}
-        </div>
+        </section>
     );
 }

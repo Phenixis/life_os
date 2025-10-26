@@ -11,7 +11,7 @@ import {
     SidebarMenuItem
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import {isToolsCategorie, tools} from "@/lib/tools-data"
+import {isToolCard, isToolsCategorie, tools} from "@/lib/tools-data"
 import {usePathname} from "next/navigation"
 
 export function ToolsSidebar() {
@@ -24,7 +24,8 @@ export function ToolsSidebar() {
                     <SidebarGroupLabel>Tools</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {tools.map((tool) => {
+                            {tools.sort((a, b) => Number(isToolCard(b)) - Number(isToolCard(a)))
+                                .map((tool) => {
                                 if (isToolsCategorie(tool)) {
                                     return tool.tools.map((tool) => (
                                         <SidebarMenuItem key={tool.name}>

@@ -243,11 +243,11 @@ export default function ChatProfileLayout({ children }: ChatLayoutProps) {
     }
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-white dark:bg-black">
             {/* Sidebar */}
-            <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+            <div className="w-80 border-r border-gray-200 dark:border-gray-800 flex flex-col">
                 {/* Profile Selection */}
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-semibold">AI Profiles</h2>
                         <Button size="sm" onClick={() => setIsCreatingProfile(true)}>
@@ -335,7 +335,7 @@ export default function ChatProfileLayout({ children }: ChatLayoutProps) {
                                 {conversations.map((conversation) => (
                                     <div key={conversation.id} className="group relative">
                                         {editingConversationId === conversation.id ? (
-                                            <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                                                <div className="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-950 rounded-md">
                                                 <Input
                                                     value={editingTitle}
                                                     onChange={(e) => setEditingTitle(e.target.value)}

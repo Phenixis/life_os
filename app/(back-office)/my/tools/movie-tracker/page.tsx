@@ -58,12 +58,12 @@ export default function MovieTrackerPage() {
     };
 
     return (
-        <div className="container mx-auto p-6 space-y-6">
+        <section className="page">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Movie Tracker</h1>
-                    <p className="text-muted-foreground">
+                    <h1 className="page-title">Movie Tracker</h1>
+                    <p className="page-description">
                         Track, rate, and organize your movie and TV show collection
                     </p>
                 </div>
@@ -135,6 +135,6 @@ export default function MovieTrackerPage() {
                     <DiscoverMovies />
                 </TabsContent>
             </Tabs>
-        </div>
+        </section>
     );
 }

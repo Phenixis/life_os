@@ -1,4 +1,4 @@
-import {Dumbbell, Film, Grid2X2, LayoutGrid, MessagesSquare} from "lucide-react"
+import {Car, Dumbbell, Film, Grid2X2, LayoutGrid, MessagesSquare, ShoppingBag} from "lucide-react"
 import type {ReactNode} from "react"
 
 export interface ToolsCategorieProps {
@@ -24,6 +24,25 @@ export function isToolCard(data: ToolCardProps | ToolsCategorieProps): data is T
 
 // Move the tools data to a separate file that can be imported by both client and server components
 export const tools: (ToolCardProps | ToolsCategorieProps)[] = [
+    process.env.NEXT_PUBLIC_ENVIRONMENT === "development" ? {
+        name: "Dev tools",
+        tools: [
+            {
+                name: "Grocery List Maker",
+                href: "/my/tools/grocery-list",
+                icon: <ShoppingBag className="size-4"/>,
+                description: "Create and manage grocery lists with ease.",
+                alternativeNames: ["grocery", "shopping list"],
+            },
+            {
+                name: "Car Management",
+                href: "/my/tools/car-management",
+                icon: <Car className="size-4"/>,
+                description: "Manage your car's gas consumption, MOT expiration date, and other car-related information.",
+                alternativeNames: ["car", "inventory", "usage"],
+            }
+        ]
+    } : undefined,
     {
         name: "All Tools",
         href: "/my/tools",
@@ -75,4 +94,4 @@ export const tools: (ToolCardProps | ToolsCategorieProps)[] = [
         ]
     }
     // Future tools can be added here following the same structure
-]
+].filter(Boolean) as (ToolCardProps | ToolsCategorieProps)[];

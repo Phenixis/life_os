@@ -4,7 +4,7 @@ import {useSavedWorkouts} from "@/hooks/use-workouts"
 import {SavedWorkoutDisplay} from "./saved-workout-display"
 import {SavedWorkoutSkeleton} from "@/components/big/workout/saved-workout/saved-workout-skeleton";
 
-export function SavedWorkoutsAsync() {
+export function SavedWorkouts() {
     const {savedWorkouts, isLoading} = useSavedWorkouts()
 
     if (isLoading) {
