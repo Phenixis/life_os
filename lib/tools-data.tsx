@@ -3,6 +3,7 @@ import type {ReactNode} from "react"
 
 export interface ToolsCategorieProps {
     name: string
+    description: string
     tools: ToolCardProps[]
 }
 
@@ -15,49 +16,34 @@ export interface ToolCardProps {
     description: string
     icon: ReactNode
     href: string
+    available: boolean
     alternativeNames?: string[]
 }
 
 export function isToolCard(data: ToolCardProps | ToolsCategorieProps): data is ToolCardProps {
-    return "description" in data;
+    return "href" in data;
 }
 
 // Move the tools data to a separate file that can be imported by both client and server components
 export const tools: (ToolCardProps | ToolsCategorieProps)[] = [
-    process.env.NEXT_PUBLIC_ENVIRONMENT === "development" ? {
-        name: "Dev tools",
-        tools: [
-            {
-                name: "Grocery List Maker",
-                href: "/my/tools/grocery-list",
-                icon: <ShoppingBag className="size-4"/>,
-                description: "Create and manage grocery lists with ease.",
-                alternativeNames: ["grocery", "shopping list"],
-            },
-            {
-                name: "Car Management",
-                href: "/my/tools/car-management",
-                icon: <Car className="size-4"/>,
-                description: "Manage your car's gas consumption, MOT expiration date, and other car-related information.",
-                alternativeNames: ["car", "inventory", "usage"],
-            }
-        ]
-    } : undefined,
     {
         name: "All Tools",
         href: "/my/tools",
         icon: <LayoutGrid className="size-4"/>,
         description: "View all available tools",
+        available: true,
         alternativeNames: ["tools"],
     },
     {
         name: "Trackers",
+        description: "A set of tools to track what happens in your life.",
         tools: [
             {
                 name: "Movie Tracker",
                 href: "/my/tools/movie-tracker",
                 icon: <Film className="size-4"/>,
-                description: "A tool for tracking movies and TV shows.",
+                description: "Track movies and TV shows you've watched and get personalized recommendations.",
+                available: true,
                 alternativeNames: ["movie", "movies", "film", "films"],
             },
             {
@@ -65,31 +51,57 @@ export const tools: (ToolCardProps | ToolsCategorieProps)[] = [
                 href: "/my/tools/workout",
                 icon: <Dumbbell className="size-4"/>,
                 description: "Track your workout, analyze the stats and improve to your best self",
+                available: true,
                 alternativeNames: ["workout", "exercise", "gym"],
             },
         ]
     },
     {
         name: "Decision-making tools",
+        description: "A set of tools to help you make big decisions easily.",
         tools: [
             {
                 name: "Weighted Multi-Criteria Decision Matrix",
                 href: "/my/tools/WMCDM",
                 icon: <Grid2X2 className="size-4"/>,
-                description: "A decision-making tool that helps evaluate multiple options against various criteria, with each criterion having a different level of importance (weight).",
+                description: "Evaluate multiple options against multiple criteria, with each criterion having a different level of importance. Fill the table and get the mathematically best option",
+                available: true,
                 alternativeNames: ["WMCDM", "decision matrix"],
             }
         ]
     },
     {
         name: "AI tools",
+        description: "A set of useful AI tools",
         tools: [
             {
                 name: "Chat",
                 href: "/my/tools/chat",
                 icon: <MessagesSquare className="size-4"/>,
-                description: "Chat with various and personalized profiles.",
+                description: "Chat with AI profiles you set yourself, and get personalized advice and support.",
+                available: true,
                 alternativeNames: ["ai chat", "chatbot"],
+            }
+        ]
+    },{
+        name: "Coming soon",
+        description: "I'm currently working on these tools, they will be available in the next update !",
+        tools: [
+            {
+                name: "Grocery List Maker",
+                href: "/my/tools/grocery-list",
+                icon: <ShoppingBag className="size-4"/>,
+                description: "Create and manage grocery lists with ease.",
+                available: false,
+                alternativeNames: ["grocery", "shopping list"],
+            },
+            {
+                name: "Car Management",
+                href: "/my/tools/car-management",
+                icon: <Car className="size-4"/>,
+                description: "Manage your car's gas consumption, MOT expiration date, and other car-related information.",
+                available: false,
+                alternativeNames: ["car", "inventory", "usage"],
             }
         ]
     }

@@ -331,11 +331,11 @@
     }
 
     section.page h1.page-title {
-        @apply mb-2 text-2xl font-semibold tracking-tighter;
+        @apply mb-2 text-2xl font-bold tracking-tighter;
     }
 
     section.page h2.page-title {
-        @apply mb-2 text-xl font-semibold tracking-tighter;
+        @apply mb-2 text-xl tracking-tighter;
     }
 
     section.page > p.page-description,

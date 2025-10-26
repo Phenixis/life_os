@@ -3,10 +3,24 @@ import {isToolCard, isToolsCategorie, type ToolCardProps, tools, ToolsCategorieP
 import Link from "next/link"
 
 function ToolCard(tool: ToolCardProps) {
+
+    if (!tool.available) {
+        return (
+            <div
+                className={"select-none p-6 bg-card border rounded-lg transition-colors duration-300"}>
+                <div className="flex items-center justify-left gap-2 mb-4">
+                    <div className="text-3xl">{tool.icon}</div>
+                    <h2 className="text-xl">{tool.name}</h2>
+                </div>
+                <p className="text-muted-foreground">{tool.description}</p>
+            </div>
+        )
+    }
+
     return (
         <Link
             href={tool.href}
-            className="block p-6 bg-card border rounded-lg shadow-sm hover:bg-accent/10 transition-colors duration-300 cursor-pointer"
+            className="block p-6 bg-card border rounded-lg shadow hover:bg-accent/75 transition-colors duration-300 cursor-pointer"
         >
             <div className="flex items-center justify-left gap-2 mb-4">
                 <div className="text-3xl">{tool.icon}</div>
@@ -19,14 +33,17 @@ function ToolCard(tool: ToolCardProps) {
 
 function ToolsCategorie(categorie: ToolsCategorieProps) {
     return (
-        <>
-            <h2 className="text-2xl mt-6 mb-4 font-semibold">{categorie.name}</h2>
+        <div className={"group/category"}>
+            <header className={"flex items-baseline gap-6"}>
+                <h2 className="page-title">{categorie.name}</h2>
+                <p className="text-muted-foreground mb-6 lg:opacity-0 duration-300 lg:group-hover/category:opacity-100">{categorie.description}</p>
+            </header>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {categorie.tools.map((tool, index) => (
                     <ToolCard key={index} {...tool} />
                 ))}
             </div>
-        </>
+        </div>
     )
 }
 
@@ -34,11 +51,8 @@ export default function ToolsPage() {
     const toolsCard = tools.filter((tool) => isToolCard(tool)).filter((tool) => tool.href !== "/my/tools")
     const toolsCategorie = tools.filter((tool) => isToolsCategorie(tool))
     return (
-        <div className="container mx-auto py-8">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold">Tools</h1>
-            </div>
-
+        <section className="page">
+            <h1 className="page-title">Tools</h1>
             {
                 toolsCard.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -51,6 +65,6 @@ export default function ToolsPage() {
             {
                 toolsCategorie.map((categorie, index) => <ToolsCategorie key={index} {...categorie} />)
             }
-        </div>
+        </section>
     )
 }
