@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const mediaType = searchParams.get('media_type') as 'movie' | 'tv' | 'all' || 'all';
         const excludeIds = searchParams.get('exclude_ids')?.split(',').map(id => parseInt(id)) || [];
+        const basedOnTmdbId = searchParams.get('based_on_tmdb_id') ? parseInt(searchParams.get('based_on_tmdb_id')!) : null;
+        const basedOnMediaType = searchParams.get('based_on_media_type') as 'movie' | 'tv' | null;
 
         // Get TMDb API key
         const tmdbApiKey = process.env.TMDB_ACCESS_TOKEN;
@@ -60,8 +62,38 @@ export async function GET(request: NextRequest) {
 
         let recommendation = null;
 
-        // Strategy 1: Get recommendation from a highly-rated movie
-        if (highRatedMovies.length > 0) {
+        // Strategy 1: Get recommendation based on the movie the user just interacted with
+        if (basedOnTmdbId && basedOnMediaType) {
+            try {
+                let movieRecs;
+                if (basedOnMediaType === 'movie') {
+                    movieRecs = await tmdbService.getMovieRecommendations(basedOnTmdbId, 1);
+                } else {
+                    movieRecs = await tmdbService.getTVRecommendations(basedOnTmdbId, 1);
+                }
+
+                // Find a suitable recommendation
+                for (const rec of movieRecs.results.filter(
+                    rec => (mediaType === 'all' || 
+                           (mediaType === 'movie' && isMovie(rec)) || 
+                           (mediaType === 'tv' && isTVShow(rec))) &&
+                           !shouldExcludeMovie(rec.id)
+                )) {
+                    recommendation = {
+                        ...rec,
+                        media_type: basedOnMediaType,
+                        recommendation_source: 'similar_to_rated'
+                    };
+                    break;
+                }
+            } catch (error) {
+                console.warn('Failed to get recommendations from interacted movie:', basedOnTmdbId);
+                console.warn(error);
+            }
+        }
+
+        // Strategy 2: Get recommendation from a highly-rated movie (fallback)
+        if (!recommendation && highRatedMovies.length > 0) {
             // Pick a random high-rated movie
             const randomMovie = highRatedMovies[Math.floor(Math.random() * highRatedMovies.length)];
             
@@ -93,7 +125,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Strategy 2: Get from trending if no recommendation found
+        // Strategy 3: Get from trending if no recommendation found
         if (!recommendation) {
             try {
                 const trending = await tmdbService.getTrending(mediaType === 'all' ? 'all' : mediaType, 'week');
@@ -112,7 +144,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Strategy 3: Get from popular if still no recommendation
+        // Strategy 4: Get from popular if still no recommendation
         if (!recommendation) {
             try {
                 let popularContent = [];

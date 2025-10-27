@@ -134,8 +134,13 @@ export function useMovieRecommendations(mediaType: 'movie' | 'tv' | 'all' = 'all
      * 
      * @param tmdbIdToRemove - The TMDb ID of the movie to remove
      * @param optimistic - If true, immediately replaces with buffer movie if available
+     * @param basedOnMovie - Optional movie details to base the new recommendation on
      */
-    const replaceRecommendation = async (tmdbIdToRemove: number, optimistic: boolean = false) => {
+    const replaceRecommendation = async (
+        tmdbIdToRemove: number, 
+        optimistic: boolean = false,
+        basedOnMovie?: { tmdbId: number; mediaType: 'movie' | 'tv' }
+    ) => {
         if (!user || !data) return null;
 
         try {
@@ -187,7 +192,12 @@ export function useMovieRecommendations(mediaType: 'movie' | 'tv' | 'all' = 'all
             
             // Get a replacement recommendation excluding current list + the removed item
             const excludeIds = [...existingIds];
-            const singleRecUrl = `/api/movie/recommendations/single?media_type=${mediaType}&exclude_ids=${excludeIds.join(',')}`;
+            let singleRecUrl = `/api/movie/recommendations/single?media_type=${mediaType}&exclude_ids=${excludeIds.join(',')}`;
+            
+            // If we have movie details to base the recommendation on, add them to the URL
+            if (basedOnMovie) {
+                singleRecUrl += `&based_on_tmdb_id=${basedOnMovie.tmdbId}&based_on_media_type=${basedOnMovie.mediaType}`;
+            }
             
             const response = await fetcher(singleRecUrl, user.api_key);
             
