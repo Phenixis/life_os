@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
                     )) {
                         recommendation = {
                             ...rec,
-                            media_type: isMovie(rec) ? 'movie' : 'tv',
+                            media_type: basedOnMediaType,
                             recommendation_source: 'similar_to_rated'
                         };
                         break;
