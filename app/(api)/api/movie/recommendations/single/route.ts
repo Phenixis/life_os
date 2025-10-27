@@ -68,23 +68,25 @@ export async function GET(request: NextRequest) {
                 let movieRecs;
                 if (basedOnMediaType === 'movie') {
                     movieRecs = await tmdbService.getMovieRecommendations(basedOnTmdbId, 1);
-                } else {
+                } else if (basedOnMediaType === 'tv') {
                     movieRecs = await tmdbService.getTVRecommendations(basedOnTmdbId, 1);
                 }
 
                 // Find a suitable recommendation
-                for (const rec of movieRecs.results.filter(
-                    rec => (mediaType === 'all' || 
-                           (mediaType === 'movie' && isMovie(rec)) || 
-                           (mediaType === 'tv' && isTVShow(rec))) &&
-                           !shouldExcludeMovie(rec.id)
-                )) {
-                    recommendation = {
-                        ...rec,
-                        media_type: basedOnMediaType,
-                        recommendation_source: 'similar_to_rated'
-                    };
-                    break;
+                if (movieRecs) {
+                    for (const rec of movieRecs.results.filter(
+                        rec => (mediaType === 'all' || 
+                               (mediaType === 'movie' && isMovie(rec)) || 
+                               (mediaType === 'tv' && isTVShow(rec))) &&
+                               !shouldExcludeMovie(rec.id)
+                    )) {
+                        recommendation = {
+                            ...rec,
+                            media_type: isMovie(rec) ? 'movie' : 'tv',
+                            recommendation_source: 'similar_to_rated'
+                        };
+                        break;
+                    }
                 }
             } catch (error) {
                 console.warn('Failed to get recommendations from interacted movie:', basedOnTmdbId);
