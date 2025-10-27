@@ -1,9 +1,10 @@
 import {useSearchProject} from "@/hooks/use-search-project"
-import {useDebouncedCallback, useDebounce} from "use-debounce"
-import {useState, useEffect, useRef} from "react"
+import {useDebounce, useDebouncedCallback} from "use-debounce"
+import {useEffect, useRef, useState} from "react"
 import {Label} from "@/components/ui/label"
 import {Input} from "@/components/ui/input"
 import {cn} from "@/lib/utils"
+import {Badge} from "@/components/ui/badge";
 
 export default function SearchProjectsInput(
     {
@@ -48,41 +49,66 @@ export default function SearchProjectsInput(
     }, [project.title])
 
     return (
-        <div className={cn("w-full", className)}>
-            <Label htmlFor="project" className="text-nowrap">{label || "Project"}</Label>
-            <Input
-                type="text"
-                id="project"
-                name="project"
-                value={projectInputValue}
-                onFocus={() => setShowProjectSuggestions(true)}
-                onBlur={(e) => {
-                    // User finished typing
-                    isUserTypingRef.current = false
-                    // Delay hiding to allow click on suggestions
-                    setTimeout(() => {
-                        if (!e.relatedTarget || !e.relatedTarget.closest(".project-suggestions")) {
-                            setShowProjectSuggestions(false)
-                        }
-                    }, 100)
-                }}
-                onChange={(e) => {
-                    isUserTypingRef.current = true
-                    setProjectInputValue(e.target.value)
-                    if (projects && projects.length > 0) {
-                        projects.forEach(proj => {
-                            if (proj.title === e.target.value) {
-                                handleProjectChange({title: proj.title, id: proj.id})
+        <div className={cn("w-full relative", className)}>
+            <Label htmlFor="project" className="text-nowrap">
+                {label || "Project"}
+            </Label>
+            <div className={"relative"}>
+                <Input
+                    type="text"
+                    id="project"
+                    name="project"
+                    value={projectInputValue}
+                    onFocus={() => setShowProjectSuggestions(true)}
+                    onBlur={(e) => {
+                        // User finished typing
+                        isUserTypingRef.current = false
+                        // Delay hiding to allow click on suggestions
+                        setTimeout(() => {
+                            if (!e.relatedTarget || !e.relatedTarget.closest(".project-suggestions")) {
+                                setShowProjectSuggestions(false)
                             }
-                        })
-                    } else {
-                        handleProjectChange({title: e.target.value, id: -1})
-                    }
-                }}
-            />
+                        }, 100)
+                    }}
+                    onChange={(e) => {
+                        isUserTypingRef.current = true
+                        setProjectInputValue(e.target.value)
+                        if (projects && projects.length > 0) {
+                            projects.forEach(proj => {
+                                if (proj.title === e.target.value) {
+                                    handleProjectChange({title: proj.title, id: proj.id})
+                                }
+                            })
+                        } else {
+                            handleProjectChange({title: e.target.value, id: -1})
+                        }
+                    }}
+                />
+                {
+                    (projects.map(project => project.title).includes(debouncedProjectInputValue) || project.id >= 0) || (debouncedProjectInputValue !== null && debouncedProjectInputValue !== "") ? (
+                        <div className={"absolute right-2 top-0 h-full flex items-center justify-center"}>
+                            {
+                                projects.map(project => project.title).includes(debouncedProjectInputValue) || project.id >= 0 ? (
+                                    <Badge
+                                        variant={"outline"}
+                                    >
+                                        Existing
+                                    </Badge>
+                                ) : debouncedProjectInputValue !== null && debouncedProjectInputValue !== "" ? (
+                                    <Badge
+                                        variant={"secondary"}
+                                    >
+                                        New Project
+                                    </Badge>
+                                ) : null
+                            }
+                        </div>
+                    ) : null
+                }
+            </div>
             {showProjectSuggestions && projectInputValue && (
                 <div
-                    className="mt-1 overflow-y-auto rounded-md border border-border bg-popover shadow-md project-suggestions"
+                    className="absolute top-16 left-0 w-full mt-1 overflow-y-auto rounded-md border border-border bg-popover shadow-md project-suggestions"
                     tabIndex={-1}
                 >
                     {isLoading ? (
