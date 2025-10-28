@@ -299,9 +299,9 @@ export function DiscoverMovies({ className }: DiscoverMoviesProps) {
             // Add movie with optimization flag
             await addMovie(tmdbId, mediaType, 'will_watch', { optimizeRecommendations: true });
 
-            // If we didn't do optimistic replacement, do regular replacement
+            // If we didn't do optimistic replacement, do regular replacement based on the interacted movie
             if (!replacedMovie) {
-                await replaceRecommendation(tmdbId);
+                await replaceRecommendation(tmdbId, false, { tmdbId, mediaType });
             }
 
             toast.success('Added to your watchlist!');
@@ -344,9 +344,9 @@ export function DiscoverMovies({ className }: DiscoverMoviesProps) {
                 rating: rating
             });
 
-            // If we didn't do optimistic replacement, do regular replacement
+            // If we didn't do optimistic replacement, do regular replacement based on the interacted movie
             if (!replacedMovie) {
-                await replaceRecommendation(tmdbId);
+                await replaceRecommendation(tmdbId, false, { tmdbId, mediaType });
             }
 
         } catch (error: unknown) {
@@ -383,9 +383,9 @@ export function DiscoverMovies({ className }: DiscoverMoviesProps) {
             // Mark as not interested with optimization flag
             await markAsNotInterested(tmdbId, mediaType, title, { optimizeRecommendations: true });
 
-            // If we didn't do optimistic replacement, do regular replacement
+            // If we didn't do optimistic replacement, do regular replacement based on the interacted movie
             if (!replacedMovie) {
-                await replaceRecommendation(tmdbId);
+                await replaceRecommendation(tmdbId, false, { tmdbId, mediaType });
             }
 
             toast.success('Marked as not interested - won\'t appear in future recommendations');
