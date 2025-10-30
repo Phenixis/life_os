@@ -61,9 +61,11 @@ export default function TaskModal() {
         if (task) {
             setImportance(task.importance?.toString() || "0")
             setDuration(task.duration?.toString() || "0")
-            const taskDueDate = new Date(task.due)
-            taskDueDate.setHours(0, 0, 0, 0)
-            setDueDate(taskDueDate)
+            if (task.due) {
+                const taskDueDate = new Date(task.due)
+                taskDueDate.setHours(0, 0, 0, 0)
+                setDueDate(taskDueDate)
+            }
         }
     }, [task])
 
