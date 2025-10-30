@@ -73,13 +73,15 @@ export default function SearchProjectsInput(
                     onChange={(e) => {
                         isUserTypingRef.current = true
                         setProjectInputValue(e.target.value)
-                        if (projects && projects.length > 0) {
-                            projects.forEach(proj => {
-                                if (proj.title === e.target.value) {
-                                    handleProjectChange({title: proj.title, id: proj.id})
-                                }
-                            })
+                        
+                        // Check if the input value exactly matches an existing project
+                        const matchingProject = projects?.find(proj => proj.title === e.target.value)
+                        
+                        if (matchingProject) {
+                            // Exact match found - use the existing project
+                            handleProjectChange({title: matchingProject.title, id: matchingProject.id})
                         } else {
+                            // No exact match - treat as new project
                             handleProjectChange({title: e.target.value, id: -1})
                         }
                     }}
