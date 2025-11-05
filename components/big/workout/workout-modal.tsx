@@ -229,6 +229,30 @@ export function WorkoutModal(
         }
     }
 
+    const resetForm = () => {
+        // Reset all form values to their initial values
+        setExercices(initialExercises)
+        setWorkoutName(
+            isPastWorkoutEdit ? data.title : isSavedWorkoutEdit ? data.title : "My Workout"
+        )
+        setWorkoutDate(() => {
+            const date = isPastWorkoutEdit ? new Date(data.date) : new Date()
+            date.setHours(0, 0, 0, 0)
+            return date
+        })
+        setDifficulty(isPastWorkoutEdit ? data.difficulty : 3)
+        setCurrentExerciseIndex(0)
+
+        // If carousel api is available, scroll back to first slide
+        setTimeout(() => {
+            try {
+                carouselApi?.scrollTo(0, true)
+            } catch (e) {
+                // ignore scroll errors
+            }
+        }, 50)
+    }
+
     const handleDelete = async () => {
         if (isPastWorkoutEdit) {
             try {
@@ -305,6 +329,7 @@ export function WorkoutModal(
             toast.error(error instanceof Error ? error.message : "Failed to save workout")
         } finally {
             setIsSaving(false)
+            resetForm();
         }
     }
 
@@ -378,6 +403,7 @@ export function WorkoutModal(
                                     onChange={(e) => setWorkoutName(e.target.value)}
                                     placeholder="Enter workout name"
                                     className={"font-semibold text-base md:text-lg"}
+                                    autoFocus
                                 />
                             </div>
                             <Carousel setApi={setCarouselApi} className="my-2 mx-auto lg:w-[80%] pb-12 lg:pb-0">
@@ -436,8 +462,8 @@ export function WorkoutModal(
                                                         <TableHead>
                                                             N° Set
                                                         </TableHead>
-                                                        <TableHead>Weight</TableHead>
                                                         <TableHead>Nb Rep</TableHead>
+                                                        <TableHead>Weight</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -471,12 +497,12 @@ export function WorkoutModal(
                                                             <TableCell className="w-2/6">
                                                                 <Input
                                                                     type="number"
-                                                                    placeholder="Weight"
-                                                                    id={`exercice-${index}-set-weight-${set.id}`}
-                                                                    value={set.weight}
+                                                                    placeholder="Number of reps"
+                                                                    id={`exercice-${index}-set-nb-reps-${set.id}`}
+                                                                    value={set.nb_rep}
                                                                     onChange={(e) => {
                                                                         const newSets = [...exercice.sets]
-                                                                        newSets[setIndex].weight = parseInt(e.target.value) || 0
+                                                                        newSets[setIndex].nb_rep = parseInt(e.target.value) || 0
                                                                         setExercices([...exercices])
                                                                     }}
                                                                     min={0}
@@ -485,12 +511,12 @@ export function WorkoutModal(
                                                             <TableCell className="w-2/6">
                                                                 <Input
                                                                     type="number"
-                                                                    placeholder="Number of reps"
-                                                                    id={`exercice-${index}-set-nb-reps-${set.id}`}
-                                                                    value={set.nb_rep}
+                                                                    placeholder="Weight"
+                                                                    id={`exercice-${index}-set-weight-${set.id}`}
+                                                                    value={set.weight}
                                                                     onChange={(e) => {
                                                                         const newSets = [...exercice.sets]
-                                                                        newSets[setIndex].nb_rep = parseInt(e.target.value) || 0
+                                                                        newSets[setIndex].weight = parseInt(e.target.value) || 0
                                                                         setExercices([...exercices])
                                                                     }}
                                                                     min={0}
@@ -503,28 +529,6 @@ export function WorkoutModal(
                                                         className="opacity-50 hover:opacity-100 transition-opacity">
                                                         <TableCell>
                                                             {exercice.sets.length + 1}
-                                                        </TableCell>
-                                                        <TableCell className="w-2/6">
-                                                            <Input
-                                                                readOnly
-                                                                type="number"
-                                                                placeholder="Weight"
-                                                                onFocus={() => {
-                                                                    const newExercices = [...exercices]
-                                                                    const currentSets = newExercices[index].sets
-                                                                    const nextId = currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0
-                                                                    newExercices[index].sets.push({
-                                                                        id: nextId,
-                                                                        weight: 0,
-                                                                        nb_rep: 0,
-                                                                    })
-                                                                    setExercices(newExercices)
-                                                                    setTimeout(() => {
-                                                                        const newInput = document.getElementById(`exercice-${index}-set-weight-${nextId}`)
-                                                                        if (newInput) newInput.focus()
-                                                                    }, 0)
-                                                                }}
-                                                            />
                                                         </TableCell>
                                                         <TableCell className="w-2/6">
                                                             <Input
@@ -543,6 +547,28 @@ export function WorkoutModal(
                                                                     setExercices(newExercices)
                                                                     setTimeout(() => {
                                                                         const newInput = document.getElementById(`exercice-${index}-set-nb-reps-${nextId}`)
+                                                                        if (newInput) newInput.focus()
+                                                                    }, 0)
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="w-2/6">
+                                                            <Input
+                                                                readOnly
+                                                                type="number"
+                                                                placeholder="Weight"
+                                                                onFocus={() => {
+                                                                    const newExercices = [...exercices]
+                                                                    const currentSets = newExercices[index].sets
+                                                                    const nextId = currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0
+                                                                    newExercices[index].sets.push({
+                                                                        id: nextId,
+                                                                        weight: 0,
+                                                                        nb_rep: 0,
+                                                                    })
+                                                                    setExercices(newExercices)
+                                                                    setTimeout(() => {
+                                                                        const newInput = document.getElementById(`exercice-${index}-set-weight-${nextId}`)
                                                                         if (newInput) newInput.focus()
                                                                     }, 0)
                                                                 }}

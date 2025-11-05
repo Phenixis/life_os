@@ -13,6 +13,7 @@ import {WorkoutProgressionDisplay} from "./workout-progression-display"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
+    const dateObj = new Date(date)
     // Normalize to midnight for day-based diff
     const startOfDay = (d: Date) => {
         const nd = new Date(d)
@@ -20,19 +21,19 @@ function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
         return nd
     }
     const today = startOfDay(now)
-    const target = startOfDay(date)
+    const target = startOfDay(dateObj)
     const diffMs = today.getTime() - target.getTime()
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
     // Future dates: fallback to locale date
     if (diffDays < 0) {
-        return date.toLocaleDateString(locale)
+        return dateObj.toLocaleDateString(locale)
     }
 
     if (diffDays === 0) return "Today"
     if (diffDays === 1) return "Yesterday"
 
-    const weekday = new Date(date).toLocaleDateString(locale, {weekday: 'long'})
+    const weekday = dateObj.toLocaleDateString(locale, {weekday: 'long'})
 
     if (diffDays <= 6) {
         // Within the last week but not yesterday
@@ -44,7 +45,7 @@ function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     }
 
     // More than 2 weeks ago
-    return date.toLocaleDateString(locale)
+    return dateObj.toLocaleDateString(locale)
 }
 
 export type PastWorkoutProps = {
@@ -149,8 +150,8 @@ export function PastWorkoutDisplay(
                                                         <TableHeader>
                                                             <TableRow>
                                                                 <TableHead>N° Set</TableHead>
-                                                                <TableHead>Weight</TableHead>
                                                                 <TableHead>Nb Rep</TableHead>
+                                                                <TableHead>Weight</TableHead>
                                                             </TableRow>
                                                         </TableHeader>
                                                         <TableBody className={"w-full"}>
@@ -158,8 +159,8 @@ export function PastWorkoutDisplay(
                                                                 exercice.sets.map((exercice, index) => (
                                                                     <TableRow key={index} className={"w-full"}>
                                                                         <TableCell>{index + 1}</TableCell>
-                                                                        <TableCell>{exercice.weight}</TableCell>
                                                                         <TableCell>{exercice.nb_rep}</TableCell>
+                                                                        <TableCell>{exercice.weight}</TableCell>
                                                                     </TableRow>
                                                                 ))
                                                             }
