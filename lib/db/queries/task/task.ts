@@ -63,7 +63,7 @@ export async function getTaskById(id: number, recursive: boolean = false) {
             urgency: table.urgency,
             score: table.score,
             due: table.due,
-            project_id: table.id,
+            project_id: table.project_id,
             state: table.state,
             completed_at: table.completed_at,
             created_at: table.created_at,
