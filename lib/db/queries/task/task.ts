@@ -207,6 +207,7 @@ export async function getTasks(
     completed?: boolean,
     completed_after?: Date,
     completed_before?: Date,
+    state?: string,
 ) {
     // Step 1: First query to get distinct tasks with limit applied
     const distinctTasks = await lib.db
@@ -253,6 +254,7 @@ export async function getTasks(
                     : lib.sql`1 = 1`,
                 completed_after ? lib.gte(table.completed_at, completed_after) : lib.sql`1 = 1`,
                 completed_before ? lib.lte(table.completed_at, completed_before) : lib.sql`1 = 1`,
+                state ? lib.eq(table.state, state) : lib.sql`1 = 1`,
             ),
         )
         .orderBy(

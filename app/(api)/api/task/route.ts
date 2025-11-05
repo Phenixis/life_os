@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     const dueAfter = searchParams.get("dueAfter")
         ? new Date(searchParams.get("dueAfter") as string)
         : undefined
+    const state = searchParams.get("state") || undefined
     const limit = limitParam ? Number.parseInt(limitParam) : undefined
     const completed: boolean | undefined = completedParam === "true" ? true : completedParam === "false" ? false : undefined
 
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
                 ? await TaskQueries.Task.getCompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter)
                 : completed === false
                     ? await TaskQueries.Task.getUncompletedTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter)
-                    : await TaskQueries.Task.getTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter, completed)
+                    : await TaskQueries.Task.getTasks(verification.userId, orderBy || undefined, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter, completed, undefined, undefined, state)
 
         return NextResponse.json(tasks)
     } catch (error) {
@@ -105,7 +106,7 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const {id, title, importance, dueDate: initialDueDate, duration, project, toDoAfterId} = body
+        const {id, title, importance, dueDate: initialDueDate, duration, project, toDoAfterId, state} = body
 
         // Validation
         if (!id || !title || importance === undefined || initialDueDate === undefined || duration === undefined) {
@@ -165,14 +166,20 @@ export async function PUT(request: NextRequest) {
             }
         }
 
-        const taskId = await TaskQueries.Task.updateTask(Number(id), {
+        const updateData: Partial<Task.Task.Insert> = {
             user_id: verification.userId,
             title: title,
             importance: Number(importance),
             due: new Date(dueDate),
             duration: Number(duration),
             project_id: projectId
-        })
+        }
+
+        if (state !== undefined) {
+            updateData.state = state
+        }
+
+        const taskId = await TaskQueries.Task.updateTask(Number(id), updateData)
 
         return NextResponse.json({id: taskId})
     } catch (error) {
