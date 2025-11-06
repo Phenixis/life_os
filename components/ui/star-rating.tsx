@@ -99,18 +99,19 @@ export function StarRating({
     };
 
     return (
-        <div className={cn('flex items-center gap-1.5', className)}>
+        <>
             <div className={cn("flex items-center gap-1", className)}>
                 {Array.from({ length: 5 }, (_, index) => renderStar(index))}
             </div>
-            {rating !== null ? (
-                <span className="ml-2 text-sm text-muted-foreground">
-                    {rating.toFixed(1)}/5.0
-                </span>
-            ) : readonly &&(
-                <span className="text-xs text-muted-foreground">Not rated</span>
-            )}
-            
-        </div>
+            {
+                rating !== null ? (
+                    <span className="ml-2 text-sm text-muted-foreground">
+                        {rating.toFixed(1)}/5.0
+                    </span>
+                ) : readonly && (
+                    <span className="text-xs text-muted-foreground">Not rated</span>
+                )
+            }
+        </>
     );
 }

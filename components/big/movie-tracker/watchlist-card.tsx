@@ -37,6 +37,7 @@ import { Movie } from '@/lib/db/schema';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import Tooltip from '@/components/big/tooltip';
+import { cn } from '@/lib/utils';
 
 interface WatchlistCardProps {
     movie: Movie.Movie.Select;
@@ -165,13 +166,16 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                         )}
 
                         {/* Hover overlay with action button */}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 lg:group-hover/Poster:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <div className={cn(
+                            "absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2",
+                            showRatingDialog ? "" : "opacity-0 lg:group-hover/Poster:opacity-100 transition-opacity "
+                            )}>
                             {showRatingDialog ? (
                                 // Rating Dialog
                                 <div className="bg-black/80 rounded-lg p-3 w-[90%] max-w-[200px]">
                                     <div className="space-y-3">
                                         <p className="text-white text-sm font-medium text-center">Rate this {movie.media_type === 'tv' ? 'TV show' : 'movie'}</p>
-                                        <div className="flex justify-center">
+                                        <div className="flex flex-col items-center gap-1 justify-center">
                                             <StarRating
                                                 rating={currentRating}
                                                 onRatingChange={setCurrentRating}
@@ -183,16 +187,16 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                                                 size="sm"
                                                 onClick={handleRateAndWatch}
                                                 disabled={currentRating === 0}
-                                                className="text-xs px-2 py-1 h-auto flex-1"
+                                                className="text-xs px-2 py-1 h-auto flex-2"
                                             >
                                                 <Star className="w-3 h-3 mr-1" />
-                                                Rate & Watch
+                                                Rate
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 onClick={handleCancelRating}
-                                                className="text-xs px-2 py-1 h-auto"
+                                                className="text-xs px-2 py-1 h-auto flex-1"
                                             >
                                                 <X className="w-3 h-3" />
                                             </Button>
@@ -203,21 +207,13 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                                 // Regular Buttons
                                 <>
                                     <Button
-                                        onClick={handleMarkAsWatched}
-                                        size="sm"
-                                        className="gap-2 w-[80%]"
-                                    >
-                                        <Eye className="w-3 h-3" />
-                                        Mark as Watched
-                                    </Button>
-                                    <Button
                                         onClick={handleShowRatingDialog}
                                         size="sm"
                                         variant="secondary"
                                         className="gap-2 w-[80%]"
                                     >
                                         <Star className="w-3 h-3" />
-                                        Rate & Watch
+                                        Rate
                                     </Button>
                                     <Button
                                         onClick={() => setShowDeleteDialog(true)}
@@ -250,13 +246,9 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
-                                    <DropdownMenuItem onClick={handleMarkAsWatched}>
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        Mark as Watched
-                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={handleShowRatingDialog}>
                                         <Star className="mr-2 h-4 w-4" />
-                                        Rate & Watch
+                                        Rate
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
@@ -264,7 +256,7 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                                         className="text-destructive"
                                     >
                                         <Trash2 className="mr-2 h-4 w-4" />
-                                        Remove from Watchlist
+                                        Remove
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>

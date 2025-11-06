@@ -6,7 +6,16 @@ import { Button } from '@/components/ui/button';
 import { WatchlistCard } from './watchlist-card';
 import { useMovies } from '@/hooks/use-movies';
 import { useDebounce } from 'use-debounce';
-import { Search, SortAsc, SortDesc, ChevronLeft, ChevronRight, Film, Tv } from 'lucide-react';
+import { Search, SortAsc, SortDesc, Film, Tv } from 'lucide-react';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationPrevious,
+    PaginationNext,
+    PaginationEllipsis,
+} from '@/components/ui/pagination';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,7 +48,7 @@ export function WatchlistGrid() {
             currentPage: 1
         };
     });
-    
+
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [sortBy, setSortBy] = useState<SortBy>(filters.sortBy || 'date_added');
     const [sortOrder, setSortOrder] = useState<SortOrder>(filters.sortOrder || 'desc');
@@ -62,7 +71,7 @@ export function WatchlistGrid() {
     // Update cookies when filters change
     const updateFilters = useCallback((updates: Partial<WatchlistFilterCookie>) => {
         if (!isClient) return;
-        
+
         const newFilters = updateClientWatchlistFilterCookie(updates);
         setFilters(newFilters);
     }, [isClient]);
@@ -106,7 +115,7 @@ export function WatchlistGrid() {
 
     if (debouncedQuery) {
         // Filter search results to show both will_watch and watch_again movies
-        movies = searchMovies.filter(movie => 
+        movies = searchMovies.filter(movie =>
             movie.watch_status === 'will_watch' || movie.watch_status === 'watch_again'
         );
         isLoading = isLoadingSearch;
@@ -190,7 +199,7 @@ export function WatchlistGrid() {
                         variant={mediaFilter === 'all' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setMediaFilter('all')}
-                        className="h-10 px-3"
+                        className="h-10 flex-1 px-3"
                     >
                         All
                     </Button>
@@ -198,7 +207,7 @@ export function WatchlistGrid() {
                         variant={mediaFilter === 'movie' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setMediaFilter('movie')}
-                        className="h-10 px-3 gap-1"
+                        className="h-10 flex-1 px-3 gap-1"
                     >
                         <Film className="w-3 h-3" />
                         Movies
@@ -207,7 +216,7 @@ export function WatchlistGrid() {
                         variant={mediaFilter === 'tv' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setMediaFilter('tv')}
-                        className="h-10 px-3 gap-1"
+                        className="h-10 flex-1 px-3 gap-1"
                     >
                         <Tv className="w-3 h-3" />
                         TV
@@ -261,39 +270,7 @@ export function WatchlistGrid() {
                                 ({mediaFilter === 'movie' ? 'movies' : 'TV shows'} only)
                             </span>
                         )}
-                        {totalPages > 1 && (
-                            <span className="ml-2">
-                                (Page {currentPage} of {totalPages})
-                            </span>
-                        )}
                     </p>
-                    {totalPages > 1 && (
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="gap-1"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                                Previous
-                            </Button>
-                            <span className="text-sm text-muted-foreground">
-                                {startIndex + 1}-{Math.min(endIndex, totalMovies)} of {totalMovies}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="gap-1"
-                            >
-                                Next
-                                <ChevronRight className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    )}
                 </div>
             )}
 
@@ -331,72 +308,61 @@ export function WatchlistGrid() {
 
             {/* Bottom pagination for large lists */}
             {!isLoading && totalPages > 1 && paginatedMovies.length > 0 && (
-                <div className="flex justify-center items-center gap-2 pt-6">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(1)}
-                        disabled={currentPage === 1}
-                    >
-                        First
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="gap-1"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Previous
-                    </Button>
-                    
-                    {/* Page numbers */}
-                    <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let pageNumber;
-                            if (totalPages <= 5) {
-                                pageNumber = i + 1;
-                            } else {
-                                // Show pages around current page
-                                const start = Math.max(1, currentPage - 2);
-                                const end = Math.min(totalPages, start + 4);
-                                pageNumber = start + i;
-                                if (pageNumber > end) return null;
-                            }
-                            
-                            return (
-                                <Button
-                                    key={pageNumber}
-                                    variant={currentPage === pageNumber ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => handlePageChange(pageNumber)}
-                                    className="w-10"
-                                >
-                                    {pageNumber}
-                                </Button>
-                            );
-                        }).filter(Boolean)}
-                    </div>
-                    
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="gap-1"
-                    >
-                        Next
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(totalPages)}
-                        disabled={currentPage === totalPages}
-                    >
-                        Last
-                    </Button>
+                <div className="pt-6">
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                                />
+                            </PaginationItem>
+
+                            {/* Page numbers with ellipsis logic */}
+                            {(() => {
+                                const items: (number | 'ellipsis')[] = [];
+
+                                if (totalPages <= 5) {
+                                    for (let i = 1; i <= totalPages; i++) items.push(i);
+                                } else {
+                                    items.push(1);
+
+                                    const left = Math.max(2, currentPage - 1);
+                                    const right = Math.min(totalPages - 1, currentPage + 1);
+
+                                    if (left > 2) items.push('ellipsis');
+
+                                    for (let i = left; i <= right; i++) items.push(i);
+
+                                    if (right < totalPages - 1) items.push('ellipsis');
+
+                                    items.push(totalPages);
+                                }
+
+                                return items.map((p, idx) => (
+                                    <PaginationItem key={String(p) + idx}>
+                                        {p === 'ellipsis' ? (
+                                            <PaginationEllipsis />
+                                        ) : (
+                                            <PaginationLink
+                                                onClick={() => handlePageChange(p as number)}
+                                                isActive={p === currentPage}
+                                            >
+                                                {p}
+                                            </PaginationLink>
+                                        )}
+                                    </PaginationItem>
+                                ));
+                            })()}
+
+                            <PaginationItem>
+                                <PaginationNext
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
                 </div>
             )}
         </div>

@@ -196,7 +196,7 @@ export function MovieCard({ movie }: MovieCardProps) {
                                     <h3 className="font-medium text-sm line-clamp-2 underline-offset-2 leading-tight underline lg:no-underline lg:group-hover:underline mt-1">
                                         <a href={`https://google.com/search?q=${movie.title}+%28${movie.media_type === 'tv' ? 'TV' : 'Movie'}${" " + movie.release_date}%29`} target='_blank' rel='noopener noreferrer'>
                                             {movie.title}
-                                            <span className="lg:opacity-0 lg:group-hover:opacity-100 text-muted-foreground">
+                                            <span className="inline-block ml-2 lg:opacity-0 lg:group-hover:opacity-100 text-muted-foreground">
                                                 <ExternalLink className="inline w-3 h-3" />
                                             </span>
                                         </a>

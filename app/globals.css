@@ -327,7 +327,7 @@
 
     /* Component Page */
     section.page {
-        @apply container mx-auto py-8 space-y-8;
+        @apply container px-4 md:px-0 md:mx-auto py-8 space-y-8;
     }
 
     section.page h1.page-title {

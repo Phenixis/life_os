@@ -1,24 +1,24 @@
-import {SidebarProvider} from "@/components/ui/sidebar"
-import {ToolsSidebar} from '@/components/big/tools-sidebar'
-import {MobileSidebarToggle} from "@/components/ui/mobile-sidebar-toggle"
-import {UserQueries} from "@/lib/db/queries"
-import {redirect} from "next/navigation";
-import {SubscriptionLevels, SubscriptionWall} from "@/components/big/auth/subcription-wall";
-import {getStripeProduct} from "@/lib/services/payments/stripe";
+import { SidebarProvider } from "@/components/ui/sidebar"
+import { ToolsSidebar } from '@/components/big/tools-sidebar'
+import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle"
+import { UserQueries } from "@/lib/db/queries"
+import { redirect } from "next/navigation";
+import { SubscriptionLevels, SubscriptionWall } from "@/components/big/auth/subcription-wall";
+import { getStripeProduct } from "@/lib/services/payments/stripe";
 
-function ToolsLayoutContent({children}: { children: React.ReactNode }) {
+function ToolsLayoutContent({ children }: { children: React.ReactNode }) {
     return (
         <>
-            <ToolsSidebar/>
+            <ToolsSidebar />
             <main className="w-full">
                 {children}
             </main>
-            <MobileSidebarToggle/>
+            <MobileSidebarToggle />
         </>
     )
 }
 
-export default async function ToolsLayout({children}: { children: React.ReactNode }) {
+export default async function ToolsLayout({ children }: { children: React.ReactNode }) {
     const user = await UserQueries.User.getUser()
 
     if (!user) {
@@ -32,8 +32,10 @@ export default async function ToolsLayout({children}: { children: React.ReactNod
 
     return (
         <>
-            <SubscriptionWall minRequiredSubscription={"Basic"}
-                              userSubscription={subscriptionName as keyof typeof SubscriptionLevels}/>
+            <SubscriptionWall
+                minRequiredSubscription={"Basic"}
+                userSubscription={subscriptionName as keyof typeof SubscriptionLevels}
+            />
             <SidebarProvider defaultOpen={false}>
                 <ToolsLayoutContent>
                     {children}

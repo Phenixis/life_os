@@ -11,7 +11,7 @@ export function MovieStats() {
         return (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {Array.from({ length: 5 }).map((_, i) => (
-                    <Card key={i}>
+                    <Card key={i} className="first:col-span-2 md:col-span-1">
                         <CardContent fullPadding>
                             <div className="animate-pulse">
                                 <div className="h-4 bg-muted rounded-sm mb-2"></div>
@@ -63,7 +63,7 @@ export function MovieStats() {
             {statsData.map((stat) => {
                 const Icon = stat.icon;
                 return (
-                    <Card key={stat.title}>
+                    <Card key={stat.title} className="first:col-span-2 md:col-span-1">
                         <CardContent fullPadding>
                             <div className="flex items-center justify-between">
                                 <div>

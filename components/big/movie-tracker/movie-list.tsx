@@ -101,7 +101,7 @@ export function MovieList() {
 
     if (debouncedQuery) {
         // Filter search results to show both watched and watch_again movies
-        movies = searchMovies.filter(movie => 
+        movies = searchMovies.filter(movie =>
             movie.watch_status === 'watched' || movie.watch_status === 'watch_again'
         );
         actualIsLoading = isLoadingSearch;
@@ -276,43 +276,9 @@ export function MovieList() {
                 <>
                     {/* Pagination */}
                     {!isLoading && (
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm text-muted-foreground">
-                                {totalItems} {totalItems === 1 ? 'item' : 'items'} in your watchlist
-                                {totalPages > 1 && (
-                                    <span className="ml-2">
-                                        (Page {currentPage} of {totalPages})
-                                    </span>
-                                )}
-                            </p>
-                            {totalPages > 1 && (
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                        className="gap-1"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" />
-                                        Previous
-                                    </Button>
-                                    <span className="text-sm text-muted-foreground">
-                                        {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                        className="gap-1"
-                                    >
-                                        Next
-                                        <ChevronRight className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            {totalItems} {totalItems === 1 ? 'item' : 'items'} in your watchlist
+                        </p>
                     )}
 
                     {/* Movie Cards */}
