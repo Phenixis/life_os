@@ -43,8 +43,8 @@ export function WorkoutStats() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {personalRecords.map((record, index) => (
-                        <TableRow key={index}>
+                    {personalRecords.map((record) => (
+                        <TableRow key={record.exercice_name}>
                             <TableCell>{record.exercice_name}</TableCell>
                             <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
                             <TableCell>{record.weight}</TableCell>
