@@ -19,9 +19,10 @@ function ProgressionBadge({progression}: { progression: ExerciseProgression }) {
         )
     }
 
-    const {scoreDiff} = progression.progression
-    const isPositive = scoreDiff > 0
-    const isNeutral = scoreDiff === 0
+    const {weightDiff, repsDiff} = progression.progression
+    const changeMetric = weightDiff !== 0 ? weightDiff : repsDiff
+    const isPositive = changeMetric > 0
+    const isNeutral = weightDiff === 0 && repsDiff === 0
 
     if (isNeutral) {
         return (

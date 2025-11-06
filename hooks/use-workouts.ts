@@ -5,6 +5,7 @@ import {useUser} from "@/hooks/use-user"
 import {fetcher} from "@/lib/fetcher"
 import type {PastWorkout} from "@/lib/db/queries/workout/past-workout"
 import type {SavedWorkout} from "@/lib/db/queries/workout/saved-workout"
+import type {PersonalRecord} from "@/lib/db/queries/workout/personal-records"
 import type {
     CreateSavedWorkoutRequest,
     CreateWorkoutRequest,
@@ -43,6 +44,22 @@ export function useSavedWorkouts() {
 
     return {
         savedWorkouts: data?.savedWorkouts as SavedWorkout[] || [],
+        isLoading,
+        error
+    }
+}
+
+// Hook to fetch personal records
+export function usePersonalRecords() {
+    const {user} = useUser()
+
+    const {data, error, isLoading} = useSWR(
+        user ? '/api/workout/personal-records' : null,
+        (url) => fetcher(url, user!.api_key)
+    )
+
+    return {
+        personalRecords: data?.personalRecords as PersonalRecord[] || [],
         isLoading,
         error
     }
