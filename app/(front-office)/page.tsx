@@ -145,14 +145,14 @@ export default function LandingPage() {
                         variants={staggerItem}
                         className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4"
                     >
-                        <MotionDiv
+                        {/* <MotionDiv
                             whileHover={{scale: 1.05}}
                             whileTap={{scale: 0.95}}
                         >
                             <Button variant="outline" size="lg" className="border-gray-300 dark:border-gray-700">
                                 Watch Demo
                             </Button>
-                        </MotionDiv>
+                        </MotionDiv> */}
                         <Link
                             href={"/sign-up"}
                         >

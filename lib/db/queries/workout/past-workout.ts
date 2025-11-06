@@ -33,20 +33,27 @@ export async function getPastWorkouts(userId: string, limit: number = 50): Promi
     const result: PastWorkout[] = [];
     
     for (const workout of workouts) {
-        // Get all set-to-workout links for this workout
-        const setLinks = await lib.db
+        // Pull sets in the order they were recorded for this workout
+        const setsWithExercises = await lib.db
             .select({
-                set_id: setWorkoutTable.set_id,
+                weight: setTable.weight,
+                nb_reps: setTable.nb_reps,
+                exercice_name: exerciceTable.name,
             })
             .from(setWorkoutTable)
+            .innerJoin(setTable, lib.eq(setWorkoutTable.set_id, setTable.id))
+            .leftJoin(exerciceTable, lib.eq(setTable.exercice_id, exerciceTable.id))
             .where(lib.and(
                 lib.eq(setWorkoutTable.workout_id, workout.id),
-                lib.isNull(setWorkoutTable.deleted_at)
-            ));
-        
-        const setIds = setLinks.map(link => link.set_id);
-        
-        if (setIds.length === 0) {
+                lib.isNull(setWorkoutTable.deleted_at),
+                lib.isNull(setTable.deleted_at)
+            ))
+            .orderBy(
+                lib.asc(setWorkoutTable.created_at),
+                lib.asc(setTable.id)
+            );
+
+        if (setsWithExercises.length === 0) {
             result.push({
                 id: workout.id,
                 title: workout.name,
@@ -56,20 +63,6 @@ export async function getPastWorkouts(userId: string, limit: number = 50): Promi
             });
             continue;
         }
-        
-        // Get all sets with their exercises
-        const setsWithExercises = await lib.db
-            .select({
-                weight: setTable.weight,
-                nb_reps: setTable.nb_reps,
-                exercice_name: exerciceTable.name,
-            })
-            .from(setTable)
-            .leftJoin(exerciceTable, lib.eq(setTable.exercice_id, exerciceTable.id))
-            .where(lib.and(
-                lib.inArray(setTable.id, setIds),
-                lib.isNull(setTable.deleted_at)
-            ));
         
         // Group sets by exercise
         const exerciseMap = new Map<string, { name: string, sets: { weight: number, nb_rep: number }[] }>();
