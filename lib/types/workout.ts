@@ -56,7 +56,7 @@ export interface UpdateSavedWorkoutRequest {
 export interface BestSet {
     weight: number;
     nb_rep: number;
-    score: number; // weight × reps for the selected set
+    score: number; // Heaviest weight for the selected set (legacy field name)
 }
 
 export interface ExerciseProgression {
@@ -66,8 +66,8 @@ export interface ExerciseProgression {
     progression: {
         weightDiff: number; // Difference in weight (current - previous)
         repsDiff: number; // Difference in reps (current - previous)
-        scoreDiff: number; // Difference in total score (current - previous)
-        percentageChange: number; // Percentage change in score
+        scoreDiff: number; // Difference in the tracked metric (weight first, reps if weight tied)
+        percentageChange: number; // Percentage change based on the dimension that changed
     } | null;
 }
 

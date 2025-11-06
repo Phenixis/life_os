@@ -9,7 +9,10 @@ export type PersonalRecord = {
     nb_reps: number
     date: Date
     previous_weight: number | null
+    previous_nb_reps: number | null
     weight_diff: number | null
+    nb_reps_diff: number | null
+    progress_metric: 'weight' | 'reps' | null
 }
 
 /**
@@ -20,7 +23,7 @@ export type PersonalRecord = {
 export async function getPersonalRecords(userId: string): Promise<PersonalRecord[]> {
     // Get all sets with their exercises, excluding deleted ones
     const allSets = await lib.db
-        .select({
+        .selectDistinctOn([setTable.weight, setTable.nb_reps], {
             exercice_name: exerciceTable.name,
             weight: setTable.weight,
             nb_reps: setTable.nb_reps,
@@ -33,7 +36,9 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
             lib.isNull(setTable.deleted_at),
             lib.isNull(exerciceTable.deleted_at)
         ))
-        .orderBy(lib.desc(setTable.weight), lib.desc(setTable.nb_reps), lib.desc(exerciceTable.name));
+        .orderBy(lib.desc(setTable.weight), lib.desc(setTable.nb_reps), lib.desc(exerciceTable.name))
+        .groupBy(exerciceTable.name, setTable.weight, setTable.nb_reps, setTable.created_at);
+
 
     // Group by exercise and keep the best two sets (highest weight) for each
     const exerciseSetsMap = new Map<string, typeof allSets>();
@@ -59,7 +64,21 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
         const secondBestSet = sets.length > 1 ? sets[1] : null;
         
         const previous_weight = secondBestSet ? secondBestSet.weight : null;
+        const previous_nb_reps = secondBestSet ? secondBestSet.nb_reps : null;
         const weight_diff = previous_weight !== null ? bestSet.weight - previous_weight : null;
+        // Mirror progression logic: only compare reps when the heaviest weight is unchanged
+        const nb_reps_diff = previous_nb_reps !== null && weight_diff === 0
+            ? bestSet.nb_reps - previous_nb_reps
+            : null;
+
+        let progress_metric: 'weight' | 'reps' | null = null;
+        if (previous_weight !== null) {
+            if (weight_diff !== null && weight_diff !== 0) {
+                progress_metric = 'weight';
+            } else if (nb_reps_diff !== null && nb_reps_diff !== 0) {
+                progress_metric = 'reps';
+            }
+        }
 
         records.push({
             exercice_name: exerciseName,
@@ -67,7 +86,10 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
             nb_reps: bestSet.nb_reps,
             date: bestSet.created_at,
             previous_weight,
+            previous_nb_reps,
             weight_diff,
+            nb_reps_diff,
+            progress_metric,
         });
     }
 

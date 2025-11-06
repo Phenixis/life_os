@@ -1,8 +1,10 @@
 'use client';
 
+import type { ReactNode } from "react"
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { usePersonalRecords } from "@/hooks/use-workouts"
+import Help from "@/components/big/help";
 
 export function WorkoutStats() {
     const { personalRecords, isLoading } = usePersonalRecords()
@@ -16,7 +18,7 @@ export function WorkoutStats() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Exercise</TableHead>
-                            <TableHead>Date</TableHead>
+                            {/* <TableHead>Date</TableHead> */}
                             <TableHead>Reps</TableHead>
                             <TableHead>Weight (kg)</TableHead>
                             <TableHead>Progress</TableHead>
@@ -29,9 +31,9 @@ export function WorkoutStats() {
                                     <TableCell className="text-center py-4 w-2/3">
                                         <Skeleton className="h-4 w-3/4 mx-auto" />
                                     </TableCell>
-                                    <TableCell className="text-center py-4 w-full">
+                                    {/* <TableCell className="text-center py-4 w-full">
                                         <Skeleton className="h-4 w-3/4 mx-auto" />
-                                    </TableCell>
+                                    </TableCell> */}
                                     <TableCell className="text-center py-4 w-full">
                                         <Skeleton className="h-4 w-3/4 mx-auto" />
                                     </TableCell>
@@ -70,30 +72,58 @@ export function WorkoutStats() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Exercise</TableHead>
-                        <TableHead>Date</TableHead>
+                        {/* <TableHead>Date</TableHead> */}
                         <TableHead>Reps</TableHead>
                         <TableHead>Weight (kg)</TableHead>
-                        <TableHead>Progress</TableHead>
+                        <TableHead className="flex items-center gap-1">
+                            Progress
+                            <Help size="sm">
+                                Compared to 2nd best set
+                            </Help>
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {personalRecords.map((record) => (
-                        <TableRow key={record.exercice_name}>
-                            <TableCell>{record.exercice_name}</TableCell>
-                            <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
-                            <TableCell>{record.nb_reps}</TableCell>
-                            <TableCell>{record.weight}</TableCell>
-                            <TableCell>
-                                {record.weight_diff !== null ? (
-                                    <span className={record.weight_diff > 0 ? 'text-green-600 dark:text-green-400' : record.weight_diff < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
-                                        {record.weight_diff > 0 ? '+' : ''}{record.weight_diff} kg
-                                    </span>
-                                ) : (
-                                    <span className="text-gray-400 dark:text-gray-600">First record</span>
-                                )}
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                    {personalRecords.map((record) => {
+                        const hasPrevious = record.previous_weight !== null
+                        let progressContent: ReactNode
+
+                        if (!hasPrevious) {
+                            progressContent = <span className="text-gray-400 dark:text-gray-600">First record</span>
+                        } else {
+                            const isWeightChange = record.progress_metric === 'weight'
+                            const isRepChange = record.progress_metric === 'reps'
+                            const changeValue = isWeightChange
+                                ? record.weight_diff ?? 0
+                                : isRepChange
+                                    ? record.nb_reps_diff ?? 0
+                                    : 0
+
+                            if (!isWeightChange && !isRepChange) {
+                                progressContent = <span className="text-gray-600 dark:text-gray-400">No change</span>
+                            } else {
+                                const colorClass = changeValue > 0
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : changeValue < 0
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-gray-600 dark:text-gray-400'
+                                const unit = isWeightChange ? ' kg' : ' reps'
+                                const formattedValue = `${changeValue > 0 ? '+' : ''}${changeValue}${unit}`
+
+                                progressContent = <span className={colorClass}>{formattedValue}</span>
+                            }
+                        }
+
+                        return (
+                            <TableRow key={record.exercice_name}>
+                                <TableCell>{record.exercice_name}</TableCell>
+                                {/* <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell> */}
+                                <TableCell>{record.nb_reps}</TableCell>
+                                <TableCell>{record.weight}</TableCell>
+                                <TableCell>{progressContent}</TableCell>
+                            </TableRow>
+                        )
+                    })}
                 </TableBody>
             </Table>
         </>

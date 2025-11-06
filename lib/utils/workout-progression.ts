@@ -6,7 +6,7 @@
  * 
  * Key concepts:
  * - Best Set: The set with the highest weight for a given exercise (ties broken by reps)
- * - Progression: The difference between the current workout's best set and the previous workout's best set
+ * - Progression: The difference between the current workout's best set and the previous workout's best set, focusing on weight only
  */
 
 import type { 
@@ -17,13 +17,6 @@ import type {
     WorkoutProgression 
 } from "@/lib/types/workout"
 import type { PastWorkout } from "@/lib/db/queries/workout/past-workout"
-
-/**
- * Calculate the score for a set (weight × reps)
- */
-function calculateSetScore(set: WorkoutSet): number {
-    return set.weight * set.nb_rep
-}
 
 /**
  * Find the best set for an exercise based on the highest weight
@@ -53,7 +46,8 @@ export function getBestSet(exercise: WorkoutExercise): BestSet | null {
     return {
         weight: bestSet.weight,
         nb_rep: bestSet.nb_rep,
-        score: calculateSetScore(bestSet)
+        // Store the heaviest weight as the score so downstream code can rely on a single metric
+        score: bestSet.weight
     }
 }
 
@@ -108,12 +102,18 @@ export function compareProgression(
 } {
     const weightDiff = currentBestSet.weight - previousBestSet.weight
     const repsDiff = currentBestSet.nb_rep - previousBestSet.nb_rep
-    const scoreDiff = currentBestSet.score - previousBestSet.score
-    
-    // Calculate percentage change (avoid division by zero)
-    const percentageChange = previousBestSet.score > 0
-        ? (scoreDiff / previousBestSet.score) * 100
-        : 0
+    const weightChanged = weightDiff !== 0
+    const scoreDiff = weightChanged ? weightDiff : repsDiff
+
+    // Derive percentage change from the dimension that actually changed
+    let percentageChange = 0
+    if (weightChanged) {
+        percentageChange = previousBestSet.weight > 0
+            ? (weightDiff / previousBestSet.weight) * 100
+            : 0
+    } else if (previousBestSet.nb_rep > 0) {
+        percentageChange = (repsDiff / previousBestSet.nb_rep) * 100
+    }
 
     return {
         weightDiff,
@@ -221,24 +221,20 @@ export function formatProgressionText(progression: ExerciseProgression): string 
         return "First time doing this exercise"
     }
 
-    const { weightDiff, repsDiff, scoreDiff, percentageChange } = progression.progression
-    
-    if (scoreDiff === 0) {
+    const { weightDiff, repsDiff, percentageChange } = progression.progression
+
+    if (weightDiff !== 0) {
+        const direction = weightDiff > 0 ? "↑" : "↓"
+        const changeText = `${Math.abs(weightDiff)}kg ${weightDiff > 0 ? 'heavier' : 'lighter'}`
+        return `${direction} ${changeText} (${percentageChange > 0 ? '+' : ''}${percentageChange.toFixed(1)}%)`
+    }
+
+    if (repsDiff === 0) {
         return "No change"
     }
 
-    const direction = scoreDiff > 0 ? "↑" : "↓"
-    const parts: string[] = []
+    const direction = repsDiff > 0 ? "↑" : "↓"
+    const changeText = `${Math.abs(repsDiff)} ${repsDiff > 0 ? 'more' : 'fewer'} reps`
 
-    if (weightDiff !== 0) {
-        parts.push(`${Math.abs(weightDiff)}kg ${weightDiff > 0 ? 'heavier' : 'lighter'}`)
-    }
-
-    if (repsDiff !== 0) {
-        parts.push(`${Math.abs(repsDiff)} ${repsDiff > 0 ? 'more' : 'fewer'} reps`)
-    }
-
-    const changeText = parts.length > 0 ? parts.join(', ') : `${Math.abs(scoreDiff)} total`
-    
     return `${direction} ${changeText} (${percentageChange > 0 ? '+' : ''}${percentageChange.toFixed(1)}%)`
 }

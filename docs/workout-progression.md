@@ -7,40 +7,49 @@ The workout progression tracking system allows users to compare their performanc
 ## Key Concepts
 
 ### Best Set
-The **best set** for an exercise is defined as the set lifted with the highest weight. When multiple sets share the same top weight, the tie is broken by the highest repetition count. We still keep track of the `weight × reps` value for the winning set so that downstream comparisons retain total-work context.
+
+The **best set** for an exercise is defined as the set lifted with the highest weight. When multiple sets share the same top weight, the tie is broken by the highest repetition count. The heaviest weight becomes the single metric used for comparisons.
 
 Example:
-- Set 1: 80kg × 8 reps = 640 score
-- Set 2: 85kg × 6 reps = 510 score ⭐ **Best Set**
-- Set 3: 80kg × 10 reps = 800 score
+
+- Set 1: 80kg × 8 reps
+- Set 2: 85kg × 6 reps ⭐ **Best Set** (heaviest weight)
+- Set 3: 80kg × 10 reps
 
 ### Progression
+
 **Progression** is calculated by comparing the best set from the current workout against the best set from the most recent previous workout that included the same exercise.
 
 ## How It Works
 
 ### 1. Best Set Identification
+
 For each exercise in a workout:
+
 ```typescript
 bestSet = {
   weight: 85,      // kg (highest weight lifted)
   nb_rep: 6,       // repetitions
-  score: 510       // weight × reps for the chosen set
+  score: 85        // heaviest weight metric (legacy field name)
 }
 ```
 
 ### 2. Finding Previous Best Set
+
 The system searches through previous workouts (ordered by date, most recent first) to find the last time the user performed the same exercise.
 
 ### 3. Comparison
+
 Once both sets are identified, the system calculates:
-- **Weight Difference**: Current weight - Previous weight
-- **Reps Difference**: Current reps - Previous reps
-- **Score Difference**: Current score - Previous score
-- **Percentage Change**: (Score difference / Previous score) × 100
+
+- **Weight Difference**: Current weight - Previous weight (primary metric)
+- **Percentage Change**: (Weight difference / Previous weight) × 100 (only when weight changes)
+- **Reps Difference**: Current reps - Previous reps (only considered if weight stays the same)
 
 ### 4. Visual Display
+
 Results are shown with intuitive indicators:
+
 - 🟢 **↑** Improvement (positive change)
 - 🔴 **↓** Decline (negative change)
 - ⚪ **-** No change or new exercise
@@ -89,7 +98,7 @@ import {
 
 // Get best set for a single exercise
 const bestSet = getBestSet(exercise)
-// Returns: { weight: 85, nb_rep: 6, score: 510 }
+// Returns: { weight: 85, nb_rep: 6, score: 85 }
 
 // Find previous best set
 const previous = findPreviousBestSet("Bench Press", previousWorkouts)
@@ -97,7 +106,7 @@ const previous = findPreviousBestSet("Bench Press", previousWorkouts)
 
 // Compare two sets
 const comparison = compareProgression(currentBest, previousBest)
-// Returns: { weightDiff: 5, repsDiff: 0, scoreDiff: 50, percentageChange: 6.67 }
+// Returns: { weightDiff: 5, repsDiff: 0, scoreDiff: 5, percentageChange: 5.88 }
 
 // Analyze entire workout
 const workoutAnalysis = analyzeWorkoutProgression(currentWorkout, allWorkouts)
@@ -137,59 +146,74 @@ interface WorkoutProgression {
 ### Functions
 
 #### `getBestSet(exercise: WorkoutExercise): BestSet | null`
+
 Identifies the set lifted with the highest weight (breaking ties with the highest rep count).
 
 **Parameters:**
+
 - `exercise`: Exercise containing multiple sets
 
 **Returns:**
+
 - `BestSet` object or `null` if no sets exist
 
 ---
 
 #### `findPreviousBestSet(exerciseName: string, previousWorkouts: PastWorkout[])`
+
 Finds the best set for a specific exercise from the most recent previous workout.
 
 **Parameters:**
+
 - `exerciseName`: Name of the exercise to find
 - `previousWorkouts`: Array of workouts ordered by date (most recent first)
 
 **Returns:**
+
 - Object with `{ bestSet, workoutDate, workoutId }` or `null`
 
 ---
 
 #### `compareProgression(currentBestSet: BestSet, previousBestSet: BestSet)`
+
 Calculates the differences between two best sets.
 
 **Parameters:**
+
 - `currentBestSet`: Best set from current workout
 - `previousBestSet`: Best set from previous workout
 
 **Returns:**
+
 - Object with `{ weightDiff, repsDiff, scoreDiff, percentageChange }`
 
 ---
 
 #### `analyzeWorkoutProgression(currentWorkout: PastWorkout, allWorkouts: PastWorkout[])`
+
 Analyzes progression for all exercises in a workout.
 
 **Parameters:**
+
 - `currentWorkout`: The workout to analyze
 - `allWorkouts`: All user workouts sorted by date
 
 **Returns:**
+
 - `WorkoutProgression` object with exercise-by-exercise analysis
 
 ---
 
 #### `formatProgressionText(progression: ExerciseProgression): string`
+
 Creates user-friendly text describing the progression.
 
 **Parameters:**
+
 - `progression`: Exercise progression data
 
 **Returns:**
+
 - Formatted string (e.g., "↑ 5kg heavier, 2 more reps (+6.7%)")
 
 ## Components
