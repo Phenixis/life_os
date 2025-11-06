@@ -30,7 +30,7 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
             lib.isNull(setTable.deleted_at),
             lib.isNull(exerciceTable.deleted_at)
         ))
-        .orderBy(lib.desc(setTable.weight));
+        .orderBy(lib.desc(setTable.weight), lib.desc(setTable.nb_reps), lib.desc(exerciceTable.name));
 
     // Group by exercise and keep only the best set (highest weight) for each
     const recordsMap = new Map<string, PersonalRecord>();

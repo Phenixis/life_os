@@ -1,18 +1,47 @@
 'use client';
 
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
-import {usePersonalRecords} from "@/hooks/use-workouts"
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { usePersonalRecords } from "@/hooks/use-workouts"
 
 export function WorkoutStats() {
-    const {personalRecords, isLoading} = usePersonalRecords()
+    const { personalRecords, isLoading } = usePersonalRecords()
 
     if (isLoading) {
         return (
             <>
                 <h3 className={`text-gray-600 dark:text-gray-400`}>Personal Records</h3>
-                <div className="flex items-center justify-center h-32">
-                    <p className="text-gray-500 dark:text-gray-400">Loading...</p>
-                </div>
+                <Table className="w-full mx-auto max-w-full">
+                    <TableCaption>Your best sets by weight for each exercise</TableCaption>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Exercise</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Reps</TableHead>
+                            <TableHead>Weight (kg)</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="animate-pulse">
+                        {
+                            Array.from({ length: 3 }).map((_, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="text-center py-4 w-2/3">
+                                        <Skeleton className="h-4 w-3/4 mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="text-center py-4 w-full">
+                                        <Skeleton className="h-4 w-3/4 mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="text-center py-4 w-full">
+                                        <Skeleton className="h-4 w-3/4 mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="text-center py-4 w-full">
+                                        <Skeleton className="h-4 w-3/4 mx-auto" />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        }
+                    </TableBody>
+                </Table>
             </>
         )
     }
@@ -32,14 +61,14 @@ export function WorkoutStats() {
     return (
         <>
             <h3 className={`text-gray-600 dark:text-gray-400`}>Personal Records</h3>
-            <Table className="mx-auto">
+            <Table className="w-full mx-auto">
                 <TableCaption>Your best sets by weight for each exercise</TableCaption>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Exercise</TableHead>
                         <TableHead>Date</TableHead>
-                        <TableHead>Weight (kg)</TableHead>
                         <TableHead>Reps</TableHead>
+                        <TableHead>Weight (kg)</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -47,8 +76,8 @@ export function WorkoutStats() {
                         <TableRow key={record.exercice_name}>
                             <TableCell>{record.exercice_name}</TableCell>
                             <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
-                            <TableCell>{record.weight}</TableCell>
                             <TableCell>{record.nb_reps}</TableCell>
+                            <TableCell>{record.weight}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
