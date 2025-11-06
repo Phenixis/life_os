@@ -309,6 +309,13 @@
       "when": 1761160940060,
       "tag": "0043_bizarre_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1762376700445,
+      "tag": "0044_worthless_yellowjacket",
+      "breakpoints": true
     }
   ]
 }

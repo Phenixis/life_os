@@ -23,6 +23,7 @@ export const table = lib.pgTable('task', {
     project_id: lib.integer('project_id')
         .references(() => Project.table.id),
 
+    state: lib.varchar('state', {length: 20}).notNull().default('to do'),
     completed_at: lib.timestamp('completed_at'),
     created_at: lib.timestamp('created_at').notNull().defaultNow(),
     updated_at: lib.timestamp('updated_at').notNull().defaultNow(),
@@ -41,6 +42,13 @@ export const relations = lib.relations(table, ({one, many}) => ({
         references: [User.table.id]
     })
 }));
+
+export enum State {
+    TODO = "to do",
+    WORK_IN_PROGRESS = "work in progress",
+    STALLED = "stalled",
+    DONE = "done"
+}
 
 export type Select = typeof table.$inferSelect;
 export type Insert = typeof table.$inferInsert;
