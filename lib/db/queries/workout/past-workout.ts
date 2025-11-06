@@ -19,7 +19,7 @@ export type PastWorkout = {
     }[]
 }
 
-export async function getPastWorkouts(userId: string, limit: number = 50): Promise<PastWorkout[]> {
+export async function getPastWorkouts(userId: string, limit: number = 50, offset: number = 0): Promise<PastWorkout[]> {
     const workouts = await lib.db
         .select()
         .from(workoutTable)
@@ -28,10 +28,11 @@ export async function getPastWorkouts(userId: string, limit: number = 50): Promi
             lib.isNull(workoutTable.deleted_at)
         ))
         .orderBy(lib.desc(workoutTable.date))
+        .offset(offset)
         .limit(limit);
-    
+        
     const result: PastWorkout[] = [];
-    
+
     for (const workout of workouts) {
         // Pull sets in the order they were recorded for this workout
         const setsWithExercises = await lib.db
@@ -63,26 +64,26 @@ export async function getPastWorkouts(userId: string, limit: number = 50): Promi
             });
             continue;
         }
-        
+
         // Group sets by exercise
         const exerciseMap = new Map<string, { name: string, sets: { weight: number, nb_rep: number }[] }>();
-        
+
         for (const set of setsWithExercises) {
             const exerciseName = set.exercice_name || 'Unknown Exercise';
-            
+
             if (!exerciseMap.has(exerciseName)) {
                 exerciseMap.set(exerciseName, {
                     name: exerciseName,
                     sets: []
                 });
             }
-            
+
             exerciseMap.get(exerciseName)!.sets.push({
                 weight: set.weight,
                 nb_rep: set.nb_reps
             });
         }
-        
+
         result.push({
             id: workout.id,
             title: workout.name,
@@ -91,7 +92,7 @@ export async function getPastWorkouts(userId: string, limit: number = 50): Promi
             exercices: Array.from(exerciseMap.values())
         });
     }
-    
+
     return result;
 }
 

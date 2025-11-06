@@ -15,10 +15,10 @@ import type {
 import {analyzeWorkoutProgression} from "@/lib/utils/workout-progression"
 
 // Hook to fetch past workouts
-export function useWorkouts(limit?: number) {
+export function useWorkouts(limit: number = 10, offset: number = 0) {
     const {user} = useUser()
 
-    const url = limit ? `/api/workout?limit=${limit}` : '/api/workout'
+    const url = `/api/workout?limit=${limit}&offset=${offset}`
 
     const {data, error, isLoading} = useSWR(
         user ? url : null,

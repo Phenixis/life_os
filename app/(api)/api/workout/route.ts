@@ -15,9 +15,10 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url)
         const limit = parseInt(searchParams.get('limit') || '50')
+        const offset = parseInt(searchParams.get('offset') || '0')
 
         // Use getPastWorkouts to get properly formatted workout data with exercises and sets
-        const workouts = await PastWorkoutQueries.getPastWorkouts(userId, limit)
+        const workouts = await PastWorkoutQueries.getPastWorkouts(userId, limit, offset)
 
         return NextResponse.json({ workouts })
     } catch (error) {

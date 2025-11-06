@@ -7,12 +7,12 @@ The workout progression tracking system allows users to compare their performanc
 ## Key Concepts
 
 ### Best Set
-The **best set** for an exercise is defined as the set with the highest product of `weight × reps`. This metric represents the maximum total work performed in a single set.
+The **best set** for an exercise is defined as the set lifted with the highest weight. When multiple sets share the same top weight, the tie is broken by the highest repetition count. We still keep track of the `weight × reps` value for the winning set so that downstream comparisons retain total-work context.
 
 Example:
 - Set 1: 80kg × 8 reps = 640 score
-- Set 2: 75kg × 10 reps = 750 score ⭐ **Best Set**
-- Set 3: 80kg × 6 reps = 480 score
+- Set 2: 85kg × 6 reps = 510 score ⭐ **Best Set**
+- Set 3: 80kg × 10 reps = 800 score
 
 ### Progression
 **Progression** is calculated by comparing the best set from the current workout against the best set from the most recent previous workout that included the same exercise.
@@ -23,9 +23,9 @@ Example:
 For each exercise in a workout:
 ```typescript
 bestSet = {
-  weight: 75,      // kg
-  nb_rep: 10,      // repetitions
-  score: 750       // weight × reps
+  weight: 85,      // kg (highest weight lifted)
+  nb_rep: 6,       // repetitions
+  score: 510       // weight × reps for the chosen set
 }
 ```
 
@@ -89,7 +89,7 @@ import {
 
 // Get best set for a single exercise
 const bestSet = getBestSet(exercise)
-// Returns: { weight: 75, nb_rep: 10, score: 750 }
+// Returns: { weight: 85, nb_rep: 6, score: 510 }
 
 // Find previous best set
 const previous = findPreviousBestSet("Bench Press", previousWorkouts)
@@ -112,7 +112,7 @@ const workoutAnalysis = analyzeWorkoutProgression(currentWorkout, allWorkouts)
 interface BestSet {
   weight: number        // Weight in kg
   nb_rep: number        // Number of repetitions
-  score: number         // weight × nb_rep
+  score: number         // weight × nb_rep for the selected set
 }
 
 interface ExerciseProgression {
@@ -137,7 +137,7 @@ interface WorkoutProgression {
 ### Functions
 
 #### `getBestSet(exercise: WorkoutExercise): BestSet | null`
-Identifies the set with the highest weight × reps score.
+Identifies the set lifted with the highest weight (breaking ties with the highest rep count).
 
 **Parameters:**
 - `exercise`: Exercise containing multiple sets
@@ -236,9 +236,9 @@ Result: "↑ 10kg heavier (+9.1%)"
 ### Example 3: Mixed Changes
 ```
 Exercise: Bench Press
-Current Best: 80kg × 12 = 960
-Previous Best: 85kg × 10 = 850
-Result: "↑ 5kg lighter, 2 more reps (+12.9%)"
+Current Best: 90kg × 8 = 720
+Previous Best: 90kg × 6 = 540
+Result: "↑ 2 more reps (+33.3%)"
 ```
 
 ### Example 4: Decline
@@ -275,14 +275,16 @@ Result: "↓ 2 fewer reps (-20.0%)"
 - Avoids confusion from comparing distant workouts
 - Aligns with typical workout tracking patterns
 
-**Why weight × reps?**
-- Standard metric in strength training
-- Simple calculation
-- Captures both intensity (weight) and volume (reps)
+**Why maximum weight?**
+
+- Mirrors how personal records are typically tracked
+- Encourages progressive overload on intensity first
+- Still captures total work by recording `weight × reps` for the selected set
 
 ## Future Enhancements
 
 Potential improvements:
+
 1. **Personal Records**: Track all-time best sets per exercise
 2. **Progress Charts**: Visual graphs of progression over time
 3. **Goal Setting**: Set targets for specific exercises
@@ -293,11 +295,13 @@ Potential improvements:
 ## Troubleshooting
 
 **Progression not showing?**
+
 - Ensure there's a previous workout with the same exercise
 - Check that exercise names match exactly (case-insensitive)
 - Verify workout has sets with non-zero values
 
 **Incorrect calculations?**
+
 - Verify set data (weight and reps) are correct
 - Check workout date ordering
 - Ensure current workout is not being compared with itself

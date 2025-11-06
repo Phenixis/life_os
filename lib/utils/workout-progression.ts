@@ -5,7 +5,7 @@
  * Progression is measured by comparing the "best set" of each exercise between workouts.
  * 
  * Key concepts:
- * - Best Set: The set with the highest product of weight × reps for a given exercise
+ * - Best Set: The set with the highest weight for a given exercise (ties broken by reps)
  * - Progression: The difference between the current workout's best set and the previous workout's best set
  */
 
@@ -26,7 +26,7 @@ function calculateSetScore(set: WorkoutSet): number {
 }
 
 /**
- * Find the best set for an exercise based on the highest weight × reps score
+ * Find the best set for an exercise based on the highest weight
  * 
  * @param exercise - The exercise containing multiple sets
  * @returns The best set with calculated score
@@ -37,22 +37,23 @@ export function getBestSet(exercise: WorkoutExercise): BestSet | null {
     }
 
     let bestSet = exercise.sets[0]
-    let bestScore = calculateSetScore(bestSet)
 
     for (let i = 1; i < exercise.sets.length; i++) {
         const currentSet = exercise.sets[i]
-        const currentScore = calculateSetScore(currentSet)
-        
-        if (currentScore > bestScore) {
+
+        if (
+            currentSet.weight > bestSet.weight ||
+            (currentSet.weight === bestSet.weight && currentSet.nb_rep > bestSet.nb_rep)
+        ) {
+            // Prefer the heaviest set, breaking ties with the highest rep count
             bestSet = currentSet
-            bestScore = currentScore
         }
     }
 
     return {
         weight: bestSet.weight,
         nb_rep: bestSet.nb_rep,
-        score: bestScore
+        score: calculateSetScore(bestSet)
     }
 }
 

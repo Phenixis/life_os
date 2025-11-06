@@ -56,7 +56,7 @@ export interface UpdateSavedWorkoutRequest {
 export interface BestSet {
     weight: number;
     nb_rep: number;
-    score: number; // weight × reps
+    score: number; // weight × reps for the selected set
 }
 
 export interface ExerciseProgression {
