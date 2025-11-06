@@ -49,7 +49,7 @@ const items: Record<string, MenuItem[]> = {
     "Settings": [
         {
             name: "Settings",
-            href: "/settings",
+            href: "/my/settings",
             alternativeNames: ["preferences"],
         },
         ...settingsItems.map(item => ({

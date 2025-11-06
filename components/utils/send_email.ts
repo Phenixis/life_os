@@ -441,7 +441,7 @@ export async function sendPasswordResetEmail(user: User.User.Select, resetReques
             
             <div class="warning">
                 <p><strong>⚠️ Security Notice:</strong></p>
-                <p>If you didn't request this password reset, please ignore this email and contact us immediately at <a href="mailto:max@maximeduhamel.com">max@maximeduhamel.com</a></p>
+                <p>If you didn't request this password reset, please ignore this email</p>
             </div>
             
             <div style="text-align: center;">
@@ -452,15 +452,6 @@ export async function sendPasswordResetEmail(user: User.User.Select, resetReques
             <p style="font-size: 0.875rem; color: #6b7280; word-break: break-all;">${resetUrl}</p>
             
             <p>This link will expire in 24 hours for security reasons.</p>
-            
-            <p>Your new password must meet these requirements:</p>
-            <ul>
-                <li>Between 8 and 25 characters</li>
-                <li>At least one uppercase letter</li>
-                <li>At least one lowercase letter</li>
-                <li>At least one digit</li>
-                <li>At least one special character</li>
-            </ul>
             
             <p>If you have any questions or concerns, please contact us at <a href="mailto:max@maximeduhamel.com">max@maximeduhamel.com</a></p>
             <p>Best regards,</p>
