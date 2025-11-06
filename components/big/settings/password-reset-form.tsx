@@ -128,7 +128,7 @@ export function PasswordResetForm({ user }: PasswordResetFormProps) {
                                                 <Mail className="size-4 text-blue-500" />
                                                 <span className="text-sm font-medium">Email notification will be sent to:</span>
                                             </span>
-                                            <span className="block text-sm font-mono bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                                            <span className="block text-base font-mono px-2 py-1 rounded">
                                                 {user.email}
                                             </span>
                                         </span>
