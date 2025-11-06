@@ -19,6 +19,7 @@ export function WorkoutStats() {
                             <TableHead>Date</TableHead>
                             <TableHead>Reps</TableHead>
                             <TableHead>Weight (kg)</TableHead>
+                            <TableHead>Progress</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody className="animate-pulse">
@@ -26,6 +27,9 @@ export function WorkoutStats() {
                             Array.from({ length: 3 }).map((_, index) => (
                                 <TableRow key={index}>
                                     <TableCell className="text-center py-4 w-2/3">
+                                        <Skeleton className="h-4 w-3/4 mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="text-center py-4 w-full">
                                         <Skeleton className="h-4 w-3/4 mx-auto" />
                                     </TableCell>
                                     <TableCell className="text-center py-4 w-full">
@@ -69,6 +73,7 @@ export function WorkoutStats() {
                         <TableHead>Date</TableHead>
                         <TableHead>Reps</TableHead>
                         <TableHead>Weight (kg)</TableHead>
+                        <TableHead>Progress</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -78,6 +83,15 @@ export function WorkoutStats() {
                             <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
                             <TableCell>{record.nb_reps}</TableCell>
                             <TableCell>{record.weight}</TableCell>
+                            <TableCell>
+                                {record.weight_diff !== null ? (
+                                    <span className={record.weight_diff > 0 ? 'text-green-600 dark:text-green-400' : record.weight_diff < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
+                                        {record.weight_diff > 0 ? '+' : ''}{record.weight_diff} kg
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400 dark:text-gray-600">First record</span>
+                                )}
+                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
