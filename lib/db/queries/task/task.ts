@@ -24,7 +24,8 @@ export async function createTask(
         .values({
             ...values,
             urgency: urgency,
-            score: (values.importance * urgency) - values.duration
+            score: (values.importance * urgency) - values.duration,
+            state: values.state || lib.Schema.Task.Task.State.TODO
         })
         .returning({id: table.id})
 
@@ -62,7 +63,8 @@ export async function getTaskById(id: number, recursive: boolean = false) {
             urgency: table.urgency,
             score: table.score,
             due: table.due,
-            project_id: table.id,
+            project_id: table.project_id,
+            state: table.state,
             completed_at: table.completed_at,
             created_at: table.created_at,
             updated_at: table.updated_at,
@@ -205,6 +207,7 @@ export async function getTasks(
     completed?: boolean,
     completed_after?: Date,
     completed_before?: Date,
+    state?: string,
 ) {
     // Step 1: First query to get distinct tasks with limit applied
     const distinctTasks = await lib.db
@@ -251,6 +254,7 @@ export async function getTasks(
                     : lib.sql`1 = 1`,
                 completed_after ? lib.gte(table.completed_at, completed_after) : lib.sql`1 = 1`,
                 completed_before ? lib.lte(table.completed_at, completed_before) : lib.sql`1 = 1`,
+                state ? lib.eq(table.state, state) : lib.sql`1 = 1`,
             ),
         )
         .orderBy(
@@ -274,6 +278,7 @@ export async function getTasks(
             duration: table.duration,
             due: table.due,
             score: table.score,
+            state: table.state,
             completed_at: table.completed_at,
             created_at: table.created_at,
             updated_at: table.updated_at,
@@ -426,6 +431,7 @@ export async function getDeletedTasks(userId: string, orderBy: keyof Existing = 
             duration: table.duration,
             due: table.due,
             score: table.score,
+            state: table.state,
             completed_at: table.completed_at,
             created_at: table.created_at,
             updated_at: table.updated_at,
@@ -566,6 +572,7 @@ export async function markTaskAsDone(userId: string, id: number): Promise<{
         .update(table)
         .set({
             completed_at: lib.sql`CURRENT_TIMESTAMP`,
+            state: lib.Schema.Task.Task.State.DONE,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
@@ -601,6 +608,7 @@ export async function markTaskAsUndone(userId: string, id: number) {
         .update(table)
         .set({
             completed_at: null,
+            state: lib.Schema.Task.Task.State.TODO,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(

@@ -1,0 +1,1 @@
+ALTER TABLE "task" ADD COLUMN "state" varchar(20) DEFAULT 'to do' NOT NULL;
