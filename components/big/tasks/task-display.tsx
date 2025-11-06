@@ -51,7 +51,11 @@ export default function TaskDisplay(
     const containerRef = useRef<HTMLDivElement>(null)
     const {mutate} = useSWRConfig()
     const skeleton = task !== undefined
-    const daysBeforeDue = task ? Math.ceil((new Date(task.due).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 4
+    const daysBeforeDue = task ? Math.ceil((new Date(task.due).getTime() - (task.completed_at ? new Date(task.completed_at).getTime() : Date.now())) / (1000 * 60 * 60 * 24)) : 4
+
+    if (task?.title.startsWith("bug:")) {
+        console.log((new Date(task.due).getTime() - (task.completed_at ? new Date(task.completed_at).getTime() : Date.now())) / (1000 * 60 * 60 * 24))
+    }
 
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [isDependencyDialogOpen, setIsDependencyDialogOpen] = useState(false)
@@ -531,21 +535,42 @@ export default function TaskDisplay(
                                         </p>
                                     )}
                                     {task.due && (
-                                        <Tooltip tooltip={`${new Date(task.due).toLocaleDateString()}`}
-                                                 cursor="cursor-auto">
+                                        <Tooltip tooltip={`${new Date(task.due).toLocaleDateString()}`} cursor="cursor-auto">
                                             <p className="text-muted-foreground">
-                                                Due:{" "}
-                                                <span className="text-black dark:text-white">
-													{(() => {
-                                                        const daysDifference = Math.ceil(
-                                                            (new Date(task.due).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-                                                        )
-                                                        const formatter = new Intl.RelativeTimeFormat(navigator.language || "fr-FR", {
-                                                            numeric: "auto",
-                                                        })
-                                                        return formatter.format(daysDifference, "day")
-                                                    })()}
-												</span>
+                                                {task.completed_at ? (
+                                                    <>
+                                                        {/* Show absolute difference between completion date and due date when completed */}
+                                                        Completed:{" "}
+                                                        <span className="text-black dark:text-white">
+                                                            {(() => {
+                                                                const due = new Date(task.due)
+                                                                const completed = new Date(task.completed_at)
+                                                                // Difference in days (positive = completed after due, negative = completed before due)
+                                                                const diffDays = Math.floor((completed.getTime() - due.getTime()) / (1000 * 60 * 60 * 24))
+                                                                if (diffDays === 0) return "on time"
+                                                                const abs = Math.abs(diffDays)
+                                                                return `${abs} day${abs > 1 ? "s" : ""} ${diffDays < 0 ? "early" : "late"}`
+                                                            })()}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {/* Show relative time until due when not completed */}
+                                                        Due:{" "}
+                                                        <span className="text-black dark:text-white">
+                                                            {(() => {
+                                                                const daysDifference = Math.ceil(
+                                                                    (new Date(task.due).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                                                                )
+                                                                const formatter = new Intl.RelativeTimeFormat(
+                                                                    navigator.language || "fr-FR",
+                                                                    { numeric: "auto" },
+                                                                )
+                                                                return formatter.format(daysDifference, "day")
+                                                            })()}
+                                                        </span>
+                                                    </>
+                                                )}
                                             </p>
                                         </Tooltip>
                                     )}

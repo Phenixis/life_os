@@ -1,6 +1,6 @@
 "use client"
 
-import {useEffect, useState} from "react"
+import {useEffect, useMemo, useState, useCallback} from "react"
 import {Calendar as CalendarComponent} from "@/components/ui/calendar"
 import {cn} from "@/lib/utils"
 import {useSearchParams} from "next/navigation"
@@ -22,36 +22,148 @@ export default function Calendar(
         showDailyMood?: boolean
     }
 ) {
-    const searchParams = useSearchParams()
     const now = new Date()
     const [date, setDate] = useState<Date | undefined>(new Date())
     const [month, setMonth] = useState<Date>(date ? new Date(date.getFullYear(), date.getMonth(), 1) : new Date(now.getFullYear(), now.getMonth(), 1))
 
+    const monthStart = useMemo(() => new Date(month.getFullYear(), month.getMonth(), 1), [month])
+    const monthEnd = useMemo(() => new Date(month.getFullYear(), month.getMonth() + 1, 0), [month])
+
     // Only fetch data when showNumberOfTasks is true
-    const {data: numberOfTasks, isLoading} = useNumberOfTasks({
-        projects: searchParams.get(TASK_PARAMS.PROJECTS)
-            ? searchParams.get(TASK_PARAMS.PROJECTS)!.split(",").map(title => ({title, id: -1}))
-            : undefined,
-        excludedProjects: searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)
-            ? searchParams.get(TASK_PARAMS.REMOVED_PROJECTS)!.split(",").map(title => ({title, id: -1}))
-            : undefined,
-        dueAfter: month ? new Date(month.getFullYear(), month.getMonth(), 0) : undefined,
-        dueBefore: month ? new Date(month.getFullYear(), month.getMonth() + 1, 0) : undefined,
+    const {
+        data: numberOfTasks,
+        isLoading: isTaskCountLoading,
+        isError: isTaskCountError,
+    } = useNumberOfTasks({
+        dueAfter: showNumberOfTasks ? new Date(monthStart.getFullYear(), monthStart.getMonth(), 0) : undefined,
+        dueBefore: showNumberOfTasks ? monthEnd : undefined,
         enabled: showNumberOfTasks, // Skip data fetching when not needed
     })
 
     // Fetch daily moods data
     const {data: dailyMoods} = useDailyMoods({
-        startDate: new Date(month.getFullYear(), month.getMonth(), 1),
-        endDate: new Date(month.getFullYear(), month.getMonth() + 1, 0),
+        startDate: monthStart,
+        endDate: monthEnd,
         enabled: showDailyMood,
     })
 
-    const {tasks, isLoading: isTaskLoading, isError: isTaskError} = useTasks({
+    const dayStart = useMemo(() => {
+        if (!date) return undefined
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0)
+    }, [date])
+
+    const dayEnd = useMemo(() => {
+        if (!date) return undefined
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59)
+    }, [date])
+
+    const {
+        tasks: uncompletedTasks,
+        isLoading: isUncompletedLoading,
+        isError: isUncompletedError,
+    } = useTasks({
         completed: false,
-        dueBefore: date ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59) : undefined,
-        dueAfter: date ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0) : undefined,
+        dueBefore: dayEnd,
+        dueAfter: dayStart,
     })
+
+    const {
+        tasks: completedTasks,
+        isLoading: isCompletedLoading,
+        isError: isCompletedError,
+    } = useTasks({
+        completed: true,
+        dueBefore: dayEnd,
+        dueAfter: dayStart,
+    })
+
+    const combinedTasks = useMemo(() => {
+        const taskMap = new Map<number, (typeof uncompletedTasks)[number]>()
+        uncompletedTasks.forEach((task) => {
+            taskMap.set(task.id, task)
+        })
+        completedTasks.forEach((task) => {
+            if (!taskMap.has(task.id)) {
+                taskMap.set(task.id, task)
+            }
+        })
+
+        // Keep uncompleted tasks first to highlight remaining work before completed items.
+        return Array.from(taskMap.values()).sort((a, b) => {
+            const aCompleted = a.completed_at ? 1 : 0
+            const bCompleted = b.completed_at ? 1 : 0
+
+            if (aCompleted !== bCompleted) {
+                return aCompleted - bCompleted
+            }
+
+            return new Date(a.due).getTime() - new Date(b.due).getTime()
+        })
+    }, [completedTasks, uncompletedTasks])
+
+    const countForSelectedDay = useMemo(() => {
+        if (!dayStart) {
+            return 0
+        }
+
+        if (showNumberOfTasks && !isTaskCountLoading && numberOfTasks) {
+            const match = numberOfTasks.find((taskCount) => {
+                const dueDate = new Date(taskCount.due)
+                return dueDate.getFullYear() === dayStart.getFullYear()
+                    && dueDate.getMonth() === dayStart.getMonth()
+                    && dueDate.getDate() === dayStart.getDate()
+            })
+
+            if (match) {
+                return match.uncompleted_count
+            }
+        }
+
+        return uncompletedTasks.length
+    }, [dayStart, showNumberOfTasks, isTaskCountLoading, numberOfTasks, uncompletedTasks])
+
+    const isInitialLoading = (isUncompletedLoading && uncompletedTasks.length === 0) || (isCompletedLoading && completedTasks.length === 0)
+    const hasPartialTaskError = (isUncompletedError || isCompletedError) && !(isUncompletedError && isCompletedError)
+
+    const renderDailyTasks = () => {
+        if (isUncompletedError && isCompletedError) {
+            return <div className="w-full">Error loading tasks</div>
+        }
+
+        if (isInitialLoading) {
+            if (showNumberOfTasks && !isTaskCountLoading && countForSelectedDay > 0) {
+                const skeletonCount = Math.max(countForSelectedDay, 1)
+                return (
+                    <>
+                        {Array.from({length: skeletonCount}).map((_, index) => (
+                            <TaskDisplay
+                                key={`task-skeleton-${index}`}
+                                className="w-full"
+                            />
+                        ))}
+                    </>
+                )
+            }
+
+            return <div className="w-full">Loading tasks...</div>
+        }
+
+        if (combinedTasks.length === 0) {
+            return <div className="w-full">No tasks for the day</div>
+        }
+
+        return (
+            <>
+                {combinedTasks.map((task) => (
+                    <TaskDisplay
+                        key={task.id}
+                        task={task}
+                        className="w-full"
+                    />
+                ))}
+            </>
+        )
+    }
 
     useEffect(() => {
         if (!date) {
@@ -94,9 +206,22 @@ export default function Calendar(
                     }}
                     taskCounts={showNumberOfTasks ? numberOfTasks : []}
                     dailyMoods={showDailyMood ? dailyMoods : []}
-                    onMonthChange={(month) => {
-                        setMonth(month)
-                    }}
+                    onMonthChange={useCallback((nextMonth: Date) => {
+                        setMonth((currentMonth) => {
+                            if (!currentMonth) {
+                                return new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1)
+                            }
+
+                            const currentKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`
+                            const nextKey = `${nextMonth.getFullYear()}-${nextMonth.getMonth()}`
+
+                            if (currentKey === nextKey) {
+                                return currentMonth
+                            }
+
+                            return new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1)
+                        })
+                    }, [])}
                 />
                 <div className="flex items-center justify-center w-full text-2xl">
                     <div className="flex flex-col items-center justify-center w-fit text-xl p-2">{date?.getDate()}</div>
@@ -142,49 +267,22 @@ export default function Calendar(
             </div>
             <div className="w-full h-full flex flex-col items-start justify-between">
                 <div className="w-full flex flex-col items-center justify-center">
-                    {
-                        !isTaskError && !isLoading ? (
-                            <div className="flex flex-col items-start justify-center w-full">
-                                <h6>
-                                    Tasks of the day
-                                </h6>
-                                {isTaskLoading ? (
-                                    isLoading || numberOfTasks.filter((task) => task.due === date?.toISOString()).length === 0 ? (
-                                        <div className="w-full">Loading tasks...</div>
-                                    ) : (
-                                        <>
-                                            {
-                                                Array.from({length: numberOfTasks.filter((task) => task.due === date?.toISOString())[0].uncompleted_count || 1}).map((_, i) => (
-                                                    <TaskDisplay
-                                                        key={i}
-                                                        className="w-full"
-                                                    />
-                                                ))
-                                            }
-                                        </>
-                                    )
-                                ) : isTaskError ? (
-                                    <div className="w-full">Error loading tasks</div>
-                                ) : tasks.length === 0 ? (
-                                    <div className="w-full">No tasks for the day</div>
-                                ) : (
-                                    <>
-                                        {tasks.map((task) => (
-                                            <TaskDisplay
-                                                key={task.id}
-                                                task={task}
-                                                className="w-full"
-                                            />
-                                        ))}
-                                    </>
-                                )}
+                    <div className="flex flex-col items-start justify-center w-full">
+                        <h6>
+                            Tasks of the day
+                        </h6>
+                        {renderDailyTasks()}
+                        {hasPartialTaskError && (
+                            <div className="w-full text-sm text-amber-600 dark:text-amber-400 mt-2">
+                                Some tasks could not be loaded.
                             </div>
-                        ) : isLoading ? (
-                            <div className="w-full">Loading tasks...</div>
-                        ) : (
-                            <div className="w-full">Error loading tasks</div>
-                        )
-                    }
+                        )}
+                        {isTaskCountError && showNumberOfTasks && (
+                            <div className="w-full text-sm text-amber-600 dark:text-amber-400 mt-2">
+                                Task indicators unavailable.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
