@@ -8,7 +8,7 @@ export default async function WorkoutPage() {
         <section className="w-full page grid grid-cols-1 xl:grid-cols-3 gap-4 *:size-full">
             <article className="order-2 lg:order-1">
                 <h2 className={`text-lg lg:text-xl leading-loose text-gray-900 dark:text-gray-100 page-title`}>
-                    Historique
+                    History
                 </h2>
                 <PastWorkouts/>
             </article>
@@ -23,7 +23,7 @@ export default async function WorkoutPage() {
             </article>
             <article className="order-3 lg:order-3">
                 <h2 className={`text-lg lg:text-xl leading-loose text-gray-900 dark:text-gray-100 page-title`}>
-                    Statistiques
+                    Statistics
                 </h2>
                 <WorkoutStats/>
             </article>

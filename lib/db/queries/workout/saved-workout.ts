@@ -98,7 +98,8 @@ export async function getSavedWorkouts(userId: string): Promise<SavedWorkout[]> 
             .where(lib.and(
                 lib.inArray(setTable.id, setIds),
                 lib.isNull(setTable.deleted_at)
-            ));
+            ))
+            .orderBy(lib.asc(setTable.id));
         
         // Group sets by exercise
         const exerciseMap = new Map<string, { name: string, sets: { id: number, weight: number, nb_rep: number }[] }>();

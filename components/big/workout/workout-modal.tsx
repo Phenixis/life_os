@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/carousel';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
-import { Minus, Pencil, Plus, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { GripVertical, Minus, Pencil, Plus, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkoutActions } from '@/hooks/use-workouts';
 import { toast } from 'sonner';
@@ -34,6 +34,23 @@ import { DatePicker } from '../date-picker';
 import type { PastWorkout } from '@/lib/db/queries/workout/past-workout';
 import type { SavedWorkout } from '@/lib/db/queries/workout/saved-workout';
 import { InvisibleInput } from '@/components/ui/invisible-input';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type Exercice = {
   name: string;
@@ -69,6 +86,106 @@ function isPastWorkout(data: Exercice[] | PastWorkout | SavedWorkout | undefined
 
 function isSavedWorkout(data: Exercice[] | PastWorkout | SavedWorkout | undefined): data is SavedWorkout {
   return data !== undefined && !Array.isArray(data) && 'id' in data && !('date' in data) && !('difficulty' in data);
+}
+
+// Sortable Set Row Component
+function SortableSetRow({
+  set,
+  setIndex,
+  exerciceIndex,
+  totalSets,
+  exercice,
+  exercices,
+  setExercices
+}: {
+  set: { id: number; weight: number; nb_rep: number };
+  setIndex: number;
+  exerciceIndex: number;
+  totalSets: number;
+  exercice: Exercice;
+  exercices: Exercice[];
+  setExercices: (exercices: Exercice[]) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `set-${exerciceIndex}-${set.id}`
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} className="group/row">
+      <TableCell className="flex justify-between items-center">
+        <input type="hidden" id={`exercice-${exerciceIndex}-set-id-${set.id}`} />
+        <div className="min-h-10 flex justify-center items-center gap-2">
+          <button
+            type="button"
+            className="lg:opacity-0 lg:group-hover/row:opacity-100 cursor-grab active:cursor-grabbing touch-none"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-4 text-gray-400" />
+          </button>
+          <p className="">{setIndex + 1}</p>
+        </div>
+        {totalSets > 1 && (
+          <Button
+            size="icon"
+            type="button"
+            variant="ghost"
+            className="lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-has-focus/row:opacity-100"
+            onClick={() => {
+              const newExercices = [...exercices];
+              newExercices[exerciceIndex].sets = exercice.sets.filter(s => s.id !== set.id);
+              setExercices(newExercices);
+            }}
+          >
+            <Minus className="size-4" />
+          </Button>
+        )}
+      </TableCell>
+      <TableCell className="w-2/6">
+        <Input
+          type="number"
+          placeholder="Reps"
+          id={`exercice-${exerciceIndex}-set-nb-reps-${set.id}`}
+          value={set.nb_rep}
+          onChange={e => {
+            const newSets = [...exercice.sets];
+            newSets[setIndex].nb_rep = parseInt(e.target.value);
+            setExercices([...exercices]);
+          }}
+          min={0}
+        />
+      </TableCell>
+      <TableCell className="w-2/6">
+        <Input
+          type="number"
+          placeholder="Weight"
+          id={`exercice-${exerciceIndex}-set-weight-${set.id}`}
+          value={String(set.weight)}
+          onChange={e => {
+            const raw = e.target.value;
+            const newSets = [...exercice.sets];
+
+            // Allow intermediate "-" or empty string while typing.
+            // We cast to any to avoid TypeScript errors here; final conversion should happen on submit.
+            if (raw === '' || raw === '-') {
+              newSets[setIndex].weight = raw as any;
+            } else {
+              const parsed = parseInt(raw, 10);
+              newSets[setIndex].weight = Number.isNaN(parsed) ? 0 : parsed;
+            }
+
+            setExercices([...exercices]);
+          }}
+        />
+      </TableCell>
+    </TableRow>
+  );
 }
 
 export function WorkoutModal({ data, className, triggerButton }: WorkoutModalProps) {
@@ -112,6 +229,31 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
 
   const { createWorkout, updateWorkout, deleteWorkout, createSavedWorkout, updateSavedWorkout, deleteSavedWorkout } =
     useWorkoutActions();
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent, exerciceIndex: number) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = exercices[exerciceIndex].sets.findIndex(s => `set-${exerciceIndex}-${s.id}` === active.id);
+    const newIndex = exercices[exerciceIndex].sets.findIndex(s => `set-${exerciceIndex}-${s.id}` === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newExercices = [...exercices];
+      newExercices[exerciceIndex].sets = arrayMove(newExercices[exerciceIndex].sets, oldIndex, newIndex);
+      setExercices(newExercices);
+    }
+  };
 
   useEffect(() => {
     if (!carouselApi) return;
@@ -437,127 +579,102 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
                             <TableHead>Weight</TableHead>
                           </TableRow>
                         </TableHeader>
-                        <TableBody>
-                          {exercice.sets.map((set, setIndex) => (
-                            <TableRow key={setIndex} className="group/row">
-                              <TableCell className="flex justify-between items-center">
-                                <input type="hidden" id={`exercice-${index}-set-id-${set.id}`} />
-                                <div className="min-h-10 flex justify-center items-center">
-                                  <p className={''}>{setIndex + 1}</p>
-                                </div>
-                                {exercice.sets.length > 1 && (
-                                  <Button
-                                    size="icon"
-                                    type="button"
-                                    variant="ghost"
-                                    className="lg:opacity-0 lg:group-hover/row:opacity-100 lg:group-has-focus/row:opacity-100"
-                                    onClick={() => {
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={event => handleDragEnd(event, index)}
+                        >
+                          <SortableContext
+                            items={exercice.sets.map(s => `set-${index}-${s.id}`)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            <TableBody>
+                              {exercice.sets.map((set, setIndex) => (
+                                <SortableSetRow
+                                  key={set.id}
+                                  set={set}
+                                  setIndex={setIndex}
+                                  exerciceIndex={index}
+                                  totalSets={exercice.sets.length}
+                                  exercice={exercice}
+                                  exercices={exercices}
+                                  setExercices={setExercices}
+                                />
+                              ))}
+                              {/* Empty row for adding new set */}
+                              <TableRow className="opacity-50 hover:opacity-100 transition-opacity">
+                                <TableCell>
+                                  <div className="min-h-10 flex justify-start items-center gap-2">
+                                    <button
+                                      type="button"
+                                      className="opacity-0 touch-none"
+                                    >
+                                      <GripVertical className="size-4 text-gray-400" />
+                                    </button>
+                                    <p>{exercice.sets.length + 1}</p>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="w-2/6">
+                                  <Input
+                                    readOnly
+                                    type="number"
+                                    placeholder="Reps"
+                                    onFocus={() => {
                                       const newExercices = [...exercices];
-                                      newExercices[index].sets = exercice.sets.filter(s => s.id !== set.id);
+                                      const currentSets = newExercices[index].sets;
+                                      const nextId =
+                                        currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0;
+                                      newExercices[index].sets.push({
+                                        id: nextId,
+                                        weight: 0,
+                                        nb_rep: 0
+                                      });
                                       setExercices(newExercices);
+                                      setTimeout(() => {
+                                        const newInput = document.getElementById(
+                                          `exercice-${index}-set-nb-reps-${nextId}`
+                                        );
+                                        if (newInput) newInput.focus();
+                                      }, 0);
                                     }}
-                                  >
-                                    <Minus className="size-4" />
-                                  </Button>
-                                )}
-                              </TableCell>
-                              <TableCell className="w-2/6">
-                                <Input
-                                  type="number"
-                                  placeholder="Reps"
-                                  id={`exercice-${index}-set-nb-reps-${set.id}`}
-                                  value={set.nb_rep}
-                                  onChange={e => {
-                                    const newSets = [...exercice.sets];
-                                    newSets[setIndex].nb_rep = parseInt(e.target.value);
-                                    setExercices([...exercices]);
-                                  }}
-                                  min={0}
-                                />
-                              </TableCell>
-                              <TableCell className="w-2/6">
-                                <Input
-                                  type="number"
-                                  placeholder="Weight"
-                                  id={`exercice-${index}-set-weight-${set.id}`}
-                                  value={String(set.weight)}
-                                  onChange={e => {
-                                    const raw = e.target.value;
-                                    const newSets = [...exercice.sets];
-
-                                    // Allow intermediate "-" or empty string while typing.
-                                    // We cast to any to avoid TypeScript errors here; final conversion should happen on submit.
-                                    if (raw === '' || raw === '-') {
-                                      newSets[setIndex].weight = raw as any;
-                                    } else {
-                                      const parsed = parseInt(raw, 10);
-                                      newSets[setIndex].weight = Number.isNaN(parsed) ? 0 : parsed;
-                                    }
-
-                                    setExercices([...exercices]);
-                                  }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          {/* Empty row for adding new set */}
-                          <TableRow className="opacity-50 hover:opacity-100 transition-opacity">
-                            <TableCell>{exercice.sets.length + 1}</TableCell>
-                            <TableCell className="w-2/6">
-                              <Input
-                                readOnly
-                                type="number"
-                                placeholder="Reps"
-                                onFocus={() => {
-                                  const newExercices = [...exercices];
-                                  const currentSets = newExercices[index].sets;
-                                  const nextId =
-                                    currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0;
-                                  newExercices[index].sets.push({
-                                    id: nextId,
-                                    weight: 0,
-                                    nb_rep: 0
-                                  });
-                                  setExercices(newExercices);
-                                  setTimeout(() => {
-                                    const newInput = document.getElementById(`exercice-${index}-set-nb-reps-${nextId}`);
-                                    if (newInput) newInput.focus();
-                                  }, 0);
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell className="w-2/6">
-                              <Input
-                                readOnly
-                                type="number"
-                                placeholder="Weight"
-                                onFocus={() => {
-                                  const newExercices = [...exercices];
-                                  const currentSets = newExercices[index].sets;
-                                  const nextId =
-                                    currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0;
-                                  newExercices[index].sets.push({
-                                    id: nextId,
-                                    weight: 0,
-                                    nb_rep: 0
-                                  });
-                                  setExercices(newExercices);
-                                  setTimeout(() => {
-                                    const newInput = document.getElementById(`exercice-${index}-set-weight-${nextId}`);
-                                    if (newInput) newInput.focus();
-                                  }, 0);
-                                }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
+                                  />
+                                </TableCell>
+                                <TableCell className="w-2/6">
+                                  <Input
+                                    readOnly
+                                    type="number"
+                                    placeholder="Weight"
+                                    onFocus={() => {
+                                      const newExercices = [...exercices];
+                                      const currentSets = newExercices[index].sets;
+                                      const nextId =
+                                        currentSets.length > 0 ? Math.max(...currentSets.map(s => s.id)) + 1 : 0;
+                                      newExercices[index].sets.push({
+                                        id: nextId,
+                                        weight: 0,
+                                        nb_rep: 0
+                                      });
+                                      setExercices(newExercices);
+                                      setTimeout(() => {
+                                        const newInput = document.getElementById(
+                                          `exercice-${index}-set-weight-${nextId}`
+                                        );
+                                        if (newInput) newInput.focus();
+                                      }, 0);
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </SortableContext>
+                        </DndContext>
                       </Table>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
                 {exercices.length > 0 && (
                   <>
-                    <div className="absolute left-1 bottom-1 lg:-left-12 lg:top-[calc(50%-40px)] -translate-y-1/2 z-10 flex flex-col gap-2">
+                    <div className="absolute left-1 bottom-1 lg:-left-12 lg:bottom-[calc(50%+10px)] -translate-y-1/2 z-10 flex flex-col gap-2">
                       <Button
                         type="button"
                         variant="outline"
@@ -569,7 +686,7 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
                         <span className="sr-only">Add exercise before</span>
                       </Button>
                     </div>
-                    <div className="absolute right-1 bottom-1 lg:-right-12 lg:top-[calc(50%-40px)] -translate-y-1/2 z-10 flex flex-col gap-2">
+                    <div className="absolute right-1 bottom-1 lg:-right-12 lg:bottom-[calc(50%+10px)] -translate-y-1/2 z-10 flex flex-col gap-2">
                       <Button
                         type="button"
                         variant="outline"
