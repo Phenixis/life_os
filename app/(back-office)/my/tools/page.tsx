@@ -3,7 +3,6 @@ import {isToolCard, isToolsCategorie, type ToolCardProps, tools, ToolsCategorieP
 import Link from "next/link"
 
 function ToolCard(tool: ToolCardProps) {
-
     if (!tool.available) {
         return (
             <div
@@ -34,7 +33,7 @@ function ToolCard(tool: ToolCardProps) {
 function ToolsCategorie(categorie: ToolsCategorieProps) {
     return (
         <div className={"group/category"}>
-            <header className={"flex items-baseline gap-6"}>
+            <header className={"flex flex-col lg:flex-row items-baseline lg:gap-6"}>
                 <h2 className="page-title">{categorie.name}</h2>
                 <p className="text-muted-foreground mb-6 lg:opacity-0 duration-300 lg:group-hover/category:opacity-100">{categorie.description}</p>
             </header>
