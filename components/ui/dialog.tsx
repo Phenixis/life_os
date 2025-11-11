@@ -80,7 +80,7 @@ function DialogContent({
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 flex w-full h-full translate-x-[-50%] translate-y-[-50%] rounded-lg py-8 px-2 md:px-4 lg:px-6 shadow-lg duration-500",
           isExpanded
-            ? "max-h-[90vh] max-w-[96vw] lg:max-h-[93vh] lg:max-w-[93vw]"
+            ? "max-h-[95vh] max-w-[95vw] lg:max-h-[93vh] lg:max-w-[93vw]"
             : cn(DEFAULT_CONTENT_MAX_WIDTH, maxHeight),
           className
         )}
@@ -88,7 +88,7 @@ function DialogContent({
       >
         <div className="relative flex w-full h-full flex-col">
           {showCloseButton && (
-            <div className={cn("pointer-events-auto absolute flex items-center gap-2 bg-background rounded-t-lg", isExpanded ? "-top-6 lg:-left-4" : "-left-[8px] -top-10 md:-left-[16px] md:-top-12 lg:-left-[24px] lg:-top-14 py-3 px-4")}>
+            <div className={cn("pointer-events-auto absolute flex items-center gap-2 bg-background rounded-t-lg", isExpanded ? "-top-6 lg:-left-4" : "-top-16 -left-[8px] md:-left-[16px] lg:-left-[24px] py-3 px-4")}>
               <DialogPrimitive.Close
                 data-slot="dialog-close"
                 className={cn(

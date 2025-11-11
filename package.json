@@ -8,7 +8,6 @@
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx tsx lib/db/migrate.ts",
-    "db:migrate-task-state": "npx tsx scripts/migrate-task-state.ts",
     "prepare": "husky",
     "type-check": "tsc --noEmit",
     "commitlint": "commitlint",

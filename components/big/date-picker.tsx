@@ -32,7 +32,7 @@ export function DatePicker(
             <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="hidden md:block px-2"
                 onClick={() => {
                     const newDate = new Date(value.getTime() - 24 * 60 * 60 * 1000)
                     if (minDate) {
@@ -81,7 +81,7 @@ export function DatePicker(
             <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="hidden md:block px-2"
                 onClick={() => {
                     const nextDate = new Date(value.getTime() + 24 * 60 * 60 * 1000)
                     onChange(nextDate)
