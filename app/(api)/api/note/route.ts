@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({error: "Missing required fields"}, {status: 400})
         }
 
-        let projectId = project.id >= 0 ? project.id : undefined
-        if (projectId === undefined) {
+        let projectId = project.id > 0 ? project.id : undefined
+        if (projectId === undefined && project.title && project.title.trim() !== "") {
             const foundProject = await ProjectQueries.getProjectByTitle(verification.userId, project.title)
             if (foundProject) {
                 projectId = foundProject.id
@@ -64,17 +64,23 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({error: "Missing required fields"}, {status: 400})
         }
 
-        let projectId = project.id >= 0 ? project.id : undefined
-        if (projectId === undefined) {
-            const foundProject = await ProjectQueries.getProjectByTitle(verification.userId, project.title)
-            if (foundProject) {
-                projectId = foundProject.id
-            } else {
-                projectId = await ProjectQueries.createProject(verification.userId, project.title)
+        // Determine the project title to pass
+        let projectTitle: string | undefined = undefined
+        if (project.id > 0) {
+            // If we have a valid project ID, get its title
+            try {
+                const existingProject = await ProjectQueries.getProjectById(verification.userId, project.id)
+                projectTitle = existingProject?.title || undefined
+            } catch (error) {
+                console.error("Project not found with id:", project.id)
+                projectTitle = undefined
             }
+        } else if (project.title && project.title.trim() !== "") {
+            // If we have a project title, use it (will be created if needed in updateNote)
+            projectTitle = project.title.trim()
         }
 
-        const note = await NoteQueries.updateNote(verification.userId, noteData.id, noteData.title, noteData.content, projectId, noteData.salt, noteData.iv)
+        const note = await NoteQueries.updateNote(verification.userId, noteData.id, noteData.title, noteData.content, projectTitle, noteData.salt, noteData.iv)
         return NextResponse.json(note)
     } catch (error) {
         console.error("Error updating note:", error)

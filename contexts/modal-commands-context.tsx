@@ -2,6 +2,7 @@
 
 import React, {createContext, ReactNode, useContext, useState} from 'react'
 import {Note, Task} from '@/lib/db/schema'
+import {NoteWithProject} from "@/lib/db/queries/note"
 
 // Define the context interface
 interface ModalCommandsContextType {
@@ -16,8 +17,8 @@ interface ModalCommandsContextType {
         isOpen: boolean
         openModal: () => void
         closeModal: () => void
-        setNote: (noteModalData: { note?: Note.Note.Select | null, password?: string | null }) => void,
-        note?: Note.Note.Select | null,
+        setNote: (noteModalData: { note?: NoteWithProject | null, password?: string | null }) => void,
+        note?: NoteWithProject | null,
         password?: string | null
     }
 
@@ -42,7 +43,7 @@ export function ModalCommandsProvider({children}: { children: ReactNode }) {
 
     // Note modal state
     const [noteModalOpen, setNoteModalOpen] = useState(false)
-    const [noteModalData, setNoteModalData] = useState<{ note?: Note.Note.Select | null; password?: string | null }>({})
+    const [noteModalData, setNoteModalData] = useState<{ note?: NoteWithProject | null; password?: string | null }>({})
 
     // Daily mood modal state
     const [dailyMoodModalOpen, setDailyMoodModalOpen] = useState(false)

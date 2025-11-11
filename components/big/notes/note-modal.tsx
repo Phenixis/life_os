@@ -15,7 +15,7 @@ import {decryptNote, encryptNote} from "@/lib/utils/crypt"
 import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
 import {useDebouncedCallback} from "use-debounce"
 import SearchProjectsInput from "@/components/big/projects/search-projects-input"
-import {NotesAndData} from "@/lib/db/queries/note"
+import {NotesAndData, NoteWithProject} from "@/lib/db/queries/note"
 import {updateUserDraftNote} from "@/lib/db/queries/user/user"
 import {useNoteModal} from "@/contexts/modal-commands-context";
 import {simplifiedProject} from "@/components/big/tasks/tasks-card";
@@ -47,7 +47,10 @@ export default function NoteModal() {
     const [inputNoteContent, setInputNoteContent] = useState<string>(note ? note.content : (user?.note_draft_content || ""))
     const [project, setProject] = useState<simplifiedProject>(
         note && note.project_id
-            ? { title: "", id: note.project_id }
+            ? { 
+                title: note.project_title || allProjects.find(p => p.id === note.project_id)?.title || "", 
+                id: note.project_id 
+            }
             : user?.note_draft_project_title
                 ? { title: user.note_draft_project_title, id: -1 }
                 : { title: "", id: -1 }
@@ -97,7 +100,10 @@ export default function NoteModal() {
             setNoteContent(safeContent)
             setProject(
                 note.project_id
-                    ? { title: allProjects.find(p => p.id === note.project_id)?.title || "", id: note.project_id }
+                    ? { 
+                        title: note.project_title || allProjects.find(p => p.id === note.project_id)?.title || "", 
+                        id: note.project_id 
+                    }
                     : { title: "", id: -1 }
             )
             setPasswordValue(password || "")
@@ -113,7 +119,7 @@ export default function NoteModal() {
             setPasswordValue(password || "")
             setDecryptedContent(null)
         }
-    }, [isOpen, mode, note?.id, note?.title, note?.content, note?.project_id, user?.note_draft_title, user?.note_draft_content, user?.note_draft_project_title, password, allProjects])
+    }, [isOpen, mode, note?.id, note?.title, note?.content, note?.project_id, note?.project_title, user?.note_draft_title, user?.note_draft_content, user?.note_draft_project_title, password, allProjects])
 
     useEffect(() => {
         if (mode === "create") {
@@ -125,15 +131,22 @@ export default function NoteModal() {
         const originalContent = (mode === "edit" && passwordValue && decryptedContent !== null)
             ? decryptedContent
             : (note?.content || "")
+        
+        // For project comparison, check both ID and title
+        const originalProjectId = note?.project_id ? note.project_id : -1
+        const originalProjectTitle = note?.project_title || ""
+        const projectChanged = project.id !== originalProjectId || 
+            (project.id === -1 && project.title !== originalProjectTitle)
+        
         setFormChanged(
             mode === "edit"
                 ? inputNoteTitle.trim() !== (note?.title || "").trim()
                     || inputNoteContent.trim() !== originalContent.trim()
-                    || project.id !== (note?.project_id ? note.project_id : -1)
+                    || projectChanged
                     || passwordValue.trim() !== (password || "").trim()
                 : inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
         )
-    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, password, decryptedContent])
+    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, note?.project_title, password, decryptedContent])
 
     // Keep project title in sync when projects list loads/changes
     useEffect(() => {
@@ -203,7 +216,7 @@ export default function NoteModal() {
                     user_id: user ? user.id : "00000000",
                     title: noteTitle,
                     content: encrypted.ciphertext,
-                    project_id: project.id,
+                    project_id: project.id > 0 ? project.id : null,
                     salt: encrypted.salt,
                     iv: encrypted.iv,
                     created_at: mode === "create" ? new Date() : note?.created_at,
@@ -215,44 +228,15 @@ export default function NoteModal() {
                     user_id: user ? user.id : "00000000",
                     title: noteTitle,
                     content: noteContent,
-                    project_id: project.id,
+                    project_id: project.id > 0 ? project.id : null,
                     created_at: mode === "create" ? new Date() : note?.created_at,
                     updated_at: new Date(),
                 } as Note.Note.Select
             }
 
-            close()
-
-            mutate(
-                (key: unknown) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")),
-                async (currentData: unknown): Promise<NotesAndData | unknown> => {
-                    try {
-                        const data = currentData as NotesAndData
-                        if (!data) return currentData
-                        const currentNotes = data.notes || []
-
-                        let updatedData: Note.Note.Select[]
-                        if (mode === "edit") {
-                            updatedData = currentNotes.map((item: Note.Note.Select) => (item.id === note?.id ? noteData : item))
-                        } else {
-                            updatedData = [...currentNotes, noteData]
-                        }
-
-                        return {
-                            ...data,
-                            notes: updatedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-                        }
-                    } catch (error: unknown) {
-                        console.error("Error updating local data:", error)
-                        return currentData
-                    }
-                },
-                {revalidate: false},
-            )
-
             toast.success(`Note ${mode === "edit" ? "updated" : "created"} successfully`)
 
-            await fetch("/api/note", {
+            const response = await fetch("/api/note", {
                 method: mode === "edit" ? "PUT" : "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -264,6 +248,11 @@ export default function NoteModal() {
                 }),
             })
 
+            if (!response.ok) {
+                throw new Error("Failed to save note")
+            }
+
+            close()
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
         } catch (error) {
@@ -311,7 +300,7 @@ export default function NoteModal() {
         }}>
             <DialogContent
                 aria-describedby={undefined}
-                maxHeight="max-h-115"
+                maxHeight="max-h-120"
             >
                 <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
                     <main className="space-y-4">

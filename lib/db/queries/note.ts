@@ -2,8 +2,12 @@
 
 import * as lib from "./lib"
 
+export type NoteWithProject = lib.Schema.Note.Note.Select & {
+    project_title?: string | null
+}
+
 export type NotesAndData = {
-    notes: lib.Schema.Note.Note.Select[]
+    notes: NoteWithProject[]
     totalCount: number
     totalPages: number
     currentPage: number
@@ -134,7 +138,17 @@ export async function updateNote(userId: string, id: number, title: string, cont
                     lib.eq(lib.Schema.Project.table.title, projectTitle)
                 ))
                 .limit(1);
-            projectIdToSet = proj.length > 0 ? proj[0].id : null;
+            
+            if (proj.length > 0) {
+                projectIdToSet = proj[0].id;
+            } else {
+                // Project doesn't exist, create it
+                const newProject = await lib.db.insert(lib.Schema.Project.table).values({
+                    user_id: userId,
+                    title: projectTitle,
+                }).returning({ id: lib.Schema.Project.table.id });
+                projectIdToSet = newProject[0].id;
+            }
         }
     }
 
