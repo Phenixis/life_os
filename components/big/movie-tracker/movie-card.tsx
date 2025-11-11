@@ -345,7 +345,7 @@ export function MovieCard({ movie }: MovieCardProps) {
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <DialogContent>
+                <DialogContent maxHeight='max-h-72'>
                     <DialogHeader>
                         <DialogTitle>Remove Movie</DialogTitle>
                     </DialogHeader>

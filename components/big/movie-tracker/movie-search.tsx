@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus, Film, Tv, ChevronDown, ChevronUp, Star, X, Check, Eye } from 'lucide-react';
+import { Search, Plus, Film, Tv, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,8 +20,6 @@ export function MovieSearch({ onMovieAdded }: MovieSearchProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedQuery] = useDebounce(searchQuery, 500);
     const [expandedOverviews, setExpandedOverviews] = useState<Set<string>>(new Set());
-    const [showRatingDialog, setShowRatingDialog] = useState<string | null>(null);
-    const [currentRating, setCurrentRating] = useState<number>(0);
     const { results, isLoading } = useMovieSearch(debouncedQuery);
     const { addMovie } = useMovieActions();
     const { movies: userMovies } = useMovies(); // Get all user movies to check if already in list
@@ -46,31 +44,13 @@ export function MovieSearch({ onMovieAdded }: MovieSearchProps) {
         }
     };
 
-    const handleShowRatingDialog = (itemId: number, mediaType: string) => {
-        const key = `${itemId}-${mediaType}`;
-        setShowRatingDialog(key);
-        setCurrentRating(0);
-    };
-
-    const handleRateAndWatch = async (tmdbId: number, mediaType: 'movie' | 'tv', title: string) => {
-        if (currentRating === 0) {
-            toast.error('Please select a rating');
-            return;
-        }
-
+    const handleRateMovie = async (tmdbId: number, mediaType: 'movie' | 'tv', title: string, rating: number) => {
         try {
-            await handleAddMovie(tmdbId, mediaType, title, 'watched', currentRating);
-            setShowRatingDialog(null);
-            setCurrentRating(0);
-            toast.success(`Rated ${currentRating}/5 and added to watched movies!`);
+            await handleAddMovie(tmdbId, mediaType, title, 'watched', rating);
+            toast.success(`Rated ${rating}/5 and added to watched movies!`);
         } catch (error) {
-            console.error('Failed to rate and watch movie:', error);
+            console.error('Failed to rate movie:', error);
         }
-    };
-
-    const handleCancelRating = () => {
-        setShowRatingDialog(null);
-        setCurrentRating(0);
     };
 
     // Helper function to check if a movie is already in user's list
@@ -277,66 +257,29 @@ export function MovieSearch({ onMovieAdded }: MovieSearchProps) {
                                                     );
                                                 }
 
-                                                if (showRatingDialog === `${item.id}-${mediaType}`) {
-                                                    // Rating Dialog
-                                                    return (
-                                                        <div
-                                                            className="border rounded-lg p-3 bg-muted/30 min-w-[200px] w-full">
-                                                            <div className="space-y-3">
-                                                                <p className="text-sm font-medium text-center">Rate
-                                                                    this {mediaType === 'tv' ? 'TV show' : 'movie'}</p>
-                                                                <div className="flex justify-center">
-                                                                    <StarRating
-                                                                        rating={currentRating}
-                                                                        onRatingChange={setCurrentRating}
-                                                                        size="md"
-                                                                    />
-                                                                </div>
-                                                                <div className="flex gap-2">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        onClick={() => handleRateAndWatch(item.id, mediaType as 'movie' | 'tv', title)}
-                                                                        disabled={currentRating === 0}
-                                                                        className="text-xs px-2 py-1 h-auto flex-2"
-                                                                    >
-                                                                        <Star className="w-3 h-3 mr-1" />
-                                                                        Add Rated
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={handleCancelRating}
-                                                                        className="text-xs px-2 py-1 h-auto flex-1"
-                                                                    >
-                                                                        <X className="w-3 h-3" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-
                                                 // Regular Buttons for new movies
                                                 return (
-                                                    <>
+                                                    <div className="flex flex-col gap-2 min-w-[200px] w-full">
                                                         <Button
                                                             size="sm"
                                                             onClick={() => handleAddMovie(item.id, mediaType as 'movie' | 'tv', title, 'will_watch')}
                                                             className="text-xs px-2 py-1 h-auto w-full"
                                                         >
                                                             <Plus className="w-3 h-3 mr-1" />
-                                                            Watchlist
+                                                            Add to Watchlist
                                                         </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            onClick={() => handleShowRatingDialog(item.id, mediaType)}
-                                                            className="text-xs px-2 py-1 h-auto w-full"
-                                                        >
-                                                            <Star className="w-3 h-3 mr-1" />
-                                                            Mark as watched & Rate
-                                                        </Button>
-                                                    </>
+                                                        <div className="border rounded-lg p-3 bg-muted/30 w-full">
+                                                            <p className="text-xs font-medium text-center mb-2">
+                                                                Rate & mark as watched
+                                                            </p>
+                                                            <StarRating
+                                                                rating={null}
+                                                                onRatingChange={(rating) => handleRateMovie(item.id, mediaType as 'movie' | 'tv', title, rating)}
+                                                                size="md"
+                                                                className="justify-center"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 );
                                             })()}
                                         </div>

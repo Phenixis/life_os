@@ -63,7 +63,7 @@ export function MovieStats() {
             {statsData.map((stat) => {
                 const Icon = stat.icon;
                 return (
-                    <Card key={stat.title} className="first:col-span-2 md:col-span-1">
+                    <Card key={stat.title} className="first:col-span-2 md:first:col-span-1">
                         <CardContent fullPadding>
                             <div className="flex items-center justify-between">
                                 <div>
