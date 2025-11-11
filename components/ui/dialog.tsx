@@ -7,7 +7,7 @@ import { Maximize2, XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_CONTENT_MAX_WIDTH =
-  "max-w-[calc(100%-2rem)] sm:max-w-lg lg:max-w-3xl"
+  "max-w-[calc(100%-2rem)] sm:max-w-lg md:max-w-2xl lg:max-w-3xl"
 
 const MAC_WINDOW_BUTTON_BASE =
   "ring-offset-background focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 flex h-4 w-4 items-center justify-center rounded-full border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_1px_2px_rgba(15,23,42,0.35)] opacity-90 transition-opacity duration-200 hover:opacity-100 disabled:pointer-events-none"

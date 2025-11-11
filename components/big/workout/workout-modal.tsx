@@ -365,7 +365,7 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
         <DialogContent maxHeight="max-h-150">
           <form
             onSubmit={handleSubmit}
-            className="space-y-4 mx-auto w-full overflow-y-auto sm:max-w-[462px] lg:max-w-[718px] flex flex-col justify-between"
+            className="space-y-4 mx-auto w-full overflow-y-auto flex flex-col justify-between"
           >
             <div>
               <DialogTitle className="hidden">{workoutName}</DialogTitle>
@@ -581,8 +581,8 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
                         <span className="sr-only">Add exercise after</span>
                       </Button>
                     </div>
-                    <CarouselPrevious className="-bottom-8"/>
-                    <CarouselNext className="-bottom-8"/>
+                    <CarouselPrevious className="-bottom-8" />
+                    <CarouselNext className="-bottom-8" />
                   </>
                 )}
               </Carousel>
@@ -600,32 +600,34 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
                   </div>
                 </div>
               )}
-              <div className={'w-full flex justify-between items-center gap-2'}>
-                <div className={'flex gap-2'}>
-                  {mode !== 'edit-saved' && (
-                    <Button variant="outline" type="button" disabled={isSaving} onClick={handleSaveAsTemplate}>
-                      <Save className="size-4 md:mr-2" />
-                      <span className="hidden md:block">Save as Template</span>
-                    </Button>
-                  )}
-                  {(mode === 'edit-past' || mode === 'edit-saved') && (
-                    <Button
-                      variant="outline"
-                      type="button"
-                      disabled={isSaving}
-                      onClick={() => setShowDeleteDialog(true)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="size-4 mr-2" />
-                      Delete
-                    </Button>
-                  )}
-                </div>
-                <div className="flex gap-2">
+              <div className={'w-full flex flex-col md:flex-row justify-between items-center gap-2'}>
+                <div className="w-full flex justify-between items-center gap-2">
+                  <div className={'flex gap-2'}>
+                    {mode !== 'edit-saved' && (
+                      <Button variant="outline" type="button" disabled={isSaving} onClick={handleSaveAsTemplate}>
+                        <Save className="size-4 md:mr-2" />
+                        Save as Template
+                      </Button>
+                    )}
+                    {(mode === 'edit-past' || mode === 'edit-saved') && (
+                      <Button
+                        variant="outline"
+                        type="button"
+                        disabled={isSaving}
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="size-4 mr-2" />
+                        Delete
+                      </Button>
+                    )}
+                  </div>
                   <Button variant="outline" type="button" disabled={isSaving} onClick={() => setShowDialog(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSaving}>
+                </div>
+                <div className="w-full md:w-fit flex gap-2">
+                  <Button type="submit" disabled={isSaving} className="w-full">
                     {isSaving
                       ? 'Saving...'
                       : mode === 'edit-past'
