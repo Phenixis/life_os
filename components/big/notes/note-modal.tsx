@@ -8,7 +8,7 @@ import {Note} from "@/lib/db/schema"
 import {useEffect, useRef, useState} from "react"
 import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
-import {Textarea} from "@/components/ui/textarea"
+import MDEditor from '@uiw/react-md-editor'
 import {useSWRConfig} from "swr"
 import {toast} from "sonner"
 import {decryptNote, encryptNote} from "@/lib/utils/crypt"
@@ -55,6 +55,24 @@ export default function NoteModal() {
                 ? { title: user.note_draft_project_title, id: -1 }
                 : { title: "", id: -1 }
     )
+
+    // Track color mode from root `data-color-mode` so editor follows app theme
+    const [colorMode, setColorMode] = useState<'light' | 'dark'>('light')
+    useEffect(() => {
+        if (typeof document === 'undefined') return
+        const el = document.documentElement
+        const read = () => (el.getAttribute('data-color-mode') === 'dark' ? 'dark' : 'light')
+        setColorMode(read())
+        const obs = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.type === 'attributes' && m.attributeName === 'data-color-mode') {
+                    setColorMode(read())
+                }
+            }
+        })
+        obs.observe(el, { attributes: true })
+        return () => obs.disconnect()
+    }, [])
 
     const updateNoteTitle = useDebouncedCallback((value: string) => {
         setNoteTitle(value)
@@ -326,15 +344,15 @@ export default function NoteModal() {
                         </div>
                         <div>
                             <Label htmlFor="content" required>Content</Label>
-                            <Textarea
-                                id="content"
-                                name="content"
-                                className="text-xs lg:text-sm"
-                                value={inputNoteContent}
-                                onChange={(e) => {
-                                    setInputNoteContent(e.target.value)
-                                }}
-                            />
+                            <div data-color-mode={colorMode} className="prose max-w-full">
+                                <MDEditor
+                                    key={colorMode}
+                                    id="content"
+                                    value={inputNoteContent}
+                                    onChange={(val) => setInputNoteContent(val || '')}
+                                    textareaProps={{ placeholder: 'Write your note in Markdown...' }}
+                                />
+                            </div>
                         </div>
                         <SearchProjectsInput
                             project={project}

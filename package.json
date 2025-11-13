@@ -42,6 +42,7 @@
     "@types/node": "^20.17.46",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+    "@uiw/react-md-editor": "^4.0.8",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "ai": "^4.3.16",

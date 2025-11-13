@@ -2,7 +2,7 @@
 
 import { Note } from '@/lib/db/schema';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useEffect } from 'react';
 import { ChevronDown, ChevronUp, ClipboardCheck, ClipboardPlus, Lock, PenIcon, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { decryptNote } from '@/lib/utils/crypt';
+import MDEditor from '@uiw/react-md-editor'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NotesAndData } from '@/lib/db/queries/note';
@@ -37,6 +38,24 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [decryptError, setDecryptError] = useState(false);
+
+  // Track color mode so markdown preview matches app theme
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light')
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const el = document.documentElement
+    const read = () => (el.getAttribute('data-color-mode') === 'dark' ? 'dark' : 'light')
+    setColorMode(read())
+    const obs = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'data-color-mode') {
+          setColorMode(read())
+        }
+      }
+    })
+    obs.observe(el, { attributes: true })
+    return () => obs.disconnect()
+  }, [])
 
   const projectTitle = note?.project_id ? allProjects.find(p => p.id === note.project_id)?.title : undefined;
 
@@ -172,17 +191,14 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                     {decryptError && <p className="text-red-500 text-sm">Incorrect password.</p>}
                   </>
                 ) : (
-                  <p>{decryptedContent}</p>
+                  <div data-color-mode={colorMode} key={colorMode} className="prose max-w-full">
+                    <MDEditor.Markdown source={decryptedContent || ''} />
+                  </div>
                 )
               ) : (
-                <p>
-                  {note.content.split('\n').map((line, index) => (
-                    <Fragment key={index}>
-                      {line}
-                      <br />
-                    </Fragment>
-                  ))}
-                </p>
+                <div data-color-mode={colorMode} key={colorMode} className="prose max-w-full">
+                  <MDEditor.Markdown source={note.content} />
+                </div>
               )}
             </CardContent>
             <CardFooter className="flex flex-row justify-end space-x-2">

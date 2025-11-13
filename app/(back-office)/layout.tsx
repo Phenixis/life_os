@@ -16,7 +16,7 @@ export default async function BackOfficeLayout({
   return (
     <UserProvider userPromise={userPromise}>
       <ModalCommandsProvider>
-        <main className="relative w-full h-full">
+        <main className="relative w-full h-full"  >
           <Header darkModeCookie={darkModeCookie} />
           <div className="w-full h-full">{children}</div>
         </main>

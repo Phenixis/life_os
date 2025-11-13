@@ -6,6 +6,7 @@ import {SpeedInsights} from "@vercel/speed-insights/next"
 import {Analytics} from '@vercel/analytics/next';
 import {Toaster} from "@/components/ui/sonner"
 import {darkMode} from "@/lib/flags"
+import ColorModeSync from '@/components/ui/color-mode-sync'
 
 const spaceGrotesk = Space_Grotesk({
     subsets: ['latin'],
@@ -85,6 +86,7 @@ export default async function RootLayout(
             inter.className,
         )}>
         <TooltipProvider>
+            <ColorModeSync />
             {children}
         </TooltipProvider>
         <SpeedInsights/>
