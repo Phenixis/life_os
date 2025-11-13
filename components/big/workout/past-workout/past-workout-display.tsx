@@ -9,7 +9,8 @@ import {Skeleton} from "@/components/ui/skeleton"
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel"
 import {Difficulty} from "./difficulty"
 import {WorkoutModal} from "@/components/big/workout/workout-modal"
-import {WorkoutProgressionDisplay} from "./workout-progression-display"
+import {WorkoutProgressionDisplay, ProgressionBadge} from "./workout-progression-display"
+import {useWorkoutProgression} from "@/hooks/use-workouts"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
@@ -70,6 +71,7 @@ export function PastWorkoutDisplay(
     }
 ) {
     const [showDetails, setShowDetails] = useState<boolean>(false)
+    const {progression, isLoading: progressionLoading, error: progressionError} = useWorkoutProgression(workout ? workout.id : null)
 
     return (
         <div
@@ -101,17 +103,26 @@ export function PastWorkoutDisplay(
                     {
                         workout ? (
                             <>
-                                <p>
+                                <p className="space-y-1 w-full">
                                     {
-                                        workout.exercices.map((exercice, index) => (
-                                            <span key={index}>
-                                                {index + 1}. {exercice.name}{index !== workout.exercices.length - 1 ? (
-                                                <br/>) : ""}
-                                            </span>
-                                        ))
+                                        workout.exercices.map((exercice, index) => {
+                                            const progItem = progression?.exercises.find(e => e.exerciseName === exercice.name)
+                                            return (
+                                                <span key={index} className={"flex justify-between items-center w-full"}>
+                                                    <span className={"flex-1 truncate"}>{index + 1}. {exercice.name}</span>
+                                                    <span className={"ml-4 flex-shrink-0"}>
+                                                        {progressionLoading ? (
+                                                            <span className={"text-sm text-gray-500 dark:text-gray-400"}>Analyzing...</span>
+                                                        ) : (
+                                                            progItem ? <ProgressionBadge progression={progItem}/> : null
+                                                        )}
+                                                    </span>
+                                                </span>
+                                            )
+                                        })
                                     }
                                 </p>
-                                <CollapsibleTrigger asChild className={"lg:hidden lg:group-hover/workout:flex"}>
+                                <CollapsibleTrigger asChild className={"flex lg:opacity-0 lg:group-hover/workout:opacity-100"}>
                                     <Button size="sm" variant="ghost">
                                         Details
                                         <ChevronDown
@@ -173,7 +184,7 @@ export function PastWorkoutDisplay(
                                     <CarouselNext className={"lg:hidden lg:group-hover/workout:flex"}/>
                                     <CarouselPrevious className={"lg:hidden lg:group-hover/workout:flex"}/>
                                 </Carousel>
-                                <WorkoutProgressionDisplay workoutId={workout.id}/>
+                                {/* Progression badges are now shown inline beside each exercise in the header */}
                             </>
                         ) : (
                             <p>

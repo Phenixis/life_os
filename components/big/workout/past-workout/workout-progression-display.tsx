@@ -1,7 +1,7 @@
 "use client"
 
 import {useWorkoutProgression} from "@/hooks/use-workouts"
-import {formatProgressionText} from "@/lib/utils/workout-progression"
+// compact progression formatting is rendered inline in ProgressionBadge
 import {Loader2, Minus, TrendingDown, TrendingUp} from "lucide-react"
 import type {ExerciseProgression} from "@/lib/types/workout"
 
@@ -9,7 +9,7 @@ interface WorkoutProgressionDisplayProps {
     workoutId: number
 }
 
-function ProgressionBadge({progression}: { progression: ExerciseProgression }) {
+export function ProgressionBadge({progression}: { progression: ExerciseProgression }) {
     if (!progression.progression) {
         return (
             <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
@@ -18,7 +18,6 @@ function ProgressionBadge({progression}: { progression: ExerciseProgression }) {
             </div>
         )
     }
-
     const {weightDiff, repsDiff} = progression.progression
     const changeMetric = weightDiff !== 0 ? weightDiff : repsDiff
     const isPositive = changeMetric > 0
@@ -38,10 +37,22 @@ function ProgressionBadge({progression}: { progression: ExerciseProgression }) {
         ? "text-green-600 dark:text-green-400"
         : "text-red-600 dark:text-red-400"
 
+    // Build a compact progression string using +/- before numbers
+    const parts: string[] = []
+    if (weightDiff !== 0) {
+        const sign = weightDiff > 0 ? "+" : ""
+        parts.push(`${sign}${weightDiff}kg`)
+    } else if (repsDiff !== 0) {
+        const sign = repsDiff > 0 ? "+" : ""
+        parts.push(`${sign}${repsDiff}rep`)
+    }
+
+    const compact = parts.join(" ")
+
     return (
         <div className={`flex items-center gap-1 text-xs ${colorClass}`}>
             <Icon className="size-3"/>
-            <span>{formatProgressionText(progression)}</span>
+            <span>{compact}</span>
         </div>
     )
 }
