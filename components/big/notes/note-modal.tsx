@@ -20,9 +20,11 @@ import {updateUserDraftNote} from "@/lib/db/queries/user/user"
 import {useNoteModal} from "@/contexts/modal-commands-context";
 import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 import {useProjects} from "@/hooks/use-projects";
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export default function NoteModal() {
     const user = useUser().user;
+    const isMobile = useIsMobile();
 
     const {
         isOpen,
@@ -351,6 +353,7 @@ export default function NoteModal() {
                                     value={inputNoteContent}
                                     onChange={(val) => setInputNoteContent(val || '')}
                                     textareaProps={{ placeholder: 'Write your note in Markdown...' }}
+                                    preview={isMobile ? 'edit' : 'live'}
                                 />
                             </div>
                         </div>
