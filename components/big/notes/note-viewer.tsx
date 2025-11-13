@@ -306,7 +306,7 @@ export default function NoteViewer({ note, className }: NoteViewerProps) {
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent>
+                <DialogContent maxHeight='max-h-55'>
                     <DialogHeader>
                         <DialogTitle>Delete Note</DialogTitle>
                         <DialogDescription>
