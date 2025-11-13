@@ -67,7 +67,7 @@ export default function NoteViewer({ note, className }: NoteViewerProps) {
         setPassword('');
         setDecryptError(false);
         setIsCopied(false);
-    }, [note?.id]);
+    }, [note?.id, note?.content, note?.title]);
 
     const handleDecrypt = () => {
         if (note && note.salt && note.iv && password && !decryptedContent) {

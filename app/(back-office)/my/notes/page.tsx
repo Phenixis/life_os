@@ -24,6 +24,16 @@ export default function NotesPage() {
         return notesData?.notes || []
     }, [notesData])
 
+    // Update selected note when notes data changes (e.g., after edit)
+    useEffect(() => {
+        if (selectedNote && notesData?.notes) {
+            const updatedNote = notesData.notes.find(n => n.id === selectedNote.id)
+            if (updatedNote) {
+                setSelectedNote(updatedNote)
+            }
+        }
+    }, [notesData?.notes, selectedNote?.id])
+
     useEffect(() => {
         setIsMobileOpen(mobile)
     }, [mobile])
