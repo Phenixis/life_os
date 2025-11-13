@@ -75,7 +75,7 @@ export default function Header(
                                 variant="outline"
                                 size="icon"
                                 className={
-                                    "whitespace-nowrap transition-transform duration-300 border-none"
+                                    "whitespace-nowrap transition-transform duration-300"
                                 }
                                 onClick={() => noteModal.openModal()}
                             >

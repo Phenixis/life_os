@@ -155,7 +155,50 @@
     }
 
     body {
-        @apply font-sans antialiased bg-background text-foreground;
+        @apply bg-background text-foreground;
+    }
+
+    /* Hide native scrollbar */
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar-none {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* Custom Scrollbar Styles */
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: hsl(var(--muted-foreground) / 0.2);
+        border-radius: 4px;
+    }
+
+    .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+        background: hsl(var(--muted-foreground) / 0.4);
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: hsl(var(--muted-foreground) / 0.5);
+    }
+
+    /* Firefox scrollbar */
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+    }
+
+    .scrollbar-thin:hover {
+        scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
     }
 }
 
