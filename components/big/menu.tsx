@@ -18,6 +18,7 @@ import {useDailyMoodModal, useNoteModal, useTaskModal} from "@/contexts/modal-co
 import {isToolsCategorie, tools} from "@/lib/tools-data"
 import {toast} from "sonner"
 import {settingsItems} from "@/components/big/settings/settings-sidebar"
+import {useModalsState} from "@/contexts/modal-commands-context"
 
 interface MenuItem {
     name: string
@@ -61,6 +62,7 @@ const items: Record<string, MenuItem[]> = {
 }
 
 export default function Menu() {
+    const { someModalOpen } = useModalsState()
     const router = useRouter()
     const [open, setOpen] = useState(false)
 
@@ -73,12 +75,14 @@ export default function Menu() {
         const down = (e: KeyboardEvent) => {
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault()
-                setOpen((open) => !open)
+                if (!someModalOpen()) {
+                    setOpen((open) => !open)
+                }
             }
         }
         document.addEventListener("keydown", down)
         return () => document.removeEventListener("keydown", down)
-    }, [])
+    }, [someModalOpen])
 
     const runCommand = useCallback((command: () => unknown) => {
         setOpen(false)
