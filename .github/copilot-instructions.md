@@ -1,52 +1,134 @@
-Hello Copilot !
+# Life OS - AI Coding Agent Instructions
 
-Here are some guidelines to assist you in contributing to the project. The instructions are prioritized based on their order.
+## Project Overview
+Life OS is a personal knowledge management system built with Next.js 16 (App Router), TypeScript, Drizzle ORM, and PostgreSQL. It provides task management, note-taking, habit tracking, workout logging, mood tracking, AI chat, and more.
 
-1. Ensure compatibility with the existing codebase and libraries.
-2. Follow the DRY (Don't Repeat Yourself) principle to avoid code duplication. Analyze the workspace to check if there is a similar function or method that can be reused.
-3. Use meaningful variable names that convey the purpose of the variable.
-4. Use consistent naming conventions throughout the codebase.
-5. Always include comments to explain complex logic.
-6. Write unit tests for all new functions and methods.
-7. Handle exceptions and edge cases gracefully.
-8. Validate inputs to functions and methods to prevent errors.
-9. Document public methods and classes with docstrings.
-10. Ensure code is optimized for SEO, accessibility, performance, and readability. The priority is given by the order of the words.
-11. Use TypeScript for all new files and modules.
-12. Follow the existing folder structure for placing new components, hooks, etc.
-13. Use Tailwind CSS for styling as per the configuration.
-14. Adhere to Next.js conventions and best practices.
-15. Use environment variables securely following the patterns in .env and .env.example.
-16. Leverage React hooks for managing state and side effects.
-17. Ensure compatibility with PostCSS as per the configuration.
-18. Use pnpm for package management to ensure consistent dependencies.
-19. Write comprehensive README documentation for any new features or changes.
-20. Follow ESLint and Prettier configurations for code formatting and linting rules.
-21. Use Git for version control and follow the branching strategy defined in the project.
-22. Conduct code reviews to maintain code quality and share knowledge within the team.
-23. Optimize images and other media for performance and accessibility.
-24. Ensure all new code is responsive and works on various screen sizes.
-25. Use lazy loading for components and images where applicable to improve performance.
-26. Regularly update dependencies to keep the project secure and up-to-date.
-27. Write migration scripts for database changes to ensure smooth transitions.
-28. Ensure all new features are accessible and follow WCAG guidelines.
-29. Use 4 spaces to indent the code block.
-30. Never modify code that is not directly related to the task.
-31. Add a section at the end of every answer that gives 1 to 3 suggestions for improvement on what you just wrote, or what you analyzed.
-32. When you are describing a change for a commit message, always use the following prefixes. Keep in mind that you can combine them : "fix: style: ..." for example. The goal is to be as concise but precise as possible.
-    - "chore:" for non-functional changes
-    - "feat:" for new features
-    - "fix:" for bug fixes
-    - "refactor:" for code refactoring
-    - "test:" for adding tests
-    - "docs:" for documentation changes
-    - "style:" for code style changes
-    - "perf:" for performance improvements
-    - "revert:" for reverting changes
-    - "security:" for security changes
-    - "done:" for completed tasks
-    - "wip:" for work in progress
-    - "started:" for new tasks
-33. When using a hook (e.g. useState, useEffect), remember to check if `'use client';` is the first line of the file. If not, add it.
-34. You should use the client-side as little as possible, prefer server-side rendering.
-35. Remember that the app use a the `/app` router, so you should use it for all the routes. You should check if the solution you suggest is compatible with the `/app` router.
+## Architecture
+
+### Database Layer
+- **ORM**: Drizzle ORM with PostgreSQL (Neon)
+- **Schema location**: `lib/db/schema/` organized by domain (e.g., `task/`, `user/`, `note/`)
+- **Schema pattern**: Each domain exports a namespace (e.g., `export * as Task from "./task"`) from `lib/db/schema/index.ts`
+  ```typescript
+  // Accessing schema types
+  import { Task, User, Note } from "@/lib/db/schema"
+  Task.Task.table  // The Drizzle table
+  Task.Task.Select // TypeScript type for selected records
+  ```
+- **Queries**: Organized in `lib/db/queries/` and exported as namespaces (e.g., `TaskQueries`, `NoteQueries`) from `lib/db/queries/index.ts`
+- **Migrations**: Use `pnpm db:generate` to create, `pnpm db:migrate` to apply
+
+### API Routes
+- **Location**: `app/(api)/api/` organized by domain
+- **Authentication**: All endpoints use Bearer token auth via `verifyRequest()` from `lib/auth/api.ts`
+  ```typescript
+  const verification = await verifyRequest(request)
+  if ('error' in verification) return verification.error
+  // Use verification.userId
+  ```
+- **Pattern**: Export GET, POST, PUT, DELETE as named async functions in `route.ts` files
+- **Documentation**: See `docs/HABITS_API.md` for example API patterns
+
+### Frontend Architecture
+- **App Router**: Next.js 16 `/app` router with route groups:
+  - `(front-office)`: Landing page, marketing
+  - `(door)`: Auth pages (login, signup, set-password)
+  - `(back-office)`: Main app under `/my` route
+- **Server vs Client**: Default to server components. Add `'use client'` **only** when using hooks (useState, useEffect, etc.) or browser APIs
+- **Data fetching**: 
+  - Client components: Use SWR hooks from `hooks/` (e.g., `useTasks`, `useNotes`, `useHabits`)
+  - SWR hooks use the `fetcher` from `lib/fetcher.ts` with user's API key
+  - Server components: Directly call query functions from `lib/db/queries/`
+
+### Component Organization
+- `components/ui/`: Radix UI primitives (shadcn/ui style)
+- `components/big/`: Feature components organized by domain (`tasks/`, `notes/`, `habits/`, etc.)
+- `components/utils/`: Utility components
+- `contexts/`: React contexts (e.g., `modal-commands-context.tsx` for modal state management)
+- `hooks/`: Custom hooks for data fetching and state management
+
+### State Management
+- **User context**: `UserProvider` in `hooks/use-user.tsx` provides authenticated user
+- **Modal state**: `ModalCommandsProvider` in `contexts/modal-commands-context.tsx` manages task/note/mood modals
+- **Feature flags**: `lib/flags.ts` defines cookie-based feature configurations
+- **Cookies**: Server actions in `lib/cookies.ts` handle cookie reads/writes (dark mode, filters, etc.)
+
+### Authentication
+- **Session**: JWT-based sessions using `jose` library in `lib/auth/session.ts`
+- **API auth**: API key stored in user table, validated via `verifyApiKey()` in `lib/auth/api.ts`
+- **Special case**: CRON_SECRET env var bypasses auth for cron jobs
+
+### Styling
+- **Framework**: Tailwind CSS 4.1 with PostCSS
+- **Theme**: Uses CSS variables with dark mode support
+- **Fonts**: Space Grotesk (headings) and Inter (body) from Google Fonts
+- **Indentation**: 4 spaces (not tabs)
+
+## Development Workflow
+
+### Commands
+- `pnpm dev`: Start dev server with Turbopack
+- `pnpm build`: Production build
+- `pnpm db:generate`: Generate Drizzle migrations
+- `pnpm db:migrate`: Apply migrations
+- `pnpm commit`: Interactive conventional commit helper (bash script)
+- `pnpm promote`: Promote changes with version bump
+
+### Commit Conventions
+Use conventional commits with these prefixes (can combine: `fix: style: ...`):
+- `feat:` new features
+- `fix:` bug fixes  
+- `chore:` non-functional changes
+- `refactor:` code refactoring
+- `docs:` documentation
+- `style:` formatting (not CSS)
+- `perf:` performance improvements
+- `test:` tests
+- `security:` security fixes
+
+### Key Patterns
+
+**Task State Management**: Tasks have a `state` field ("to do", "work in progress", "stalled", "done"). See `docs/TASK_STATE.md`. State auto-updates when marking complete/incomplete.
+
+**Note Encryption**: Notes support optional password encryption. See `decryptNote()` in `lib/utils/crypt.ts`. Encrypted content stored in DB.
+
+**Project Association**: Tasks and notes belong to projects (optional). Projects defined in `lib/db/schema/project.ts`.
+
+**Dark Mode**: User preferences stored in DB + cookie. Auto dark mode based on time ranges. See `lib/utils/dark-mode.ts` and `lib/cookies.ts`.
+
+**SWR Pattern**: All data-fetching hooks use SWR with API key from user context:
+```typescript
+export function useTasks(params: UseTasksParams = {}) {
+  const user = useUser().user
+  const queryString = buildQueryString(params)
+  const { data, error, mutate } = useSWR(
+    user ? ['/api/task' + queryString, user.api_key] : null,
+    ([url, api_key]) => fetcher(url, api_key)
+  )
+  // ...
+}
+```
+
+**Stripe Integration**: Subscription management via `lib/services/payments/stripe.ts`. See `docs/SUBSCRIPTION_MANAGEMENT.md`.
+
+## Code Quality Rules
+
+1. **DRY principle**: Check for existing utilities before creating new ones
+2. **Type safety**: Always use TypeScript, leverage schema types from `lib/db/schema`
+3. **Server-first**: Prefer server components; add `'use client'` only when necessary
+4. **Error handling**: Gracefully handle errors, validate inputs
+5. **Accessibility**: Follow WCAG guidelines, ensure keyboard navigation
+6. **Performance**: Optimize for SEO, accessibility, performance, readability (in that order)
+7. **Scope**: Only modify code directly related to the task
+8. **Documentation**: Comment complex logic, update docs/ for new features
+9. **Responsive**: Ensure all UI works on mobile and desktop
+
+## File Conventions
+- TypeScript for all code
+- 4-space indentation
+- Server actions marked with `"use server"` directive
+- Client components marked with `'use client'` directive
+- Export patterns: Default export for pages/components, named exports for utilities
+
+## Suggestions Requirement
+After completing a task or analysis, provide 1-3 specific suggestions for improvement.
