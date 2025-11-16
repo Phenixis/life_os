@@ -65,13 +65,13 @@ function DraggableNote({
             onClick={() => onNoteSelect(note)}
             className={cn(
                 'w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-sm',
-                'hover:bg-accent cursor-grab active:cursor-grabbing',
+                'hover:bg-accent',
                 isSelected && 'bg-accent font-medium',
                 isDragging && 'opacity-50'
             )}
             title={note.title}
         >
-            <FileText className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+            <FileText className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing" />
             <span className="truncate text-left flex-1 min-w-0">{note.title}</span>
             {isEncrypted && <Lock className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />}
         </button>

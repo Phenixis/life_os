@@ -14,6 +14,7 @@ import {
 import Link from 'next/link';
 import { isToolCard, isToolsCategorie, tools } from '@/lib/tools-data';
 import { usePathname } from 'next/navigation';
+import { Fragment } from 'react';
 
 export function ToolsSidebar() {
   const pathname = usePathname();
@@ -30,7 +31,7 @@ export function ToolsSidebar() {
                 .map((tool, index) => {
                   if (isToolsCategorie(tool)) {
                     return (
-                      <>
+                      <Fragment key={tool.name}>
                         {tool.tools.map(toolItem => (
                           <SidebarMenuItem key={toolItem.name}>
                             <SidebarMenuButton
@@ -55,12 +56,12 @@ export function ToolsSidebar() {
                           </SidebarMenuItem>
                         ))}
                         {index < tools.length - 1 ? <SidebarSeparator /> : null}
-                      </>
+                      </Fragment>
                     );
                   }
 
                   return (
-                    <>
+                    <Fragment key={tool.name}>
                       <SidebarMenuItem key={tool.name}>
                         <SidebarMenuButton
                           className={`flex items-center space-x-2 text-wrap ${
@@ -76,7 +77,7 @@ export function ToolsSidebar() {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       {tool.name == 'All Tools' && index < tools.length - 1 ? <SidebarSeparator /> : null}
-                    </>
+                    </Fragment>
                   );
                 })}
             </SidebarMenu>

@@ -9,9 +9,12 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { FolderOpen } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export default function NotesPage() {
     const mobile = useIsMobile()
+    const searchParams = useSearchParams()
+    const router = useRouter()
     const [selectedNote, setSelectedNote] = useState<NoteWithProject | null>(null)
     const [isMobileOpen, setIsMobileOpen] = useState(mobile)
 
@@ -33,6 +36,32 @@ export default function NotesPage() {
             }
         }
     }, [notesData?.notes, selectedNote?.id])
+
+    // Handle URL search params to auto-select note
+    useEffect(() => {
+        if (!notesData?.notes || notesData.notes.length === 0) return
+        
+        const noteId = searchParams.get('note_id')
+        const noteName = searchParams.get('note_name')
+        
+        if (noteId) {
+            const note = notesData.notes.find(n => n.id === Number(noteId))
+            if (note) {
+                setSelectedNote(note)
+                setIsMobileOpen(false)
+                // Remove search params from URL
+                router.replace('/my/notes', { scroll: false })
+            }
+        } else if (noteName) {
+            const note = notesData.notes.find(n => n.title.toLowerCase() === noteName.toLowerCase())
+            if (note) {
+                setSelectedNote(note)
+                setIsMobileOpen(false)
+                // Remove search params from URL
+                router.replace('/my/notes', { scroll: false })
+            }
+        }
+    }, [notesData?.notes, searchParams, router])
 
     useEffect(() => {
         setIsMobileOpen(mobile)

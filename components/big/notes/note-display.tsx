@@ -3,7 +3,16 @@
 import { Note } from '@/lib/db/schema';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, Fragment, useEffect } from 'react';
-import { ChevronDown, ChevronUp, ClipboardCheck, ClipboardPlus, Lock, PenIcon, Trash } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  ClipboardCheck,
+  ClipboardPlus,
+  ExternalLink,
+  Lock,
+  PenIcon,
+  Trash
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 import { useUser } from '@/hooks/use-user';
@@ -17,13 +26,14 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { decryptNote } from '@/lib/utils/crypt';
-import MDEditor from '@uiw/react-md-editor'
+import MDEditor from '@uiw/react-md-editor';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NotesAndData } from '@/lib/db/queries/note';
 import { cn } from '@/lib/utils';
 import { useNoteModal } from '@/contexts/modal-commands-context';
 import { useProjects } from '@/hooks/use-projects';
+import Link from 'next/link';
 
 export default function NoteDisplay({ note, className }: { note?: Note.Note.Select; className?: string }) {
   const user = useUser().user;
@@ -40,22 +50,22 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
   const [decryptError, setDecryptError] = useState(false);
 
   // Track color mode so markdown preview matches app theme
-  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light')
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
   useEffect(() => {
-    if (typeof document === 'undefined') return
-    const el = document.documentElement
-    const read = () => (el.getAttribute('data-color-mode') === 'dark' ? 'dark' : 'light')
-    setColorMode(read())
-    const obs = new MutationObserver((mutations) => {
+    if (typeof document === 'undefined') return;
+    const el = document.documentElement;
+    const read = () => (el.getAttribute('data-color-mode') === 'dark' ? 'dark' : 'light');
+    setColorMode(read());
+    const obs = new MutationObserver(mutations => {
       for (const m of mutations) {
         if (m.type === 'attributes' && m.attributeName === 'data-color-mode') {
-          setColorMode(read())
+          setColorMode(read());
         }
       }
-    })
-    obs.observe(el, { attributes: true })
-    return () => obs.disconnect()
-  }, [])
+    });
+    obs.observe(el, { attributes: true });
+    return () => obs.disconnect();
+  }, []);
 
   const projectTitle = note?.project_id ? allProjects.find(p => p.id === note.project_id)?.title : undefined;
 
@@ -150,9 +160,7 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
         >
           {note && (
             <div className="w-full">
-              <CardTitle
-                className={`w-full text-sm lg:text-base xl:text-base flex flex-row items-center gap-1`}
-              >
+              <CardTitle className={`w-full text-sm lg:text-base xl:text-base flex flex-row items-center gap-1`}>
                 {note.salt && note.iv ? <Lock className="size-3 cursor-pointer" /> : null}
                 {note.title}
               </CardTitle>
@@ -201,42 +209,50 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-row justify-end space-x-2">
-              {note.salt && note.iv && decryptedContent && (
-                <Lock className="w-4 h-4 cursor-pointer" onClick={cancelDecrypt} />
-              )}
-              <Trash className="w-4 h-4 cursor-pointer text-red-500" onClick={handleDelete} />
-              {isCopied ? (
-                <ClipboardCheck className="w-4 h-4 cursor-pointer" />
-              ) : (
-                ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
-                  <ClipboardPlus
-                    className="w-4 h-4 cursor-pointer"
+            <CardFooter className="flex flex-row justify-between space-x-2">
+              <Link 
+                href={`/my/notes?note_id=${note.id}`}
+                className="flex items-center hover:underline cursor-pointer"
+              >
+                See more
+              </Link>
+              <div className="flex items-center justify-end space-x-2">
+                {note.salt && note.iv && decryptedContent && (
+                  <Lock className="w-4 h-4 cursor-pointer" onClick={cancelDecrypt} />
+                )}
+                <Trash className="w-4 h-4 cursor-pointer text-red-500" onClick={handleDelete} />
+                {isCopied ? (
+                  <ClipboardCheck className="w-4 h-4 cursor-pointer" />
+                ) : (
+                  ((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
+                    <ClipboardPlus
+                      className="w-4 h-4 cursor-pointer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          note.salt && note.iv && decryptedContent ? decryptedContent : note.content
+                        );
+                        setIsCopied(true);
+                        toast.success('Copied to clipboard');
+                        setTimeout(() => {
+                          setIsCopied(false);
+                        }, 2000);
+                      }}
+                    />
+                  )
+                )}
+                {((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
+                  <PenIcon
+                    className={cn('min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer', className)}
                     onClick={() => {
-                      navigator.clipboard.writeText(
-                        note.salt && note.iv && decryptedContent ? decryptedContent : note.content
-                      );
-                      setIsCopied(true);
-                      toast.success('Copied to clipboard');
-                      setTimeout(() => {
-                        setIsCopied(false);
-                      }, 2000);
+                      noteModal.setNote({
+                        note: note,
+                        password: password
+                      });
+                      noteModal.openModal();
                     }}
                   />
-                )
-              )}
-              {((note.salt && note.iv && decryptedContent) || !(note.salt && note.iv)) && (
-                <PenIcon
-                  className={cn('min-w-[16px] max-w-[16px] min-h-[24px] max-h-[24px] cursor-pointer', className)}
-                  onClick={() => {
-                    noteModal.setNote({
-                      note: note,
-                      password: password
-                    });
-                    noteModal.openModal();
-                  }}
-                />
-              )}
+                )}
+              </div>
             </CardFooter>
           </>
         )}

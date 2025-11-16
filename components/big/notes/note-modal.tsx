@@ -320,7 +320,7 @@ export default function NoteModal() {
         }}>
             <DialogContent
                 aria-describedby={undefined}
-                maxHeight="max-h-120"
+                maxHeight="max-h-155"
             >
                 <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
                     <main className="space-y-4">
