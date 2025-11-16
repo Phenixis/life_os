@@ -66,8 +66,10 @@ export type PastWorkoutProps = {
 export function PastWorkoutDisplay(
     {
         workout,
+        showActions = true,
     }: {
         workout?: PastWorkoutProps
+        showActions?: boolean
     }
 ) {
     const [showDetails, setShowDetails] = useState<boolean>(false)
@@ -88,7 +90,7 @@ export function PastWorkoutDisplay(
                             </span>
                         </h3>
                         <div className="flex items-center gap-2">
-                            <WorkoutModal data={workout}/>
+                            {showActions && <WorkoutModal data={workout}/>}
                             <Difficulty value={workout.difficulty}/>
                         </div>
                     </>
@@ -122,13 +124,15 @@ export function PastWorkoutDisplay(
                                         })
                                     }
                                 </p>
-                                <CollapsibleTrigger asChild className={"flex lg:opacity-0 lg:group-hover/workout:opacity-100"}>
-                                    <Button size="sm" variant="ghost">
-                                        Details
-                                        <ChevronDown
-                                            className={"size-4 duration-200 " + (showDetails ? "rotate-180" : "")}/>
-                                    </Button>
-                                </CollapsibleTrigger>
+                                {showActions && (
+                                    <CollapsibleTrigger asChild className={"flex lg:opacity-0 lg:group-hover/workout:opacity-100"}>
+                                        <Button size="sm" variant="ghost">
+                                            Details
+                                            <ChevronDown
+                                                className={"size-4 duration-200 " + (showDetails ? "rotate-180" : "")}/>
+                                        </Button>
+                                    </CollapsibleTrigger>
+                                )}
                             </>
                         ) : (
                             <>

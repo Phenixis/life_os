@@ -33,6 +33,32 @@ export function useWorkouts(limit: number = 10, offset: number = 0) {
     }
 }
 
+// Hook to fetch past workouts by date range
+export function useWorkoutsByDate(dateAfter?: Date, dateBefore?: Date, limit: number = 10) {
+    const {user} = useUser()
+
+    const buildUrl = () => {
+        const params = new URLSearchParams()
+        params.append('limit', limit.toString())
+        if (dateAfter) params.append('dateAfter', dateAfter.toISOString())
+        if (dateBefore) params.append('dateBefore', dateBefore.toISOString())
+        return `/api/workout?${params.toString()}`
+    }
+
+    const url = (dateAfter || dateBefore) ? buildUrl() : null
+
+    const {data, error, isLoading} = useSWR(
+        user && url ? url : null,
+        (url) => fetcher(url, user!.api_key)
+    )
+
+    return {
+        workouts: data?.workouts as PastWorkout[] || [],
+        isLoading,
+        error
+    }
+}
+
 // Hook to fetch saved workout templates
 export function useSavedWorkouts() {
     const {user} = useUser()

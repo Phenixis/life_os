@@ -19,14 +19,46 @@ export type PastWorkout = {
     }[]
 }
 
-export async function getPastWorkouts(userId: string, limit: number = 50, offset: number = 0): Promise<PastWorkout[]> {
+export async function getPastWorkouts(
+    userId: string, 
+    limit: number = 50, 
+    offset: number = 0,
+    dateAfter?: Date,
+    dateBefore?: Date
+): Promise<PastWorkout[]> {
+    const conditions = [
+        lib.eq(workoutTable.user_id, userId),
+        lib.isNull(workoutTable.deleted_at)
+    ]
+
+    // When both dates are provided and they're on the same day (for single day filtering)
+    if (dateAfter && dateBefore) {
+        const startDay = new Date(dateAfter.getFullYear(), dateAfter.getMonth(), dateAfter.getDate())
+        const endDay = new Date(dateBefore.getFullYear(), dateBefore.getMonth(), dateBefore.getDate())
+        
+        if (startDay.getTime() === endDay.getTime()) {
+            // Single day filter: use SQL date casting to compare only date parts
+            conditions.push(
+                lib.sql`DATE(${workoutTable.date}) = DATE(${dateAfter.toISOString()}::timestamp)`
+            )
+        } else {
+            // Range filter
+            conditions.push(lib.gte(workoutTable.date, dateAfter))
+            conditions.push(lib.lte(workoutTable.date, dateBefore))
+        }
+    } else {
+        if (dateAfter) {
+            conditions.push(lib.gte(workoutTable.date, dateAfter))
+        }
+        if (dateBefore) {
+            conditions.push(lib.lte(workoutTable.date, dateBefore))
+        }
+    }
+
     const workouts = await lib.db
         .select()
         .from(workoutTable)
-        .where(lib.and(
-            lib.eq(workoutTable.user_id, userId),
-            lib.isNull(workoutTable.deleted_at)
-        ))
+        .where(lib.and(...conditions))
         .orderBy(lib.desc(workoutTable.date))
         .offset(offset)
         .limit(limit);

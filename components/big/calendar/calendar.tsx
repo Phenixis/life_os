@@ -8,8 +8,10 @@ import {TASK_PARAMS} from "../tasks/tasks-card"
 import {useNumberOfTasks} from "@/hooks/use-number-of-tasks"
 import {useDailyMoods} from "@/hooks/use-daily-moods"
 import {useTasks} from "@/hooks/use-tasks"
+import {useWorkoutsByDate} from "@/hooks/use-workouts"
 import TaskDisplay from "@/components/big/tasks/task-display"
 import DailyMoodModal from "@/components/big/dailyMood/dailyMood-modal"
+import {PastWorkoutDisplay} from "@/components/big/workout/past-workout/past-workout-display"
 
 export default function Calendar(
     {
@@ -76,6 +78,13 @@ export default function Calendar(
         dueBefore: dayEnd,
         dueAfter: dayStart,
     })
+
+    // Fetch workouts for the selected day
+    const {
+        workouts: dayWorkouts,
+        isLoading: isWorkoutsLoading,
+        error: workoutsError,
+    } = useWorkoutsByDate(dayStart, dayEnd, 10)
 
     const combinedTasks = useMemo(() => {
         const taskMap = new Map<number, (typeof uncompletedTasks)[number]>()
@@ -149,7 +158,7 @@ export default function Calendar(
         }
 
         if (combinedTasks.length === 0) {
-            return <div className="w-full">No tasks for the day</div>
+            return null
         }
 
         return (
@@ -267,22 +276,46 @@ export default function Calendar(
             </div>
             <div className="w-full h-full flex flex-col items-start justify-between">
                 <div className="w-full flex flex-col items-center justify-center">
-                    <div className="flex flex-col items-start justify-center w-full">
-                        <h6>
-                            Tasks of the day
-                        </h6>
-                        {renderDailyTasks()}
-                        {hasPartialTaskError && (
-                            <div className="w-full text-sm text-amber-600 dark:text-amber-400 mt-2">
-                                Some tasks could not be loaded.
-                            </div>
-                        )}
-                        {isTaskCountError && showNumberOfTasks && (
-                            <div className="w-full text-sm text-amber-600 dark:text-amber-400 mt-2">
-                                Task indicators unavailable.
-                            </div>
-                        )}
-                    </div>
+                    {(isInitialLoading || hasPartialTaskError || isTaskCountError || combinedTasks.length > 0) && (
+                        <div className="flex flex-col items-start justify-center w-full">
+                            <h6>
+                                Tasks of the day
+                            </h6>
+                            {renderDailyTasks()}
+                            {hasPartialTaskError && (
+                                <div className="w-full text-sm text-amber-600 dark:text-amber-400 mt-2">
+                                    Some tasks could not be loaded.
+                                </div>
+                            )}
+                            {isTaskCountError && showNumberOfTasks && (
+                                <div className="w-full text-sm text-amber-600 dark:text-amber-400 mt-2">
+                                    Task indicators unavailable.
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {(isWorkoutsLoading || workoutsError || dayWorkouts.length > 0) && (
+                        <div className="flex flex-col items-start justify-center w-full mt-4">
+                            <h6>
+                                Workout of the day
+                            </h6>
+                            {isWorkoutsLoading ? (
+                                <div className="w-full">Loading workout...</div>
+                            ) : workoutsError ? (
+                                <div className="w-full text-sm text-amber-600 dark:text-amber-400 mt-2">
+                                    Error loading workout
+                                </div>
+                            ) : (
+                                dayWorkouts.map((workout) => (
+                                    <PastWorkoutDisplay
+                                        key={workout.id}
+                                        workout={workout}
+                                        showActions={false}
+                                    />
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
