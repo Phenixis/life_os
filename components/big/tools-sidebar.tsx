@@ -41,7 +41,7 @@ export function ToolsSidebar() {
                               asChild
                               tooltip={toolItem.name + ': ' + toolItem.description}
                             >
-                              {tool.name === 'Coming soon' ? (
+                              {(toolItem.available || process.env.NEXT_PUBLIC_ENVIRONMENT !== 'development') ? (
                                 <p>
                                   {toolItem.icon}
                                   <span>{toolItem.name}</span>
