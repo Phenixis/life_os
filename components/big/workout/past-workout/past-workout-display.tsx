@@ -108,7 +108,7 @@ export function PastWorkoutDisplay(
                     {
                         workout ? (
                             <>
-                                <p className="space-y-1 w-full">
+                                <div className="space-y-1 w-full">
                                     {
                                         workout.exercices.map((exercice, index) => {
                                             const progItem = progression?.exercises.find(e => e.exerciseName === exercice.name)
@@ -126,7 +126,7 @@ export function PastWorkoutDisplay(
                                             )
                                         })
                                     }
-                                </p>
+                                </div>
                                 {showActions && (
                                     <CollapsibleTrigger asChild className={"flex lg:opacity-0 lg:group-hover/workout:opacity-100"}>
                                         <Button size="sm" variant="ghost">
