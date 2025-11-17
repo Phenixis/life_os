@@ -14,9 +14,11 @@ export async function GET(request: NextRequest) {
     const excludedProjectTitles = searchParams.get("excludedProjectTitles")?.split(",") || undefined
     const limit = searchParams.get("limit") ? Number.parseInt(searchParams.get("limit") as string) : undefined
     const page = searchParams.get("page") ? Number.parseInt(searchParams.get("page") as string) : undefined
+    const createdAfter = searchParams.get("createdAfter") ? new Date(searchParams.get("createdAfter")!) : undefined
+    const createdBefore = searchParams.get("createdBefore") ? new Date(searchParams.get("createdBefore")!) : undefined
 
     try {
-        const result = await NoteQueries.getNotes(verification.userId, title, projectTitle, limit, page, projectTitles, excludedProjectTitles)
+        const result = await NoteQueries.getNotes(verification.userId, title, projectTitle, limit, page, projectTitles, excludedProjectTitles, createdAfter, createdBefore)
         return NextResponse.json(result)
     } catch (error) {
         console.error("Error fetching notes:", error)

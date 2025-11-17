@@ -21,8 +21,34 @@ export async function getNotes(
     limit: number = 25,
     page: number = 1,
     projectTitles?: string[],
-    excludedProjectTitles?: string[]
+    excludedProjectTitles?: string[],
+    createdAfter?: Date,
+    createdBefore?: Date
 ) {
+    // Build date filter condition
+    const dateCondition = (() => {
+        if (createdAfter && createdBefore) {
+            const startDay = new Date(createdAfter.getFullYear(), createdAfter.getMonth(), createdAfter.getDate())
+            const endDay = new Date(createdBefore.getFullYear(), createdBefore.getMonth(), createdBefore.getDate())
+            
+            if (startDay.getTime() === endDay.getTime()) {
+                // Single day filter
+                return lib.sql`DATE(${lib.Schema.Note.Note.table.created_at}) = DATE(${createdAfter.toISOString()}::timestamp)`
+            } else {
+                // Range filter
+                return lib.and(
+                    lib.gte(lib.Schema.Note.Note.table.created_at, createdAfter),
+                    lib.lte(lib.Schema.Note.Note.table.created_at, createdBefore)
+                )
+            }
+        } else if (createdAfter) {
+            return lib.gte(lib.Schema.Note.Note.table.created_at, createdAfter)
+        } else if (createdBefore) {
+            return lib.lte(lib.Schema.Note.Note.table.created_at, createdBefore)
+        }
+        return undefined
+    })()
+
     // Get total count
     const [{ count }] = await lib.db
         .select({ count: lib.sql<number>`count(*)` })
@@ -44,7 +70,8 @@ export async function getNotes(
                 excludedProjectTitles && excludedProjectTitles.length > 0 ? lib.and(
                     lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles.filter(p => p !== "No project"))),
                     excludedProjectTitles.includes("No project") ? lib.isNotNull(lib.Schema.Note.Note.table.project_id) : lib.sql`1 = 1`
-                ) : undefined
+                ) : undefined,
+                dateCondition
             )
         )
 
@@ -90,7 +117,8 @@ export async function getNotes(
                         lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles)),
                         lib.isNull(lib.Schema.Note.Note.table.project_id)
                     )
-            ) : undefined
+            ) : undefined,
+            dateCondition
         )
     )
         .orderBy(lib.desc(lib.Schema.Note.Note.table.created_at))

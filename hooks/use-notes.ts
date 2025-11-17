@@ -43,3 +43,21 @@ export function useNotes(params: UseNotesParams = {}) {
         notes: data as NotesAndData, // Keep backward compatibility
     }
 }
+// Hook to fetch notes by date range
+export function useNotesByDate(createdAfter?: Date, createdBefore?: Date, limit: number = 10) {
+    const { data, isLoading, isError, mutate } = useFilteredData<NotesAndData>({
+        endpoint: "/api/note",
+        params: {
+            createdAfter: createdAfter?.toISOString(),
+            createdBefore: createdBefore?.toISOString(),
+            limit,
+        },
+    })
+
+    return {
+        notes: data?.notes || [],
+        isLoading,
+        isError,
+        mutate,
+    }
+}

@@ -11,6 +11,7 @@ import {Difficulty} from "./difficulty"
 import {WorkoutModal} from "@/components/big/workout/workout-modal"
 import {WorkoutProgressionDisplay, ProgressionBadge} from "./workout-progression-display"
 import {useWorkoutProgression} from "@/hooks/use-workouts"
+import { cn } from "@/lib/utils"
 
 function formatRelativeDate(date: Date, locale: string = 'en-US'): string {
     const now = new Date()
@@ -67,9 +68,11 @@ export function PastWorkoutDisplay(
     {
         workout,
         showActions = true,
+        className = "",
     }: {
         workout?: PastWorkoutProps
         showActions?: boolean
+        className?: string
     }
 ) {
     const [showDetails, setShowDetails] = useState<boolean>(false)
@@ -77,7 +80,7 @@ export function PastWorkoutDisplay(
 
     return (
         <div
-            className={"h-fit w-full lg:hover:bg-gray-100 dark:lg:hover:bg-gray-900 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout"}>
+            className={cn("h-fit w-full lg:hover:bg-gray-100 dark:lg:hover:bg-gray-900 rounded-lg my-4 p-2 flex flex-col justify-between items-left gap-2 group/workout", className)}>
             <header className={"flex justify-between items-center gap-4"}>
                 {workout ? (
                     <>
