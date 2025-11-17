@@ -10,9 +10,6 @@ import {cn} from "@/lib/utils"
 import {useState} from "react"
 import {usePathname} from "next/navigation"
 import {DarkModeCookie} from "@/lib/flags"
-import {Button} from "@/components/ui/button";
-import {Plus} from "lucide-react";
-import {useNoteModal} from "@/contexts/modal-commands-context";
 
 
 export default function Header(
@@ -26,7 +23,6 @@ export default function Header(
     const [isHovering, setIsHovering] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const pathname = usePathname()
-    const noteModal = useNoteModal()
 
     return (
         <header
@@ -62,28 +58,6 @@ export default function Header(
                         />
                     </div>
                 </div>
-
-                {
-                    pathname === "/my/notes" && (
-                        <div
-                            className="ml-2 lg:ml-0"
-                            onClick={() => {
-                                setIsOpen(false)
-                                setIsHovering(false)
-                            }}>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className={
-                                    "whitespace-nowrap transition-transform duration-300"
-                                }
-                                onClick={() => noteModal.openModal()}
-                            >
-                                <Plus size={24}/>
-                            </Button>
-                        </div>
-                    )
-                }
 
                 <div
                     className={
