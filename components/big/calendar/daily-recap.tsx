@@ -30,6 +30,15 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
     notes: status.Loading
   });
 
+  // Reset component status when date changes
+  useEffect(() => {
+    setComponentStatus({
+      tasks: status.Loading,
+      workout: status.Loading,
+      notes: status.Loading
+    });
+  }, [dayStart, dayEnd]);
+
   // Calculate loading status whenever componentStatus changes
   const isLoading = Object.values(componentStatus).some(s => s === status.Loading);
   const hasAnyData = Object.values(componentStatus).some(s => s === status.HasData);
@@ -47,6 +56,9 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
     setComponentStatus(prev => ({ ...prev, notes: hasData ? status.HasData : status.NoData }));
   }, []);
 
+  // Generate a unique key based on dates to force remount on date change
+  const dateKey = `${dayStart?.toISOString()}-${dayEnd?.toISOString()}`;
+
   return (
     <div className="w-full flex flex-col items-center justify-center gap-4">
       {[
@@ -55,7 +67,7 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
           hasData: componentStatus.tasks,
           component: (
             <DailyTasks
-              key="tasks"
+              key={`tasks-${dateKey}`}
               dayStart={dayStart}
               dayEnd={dayEnd}
               showNumberOfTasks={showNumberOfTasks}
@@ -68,7 +80,7 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
           hasData: componentStatus.workout,
           component: (
             <DailyWorkout
-              key="workout"
+              key={`workout-${dateKey}`}
               dayStart={dayStart}
               dayEnd={dayEnd}
               onDataStatusChange={handleWorkoutDataChange}
@@ -79,7 +91,7 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
           key: 'notes',
           hasData: componentStatus.notes,
           component: (
-            <DailyNotes key="notes" dayStart={dayStart} dayEnd={dayEnd} onDataStatusChange={handleNotesDataChange} />
+            <DailyNotes key={`notes-${dateKey}`} dayStart={dayStart} dayEnd={dayEnd} onDataStatusChange={handleNotesDataChange} />
           )
         }
       ]

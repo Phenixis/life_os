@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { useUser } from '@/hooks/use-user';
 import { fetcher } from '@/lib/fetcher';
 import type { NoteWithProject } from '@/lib/db/queries/note';
+import NoteDisplay from '../notes/note-display';
 
 interface DailyNotesProps {
   dayStart?: Date;
@@ -53,15 +54,7 @@ export function DailyNotes({ dayStart, dayEnd, onDataStatusChange }: DailyNotesP
     <div className="flex flex-col items-start justify-center w-full">
       <div className="w-full flex flex-col gap-2">
         {notes.map(note => (
-          <div
-            key={note.id}
-            className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-          >
-            <div className="font-medium text-sm">{note.title}</div>
-            {note.project_title && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{note.project_title}</div>
-            )}
-          </div>
+          <NoteDisplay key={note.id} note={note} />
         ))}
       </div>
     </div>
