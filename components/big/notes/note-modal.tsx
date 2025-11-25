@@ -344,9 +344,9 @@ export default function NoteModal() {
                                 className="text-sm lg:text-base"
                             />
                         </div>
-                        <div>
+                        <div className="w-full">
                             <Label htmlFor="content" required>Content</Label>
-                            <div data-color-mode={colorMode} className="prose max-w-full">
+                            <div data-color-mode={colorMode} className="max-w-full">
                                 <MDEditor
                                     key={colorMode}
                                     id="content"
@@ -354,6 +354,7 @@ export default function NoteModal() {
                                     onChange={(val) => setInputNoteContent(val || '')}
                                     textareaProps={{ placeholder: 'Write your note in Markdown...' }}
                                     preview={isMobile ? 'edit' : 'live'}
+                                    className="!text-black"
                                 />
                             </div>
                         </div>

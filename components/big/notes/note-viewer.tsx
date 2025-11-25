@@ -292,7 +292,7 @@ export default function NoteViewer({ note, className }: NoteViewerProps) {
                             <div
                                 data-color-mode={colorMode}
                                 key={colorMode}
-                                className="prose prose-sm md:prose-base lg:prose-lg dark:prose-invert max-w-none"
+                                className="max-w-none"
                             >
                                 <MDEditor.Markdown
                                     source={isEncrypted && decryptedContent ? decryptedContent : note.content}
