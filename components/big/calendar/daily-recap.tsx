@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { DailyTasks } from '@/components/big/calendar/daily-tasks';
 import { DailyWorkout } from '@/components/big/calendar/daily-workout';
 import { DailyNotes } from '@/components/big/calendar/daily-notes';
@@ -23,21 +23,39 @@ interface componentStatus {
   notes: status;
 }
 
-export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: DailyRecapProps) {
-  const [componentStatus, setComponentStatus] = useState<componentStatus>({
-    tasks: status.Loading,
-    workout: status.Loading,
-    notes: status.Loading
-  });
+const initialStatus: componentStatus = {
+  tasks: status.Loading,
+  workout: status.Loading,
+  notes: status.Loading
+};
 
-  // Reset component status when date changes
-  useEffect(() => {
-    setComponentStatus({
-      tasks: status.Loading,
-      workout: status.Loading,
-      notes: status.Loading
-    });
-  }, [dayStart, dayEnd]);
+/**
+ * Generate a stable date key for tracking date changes
+ */
+function getDateKey(dayStart?: Date, dayEnd?: Date): string {
+  const startKey = dayStart ? dayStart.getTime().toString() : 'none';
+  const endKey = dayEnd ? dayEnd.getTime().toString() : 'none';
+  return `${startKey}-${endKey}`;
+}
+
+export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: DailyRecapProps) {
+  // Generate a unique key based on dates
+  const dateKey = getDateKey(dayStart, dayEnd);
+  
+  // Track the previous dateKey to detect changes
+  // This pattern is recommended by React for updating state based on previous props
+  // See: https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const prevDateKeyRef = useRef<string>(dateKey);
+  
+  const [componentStatus, setComponentStatus] = useState<componentStatus>(initialStatus);
+  
+  // Reset component status synchronously when date changes
+  // This avoids the race condition where useEffect runs asynchronously and
+  // children report status before parent resets to Loading
+  if (prevDateKeyRef.current !== dateKey) {
+    prevDateKeyRef.current = dateKey;
+    setComponentStatus(initialStatus);
+  }
 
   // Calculate loading status whenever componentStatus changes
   const isLoading = Object.values(componentStatus).some(s => s === status.Loading);
@@ -55,9 +73,6 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
   const handleNotesDataChange = useCallback((hasData: boolean) => {
     setComponentStatus(prev => ({ ...prev, notes: hasData ? status.HasData : status.NoData }));
   }, []);
-
-  // Generate a unique key based on dates to force remount on date change
-  const dateKey = `${dayStart?.toISOString()}-${dayEnd?.toISOString()}`;
 
   return (
     <div className="w-full flex flex-col items-center justify-center gap-4">
