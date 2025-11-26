@@ -8,10 +8,11 @@ import { NoteWithProject } from '@/lib/db/queries/note';
 interface ModalCommandsContextType {
   taskModal: {
     isOpen: boolean;
-    openModal: () => void;
+    openModal: (dueDate?: Date) => void;
     closeModal: () => void;
     task?: Task.Task.TaskWithRelations;
     setTask: (task?: Task.Task.TaskWithRelations) => void;
+    dueDate?: Date;
   };
   noteModal: {
     isOpen: boolean;
@@ -40,6 +41,7 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
   // Task modal state
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskModalData, setTaskModalData] = useState<Task.Task.TaskWithRelations | undefined>(undefined);
+  const [taskModalDueDate, setTaskModalDueDate] = useState<Date>();
 
   // Note modal state
   const [noteModalOpen, setNoteModalOpen] = useState(false);
@@ -55,17 +57,20 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
   const value: ModalCommandsContextType = {
     taskModal: {
       isOpen: taskModalOpen,
-      openModal: () => {
+      openModal: (dueDate?: Date) => {
         if (!someModalOpen()) {
+          setTaskModalDueDate(dueDate);
           setTaskModalOpen(true);
         }
       },
       closeModal: () => {
         setTaskModalOpen(false);
         setTaskModalData(undefined);
+        setTaskModalDueDate(undefined);
       },
       task: taskModalData,
-      setTask: setTaskModalData
+      setTask: setTaskModalData,
+      dueDate: taskModalDueDate
     },
     noteModal: {
       isOpen: noteModalOpen,
