@@ -21,6 +21,10 @@ import {useNoteModal} from "@/contexts/modal-commands-context";
 import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 import {useProjects} from "@/hooks/use-projects";
 import { useIsMobile } from "@/hooks/use-mobile"
+import {Checkbox} from "@/components/ui/checkbox"
+
+// Local storage key for note modal content
+const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
 
 export default function NoteModal() {
     const user = useUser().user;
@@ -42,6 +46,7 @@ export default function NoteModal() {
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
     const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
     const [passwordValue, setPasswordValue] = useState<string>(password || "")
+    const [keepEditing, setKeepEditing] = useState(false)
 
     const [noteTitle, setNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
     const [inputNoteTitle, setInputNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
@@ -147,6 +152,52 @@ export default function NoteModal() {
         }
     }, [mode, updateUserDraftNoteDebounced])
 
+    // Save to local storage whenever content changes
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        
+        // Only save to local storage for create mode or if content has changed in edit mode
+        if (isOpen && (mode === "create" || formChanged)) {
+            const draftData = {
+                title: noteTitle,
+                content: noteContent,
+                projectTitle: project.title,
+                projectId: project.id,
+                mode,
+                noteId: note?.id,
+                timestamp: Date.now()
+            }
+            window.localStorage.setItem(NOTE_MODAL_STORAGE_KEY, JSON.stringify(draftData))
+        }
+    }, [noteTitle, noteContent, project, mode, note?.id, isOpen, formChanged])
+
+    // Load from local storage when modal opens in create mode
+    useEffect(() => {
+        if (typeof window === 'undefined' || !isOpen || mode !== "create") return
+        
+        const savedData = window.localStorage.getItem(NOTE_MODAL_STORAGE_KEY)
+        if (savedData) {
+            try {
+                const parsed = JSON.parse(savedData)
+                // Only restore if it's recent (within last 24 hours) and was create mode
+                if (parsed.mode === "create" && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+                    // Don't overwrite if user draft already exists (database takes precedence)
+                    if (!user?.note_draft_title && !user?.note_draft_content) {
+                        setInputNoteTitle(parsed.title || "")
+                        setNoteTitle(parsed.title || "")
+                        setInputNoteContent(parsed.content || "")
+                        setNoteContent(parsed.content || "")
+                        if (parsed.projectTitle || parsed.projectId > 0) {
+                            setProject({ title: parsed.projectTitle || "", id: parsed.projectId || -1 })
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to parse local storage data:", e)
+            }
+        }
+    }, [isOpen, mode, user?.note_draft_title, user?.note_draft_content])
+
     useEffect(() => {
         const originalContent = (mode === "edit" && passwordValue && decryptedContent !== null)
             ? decryptedContent
@@ -196,6 +247,11 @@ export default function NoteModal() {
         setDecryptedContent(null)
         setFormChanged(false)
         setShowAdvancedOptions(false)
+
+        // Clear local storage
+        if (typeof window !== 'undefined') {
+            window.localStorage.removeItem(NOTE_MODAL_STORAGE_KEY)
+        }
 
         updateUserDraftNote({
             userId: user?.id || "-1",
@@ -254,8 +310,6 @@ export default function NoteModal() {
                 } as Note.Note.Select
             }
 
-            toast.success(`Note ${mode === "edit" ? "updated" : "created"} successfully`)
-
             const response = await fetch("/api/note", {
                 method: mode === "edit" ? "PUT" : "POST",
                 headers: {
@@ -272,7 +326,20 @@ export default function NoteModal() {
                 throw new Error("Failed to save note")
             }
 
-            close()
+            toast.success(`Note ${mode === "edit" ? "updated" : "created"} successfully`)
+
+            // Clear local storage after successful save
+            if (typeof window !== 'undefined') {
+                window.localStorage.removeItem(NOTE_MODAL_STORAGE_KEY)
+            }
+
+            if (!keepEditing) {
+                close()
+            } else {
+                // Reset form but keep modal open
+                resetForm()
+            }
+            
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
         } catch (error) {
@@ -385,7 +452,17 @@ export default function NoteModal() {
                         </Collapsible>
                     </main>
 
-                    <DialogFooter>
+                    <DialogFooter className="w-full sm:justify-between">
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="keep-editing"
+                                checked={keepEditing}
+                                onCheckedChange={() => setKeepEditing(!keepEditing)}
+                            />
+                            <label htmlFor="keep-editing" className="text-sm cursor-pointer">
+                                Keep editing the note
+                            </label>
+                        </div>
                         <Button type="submit" disabled={!formChanged}>
                             {mode === "create" ? "Create" : "Save"}
                         </Button>
