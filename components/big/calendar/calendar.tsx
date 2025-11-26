@@ -128,6 +128,7 @@ export default function Calendar({
         <div className="w-full flex justify-end mt-4 px-2">
           <Button
             onClick={handleCreateTask}
+            variant="outline"
             size="sm"
             className="gap-2"
             tooltip="Create a task"
