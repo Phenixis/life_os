@@ -21,6 +21,11 @@ import {useNoteModal} from "@/contexts/modal-commands-context";
 import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 import {useProjects} from "@/hooks/use-projects";
 import { useIsMobile } from "@/hooks/use-mobile"
+import {Checkbox} from "@/components/ui/checkbox"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+
+// Local storage key for note modal content
+const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
 
 export default function NoteModal() {
     const user = useUser().user;
@@ -42,6 +47,13 @@ export default function NoteModal() {
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
     const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
     const [passwordValue, setPasswordValue] = useState<string>(password || "")
+    const [keepEditing, setKeepEditing] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+    // Track the last saved state for comparison when keep editing is enabled
+    const [lastSavedTitle, setLastSavedTitle] = useState<string>("")
+    const [lastSavedContent, setLastSavedContent] = useState<string>("")
+    const [lastSavedProjectId, setLastSavedProjectId] = useState<number>(-1)
 
     const [noteTitle, setNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
     const [inputNoteTitle, setInputNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
@@ -128,16 +140,53 @@ export default function NoteModal() {
             )
             setPasswordValue(password || "")
             setDecryptedContent(null)
+            // Set last saved values for edit mode
+            setLastSavedTitle(safeTitle)
+            setLastSavedContent(safeContent)
+            setLastSavedProjectId(note.project_id || -1)
         } else if (mode === "create") {
-            const draftTitle = user?.note_draft_title || ""
-            const draftContent = user?.note_draft_content || ""
-            setInputNoteTitle(draftTitle)
-            setNoteTitle(draftTitle)
-            setInputNoteContent(draftContent)
-            setNoteContent(draftContent)
-            setProject(user?.note_draft_project_title ? { title: user.note_draft_project_title, id: -1 } : { title: "", id: -1 })
+            // Try to load from local storage first
+            let loadedFromLocalStorage = false
+            if (typeof window !== 'undefined') {
+                const savedData = window.localStorage.getItem(NOTE_MODAL_STORAGE_KEY)
+                if (savedData) {
+                    try {
+                        const parsed = JSON.parse(savedData)
+                        // Only restore if it's recent (within last 24 hours) and was create mode
+                        if (parsed.mode === "create" && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+                            setInputNoteTitle(parsed.title || "")
+                            setNoteTitle(parsed.title || "")
+                            setInputNoteContent(parsed.content || "")
+                            setNoteContent(parsed.content || "")
+                            if (parsed.projectTitle || (parsed.projectId != null && parsed.projectId !== -1)) {
+                                setProject({ title: parsed.projectTitle || "", id: parsed.projectId || -1 })
+                            } else {
+                                setProject({ title: "", id: -1 })
+                            }
+                            loadedFromLocalStorage = true
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse local storage data:", e)
+                    }
+                }
+            }
+            
+            // If not loaded from local storage, use database draft
+            if (!loadedFromLocalStorage) {
+                const draftTitle = user?.note_draft_title || ""
+                const draftContent = user?.note_draft_content || ""
+                setInputNoteTitle(draftTitle)
+                setNoteTitle(draftTitle)
+                setInputNoteContent(draftContent)
+                setNoteContent(draftContent)
+                setProject(user?.note_draft_project_title ? { title: user.note_draft_project_title, id: -1 } : { title: "", id: -1 })
+            }
             setPasswordValue(password || "")
             setDecryptedContent(null)
+            // Reset last saved values for create mode
+            setLastSavedTitle("")
+            setLastSavedContent("")
+            setLastSavedProjectId(-1)
         }
     }, [isOpen, mode, note?.id, note?.title, note?.content, note?.project_id, note?.project_title, user?.note_draft_title, user?.note_draft_content, user?.note_draft_project_title, password, allProjects])
 
@@ -147,26 +196,48 @@ export default function NoteModal() {
         }
     }, [mode, updateUserDraftNoteDebounced])
 
+    // Save to local storage whenever content changes
     useEffect(() => {
-        const originalContent = (mode === "edit" && passwordValue && decryptedContent !== null)
-            ? decryptedContent
-            : (note?.content || "")
+        if (typeof window === 'undefined') return
+        
+        // Save to local storage for create mode or when editing (if content has changed)
+        // Note: We only restore from local storage for create mode, not edit mode.
+        // For edit mode, the authoritative source is always the database.
+        // Use inputNoteTitle/inputNoteContent (not debounced versions) for immediate updates
+        if (isOpen && (mode === "create" || formChanged)) {
+            const draftData = {
+                title: inputNoteTitle,
+                content: inputNoteContent,
+                projectTitle: project.title,
+                projectId: project.id,
+                mode,
+                noteId: note?.id,
+                timestamp: Date.now()
+            }
+            window.localStorage.setItem(NOTE_MODAL_STORAGE_KEY, JSON.stringify(draftData))
+        }
+    }, [inputNoteTitle, inputNoteContent, project, mode, note?.id, isOpen, formChanged])
+
+    useEffect(() => {
+        // Use lastSaved values if they exist (when keepEditing was used), otherwise use original note
+        const compareTitle = lastSavedTitle || (note?.title || "")
+        const compareContent = lastSavedContent || (mode === "edit" && passwordValue && decryptedContent !== null ? decryptedContent : (note?.content || ""))
+        const compareProjectId = lastSavedProjectId !== -1 ? lastSavedProjectId : (note?.project_id || -1)
         
         // For project comparison, check both ID and title
-        const originalProjectId = note?.project_id ? note.project_id : -1
         const originalProjectTitle = note?.project_title || ""
-        const projectChanged = project.id !== originalProjectId || 
+        const projectChanged = project.id !== compareProjectId || 
             (project.id === -1 && project.title !== originalProjectTitle)
         
         setFormChanged(
             mode === "edit"
-                ? inputNoteTitle.trim() !== (note?.title || "").trim()
-                    || inputNoteContent.trim() !== originalContent.trim()
+                ? inputNoteTitle.trim() !== compareTitle.trim()
+                    || inputNoteContent.trim() !== compareContent.trim()
                     || projectChanged
                     || passwordValue.trim() !== (password || "").trim()
                 : inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
         )
-    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, note?.project_title, password, decryptedContent])
+    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, note?.project_title, password, decryptedContent, lastSavedTitle, lastSavedContent, lastSavedProjectId])
 
     // Keep project title in sync when projects list loads/changes
     useEffect(() => {
@@ -181,6 +252,7 @@ export default function NoteModal() {
 
     // Refs
     const isSubmittingRef = useRef(false)
+    const closeDialogRef = useRef<() => void>(() => {})
 
     // Handlers
     const resetForm = () => {
@@ -196,6 +268,11 @@ export default function NoteModal() {
         setDecryptedContent(null)
         setFormChanged(false)
         setShowAdvancedOptions(false)
+
+        // Clear local storage
+        if (typeof window !== 'undefined') {
+            window.localStorage.removeItem(NOTE_MODAL_STORAGE_KEY)
+        }
 
         updateUserDraftNote({
             userId: user?.id || "-1",
@@ -213,15 +290,40 @@ export default function NoteModal() {
         closeModal()
     }
 
+    // Handle dialog close attempt
+    const handleCloseAttempt = () => {
+        if (formChanged) {
+            // Store the close function for later use
+            closeDialogRef.current = () => close()
+            // Show confirmation dialog
+            setShowConfirmDialog(true)
+        } else {
+            // No changes, close immediately
+            close()
+        }
+    }
+
+    // Handle confirmation dialog result
+    const handleConfirmDiscard = () => {
+        // Close confirmation dialog
+        setShowConfirmDialog(false)
+        // Execute the stored close function
+        setTimeout(() => {
+            closeDialogRef.current()
+        }, 100)
+    }
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
         if (isSubmittingRef.current) return
         isSubmittingRef.current = true
+        setIsSubmitting(true)
 
         try {
             if (!noteTitle.trim()) {
                 isSubmittingRef.current = false
+                setIsSubmitting(false)
                 return
             }
 
@@ -254,8 +356,6 @@ export default function NoteModal() {
                 } as Note.Note.Select
             }
 
-            toast.success(`Note ${mode === "edit" ? "updated" : "created"} successfully`)
-
             const response = await fetch("/api/note", {
                 method: mode === "edit" ? "PUT" : "POST",
                 headers: {
@@ -272,14 +372,31 @@ export default function NoteModal() {
                 throw new Error("Failed to save note")
             }
 
-            close()
+            toast.success(`Note ${mode === "edit" ? "updated" : "created"} successfully`)
+
+            // Clear local storage after successful save
+            if (typeof window !== 'undefined') {
+                window.localStorage.removeItem(NOTE_MODAL_STORAGE_KEY)
+            }
+
+            if (!keepEditing) {
+                close()
+            } else {
+                // If keepEditing is true, update the lastSaved values so form change detection works correctly
+                setLastSavedTitle(noteTitle)
+                setLastSavedContent(noteContent)
+                setLastSavedProjectId(project.id)
+            }
+            
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
+            setIsSubmitting(false)
         } catch (error) {
             console.error("Erreur lors de la soumission:", error)
             toast.error(`Failed to ${mode === "edit" ? "update" : "create"} note. Try again later.`)
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
+            setIsSubmitting(false)
         }
     }
 
@@ -306,13 +423,30 @@ export default function NoteModal() {
         debouncedDecrypt(pwd)
     }, [debouncedDecrypt, passwordValue, password, note?.id, note?.content, note?.salt, note?.iv, isOpen])
 
+    // Warn before leaving page with unsaved changes
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isOpen && formChanged) {
+                e.preventDefault()
+                // Chrome requires returnValue to be set
+                e.returnValue = ''
+            }
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload)
+        }
+    }, [isOpen, formChanged])
+
     // Effects
 
     return (
+        <>
         <Dialog open={isOpen} onOpenChange={(newOpenState) => {
             if (isOpen && !newOpenState) {
                 // Attempting to close
-                close()
+                handleCloseAttempt()
             } else {
                 // Opening the dialog
                 openModal()
@@ -341,6 +475,7 @@ export default function NoteModal() {
                                 onChange={(e) => {
                                     setInputNoteTitle(e.target.value)
                                 }}
+                                disabled={isSubmitting}
                                 className="text-sm lg:text-base"
                             />
                         </div>
@@ -351,8 +486,8 @@ export default function NoteModal() {
                                     key={colorMode}
                                     id="content"
                                     value={inputNoteContent}
-                                    onChange={(val) => setInputNoteContent(val || '')}
-                                    textareaProps={{ placeholder: 'Write your note in Markdown...' }}
+                                    onChange={(val) => !isSubmitting && setInputNoteContent(val || '')}
+                                    textareaProps={{ placeholder: 'Write your note in Markdown...', disabled: isSubmitting }}
                                     preview={isMobile ? 'edit' : 'live'}
                                     className="!text-black"
                                 />
@@ -385,13 +520,41 @@ export default function NoteModal() {
                         </Collapsible>
                     </main>
 
-                    <DialogFooter>
-                        <Button type="submit" disabled={!formChanged}>
-                            {mode === "create" ? "Create" : "Save"}
+                    <DialogFooter className="w-full sm:justify-between">
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="keep-editing"
+                                checked={keepEditing}
+                                onCheckedChange={() => setKeepEditing(!keepEditing)}
+                                disabled={isSubmitting}
+                            />
+                            <label htmlFor="keep-editing" className={`text-sm ${isSubmitting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                                Keep editing the note?
+                            </label>
+                        </div>
+                        <Button type="submit" disabled={!formChanged || isSubmitting}>
+                            {isSubmitting ? "Saving..." : (mode === "create" ? "Create" : "Save")}
                         </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>
+
+        {/* Confirmation dialog for unsaved changes */}
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You have unsaved changes. Are you sure you want to close without saving?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
     )
 }
