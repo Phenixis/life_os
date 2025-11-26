@@ -4,6 +4,9 @@ import { useState, useCallback, useRef } from 'react';
 import { DailyTasks } from '@/components/big/calendar/daily-tasks';
 import { DailyWorkout } from '@/components/big/calendar/daily-workout';
 import { DailyNotes } from '@/components/big/calendar/daily-notes';
+import { Button } from '@/components/ui/button';
+import { PlusIcon } from 'lucide-react';
+import { useTaskModal } from '@/contexts/modal-commands-context';
 
 interface DailyRecapProps {
   dayStart?: Date;
@@ -48,6 +51,7 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
   const prevDateKeyRef = useRef<string>(dateKey);
   
   const [componentStatus, setComponentStatus] = useState<componentStatus>(initialStatus);
+  const taskModal = useTaskModal();
   
   // Reset component status synchronously when date changes
   // This avoids the race condition where useEffect runs asynchronously and
@@ -73,6 +77,10 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
   const handleNotesDataChange = useCallback((hasData: boolean) => {
     setComponentStatus(prev => ({ ...prev, notes: hasData ? status.HasData : status.NoData }));
   }, []);
+
+  const handleCreateTask = useCallback(() => {
+    taskModal.openModal(dayStart);
+  }, [taskModal, dayStart]);
 
   return (
     <div className="w-full flex flex-col items-center justify-center gap-4">
@@ -126,6 +134,17 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
           <div className="w-full text-sm text-gray-500 dark:text-gray-400 mt-2">Nothing to show for this day</div>
         </div>
       )}
+      <div className="w-full flex justify-end mt-4">
+        <Button
+          onClick={handleCreateTask}
+          size="sm"
+          className="gap-2"
+          tooltip="Create task for this date"
+        >
+          <PlusIcon className="h-4 w-4" />
+          Create Task
+        </Button>
+      </div>
     </div>
   );
 }

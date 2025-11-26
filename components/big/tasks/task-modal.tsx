@@ -31,7 +31,7 @@ import {DatePicker} from "@/components/big/date-picker";
 
 export default function TaskModal() {
     const user = useUser().user;
-    const {isOpen, task, openModal, closeModal} = useTaskModal();
+    const {isOpen, task, openModal, closeModal, dueDate: contextDueDate} = useTaskModal();
 
     // State management for the dialog
     const mode = task ? "edit" : "create"
@@ -39,7 +39,7 @@ export default function TaskModal() {
 
     // State management for form fields
     const [dueDate, setDueDate] = useState<Date>(() => {
-        const initialDate = task ? new Date(task.due) : new Date()
+        const initialDate = task ? new Date(task.due) : (contextDueDate || new Date())
         initialDate.setHours(0, 0, 0, 0)
         return initialDate
     })
@@ -66,8 +66,12 @@ export default function TaskModal() {
                 taskDueDate.setHours(0, 0, 0, 0)
                 setDueDate(taskDueDate)
             }
+        } else if (contextDueDate) {
+            const initialDate = new Date(contextDueDate)
+            initialDate.setHours(0, 0, 0, 0)
+            setDueDate(initialDate)
         }
-    }, [task])
+    }, [task, contextDueDate])
 
     const [toDoAfter, setToDoAfter] = useState<number>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].id : -1)
     const [toDoAfterInputValue, setToDoAfterInputValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
@@ -98,7 +102,7 @@ export default function TaskModal() {
 
     const resetForm = useCallback(() => {
         setDueDate(() => {
-            const initialDate = task ? new Date(task.due) : new Date()
+            const initialDate = task ? new Date(task.due) : (contextDueDate || new Date())
             initialDate.setHours(0, 0, 0, 0)
             return initialDate
         })
@@ -113,7 +117,7 @@ export default function TaskModal() {
         if (titleRef.current) {
             titleRef.current.value = ""
         }
-    }, [task])
+    }, [task, contextDueDate])
 
     useEffect(() => {
         if (isOpen) {
