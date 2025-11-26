@@ -199,12 +199,12 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                     {decryptError && <p className="text-red-500 text-sm">Incorrect password.</p>}
                   </>
                 ) : (
-                  <div data-color-mode={colorMode} key={colorMode} className="max-w-full">
+                  <div data-color-mode={colorMode} key={colorMode} className="max-w-full max-h-96">
                     <MDEditor.Markdown source={decryptedContent || ''} />
                   </div>
                 )
               ) : (
-                <div data-color-mode={colorMode} key={colorMode} className="max-w-full">
+                <div data-color-mode={colorMode} key={colorMode} className="max-w-full max-h-72 overflow-auto">
                   <MDEditor.Markdown source={note.content} />
                 </div>
               )}

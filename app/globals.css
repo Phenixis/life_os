@@ -460,4 +460,12 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .wmde-markdown ul {
+    @apply !list-disc;
+  }
+
+  .wmde-markdown ol {
+    @apply !list-decimal;
+  }
 }
