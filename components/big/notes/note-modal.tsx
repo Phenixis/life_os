@@ -47,6 +47,11 @@ export default function NoteModal() {
     const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
     const [passwordValue, setPasswordValue] = useState<string>(password || "")
     const [keepEditing, setKeepEditing] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    // Track the last saved state for comparison when keep editing is enabled
+    const [lastSavedTitle, setLastSavedTitle] = useState<string>("")
+    const [lastSavedContent, setLastSavedContent] = useState<string>("")
+    const [lastSavedProjectId, setLastSavedProjectId] = useState<number>(-1)
 
     const [noteTitle, setNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
     const [inputNoteTitle, setInputNoteTitle] = useState<string>(note ? note.title : (user?.note_draft_title || ""))
@@ -133,16 +138,53 @@ export default function NoteModal() {
             )
             setPasswordValue(password || "")
             setDecryptedContent(null)
+            // Set last saved values for edit mode
+            setLastSavedTitle(safeTitle)
+            setLastSavedContent(safeContent)
+            setLastSavedProjectId(note.project_id || -1)
         } else if (mode === "create") {
-            const draftTitle = user?.note_draft_title || ""
-            const draftContent = user?.note_draft_content || ""
-            setInputNoteTitle(draftTitle)
-            setNoteTitle(draftTitle)
-            setInputNoteContent(draftContent)
-            setNoteContent(draftContent)
-            setProject(user?.note_draft_project_title ? { title: user.note_draft_project_title, id: -1 } : { title: "", id: -1 })
+            // Try to load from local storage first
+            let loadedFromLocalStorage = false
+            if (typeof window !== 'undefined') {
+                const savedData = window.localStorage.getItem(NOTE_MODAL_STORAGE_KEY)
+                if (savedData) {
+                    try {
+                        const parsed = JSON.parse(savedData)
+                        // Only restore if it's recent (within last 24 hours) and was create mode
+                        if (parsed.mode === "create" && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+                            setInputNoteTitle(parsed.title || "")
+                            setNoteTitle(parsed.title || "")
+                            setInputNoteContent(parsed.content || "")
+                            setNoteContent(parsed.content || "")
+                            if (parsed.projectTitle || (parsed.projectId != null && parsed.projectId !== -1)) {
+                                setProject({ title: parsed.projectTitle || "", id: parsed.projectId || -1 })
+                            } else {
+                                setProject({ title: "", id: -1 })
+                            }
+                            loadedFromLocalStorage = true
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse local storage data:", e)
+                    }
+                }
+            }
+            
+            // If not loaded from local storage, use database draft
+            if (!loadedFromLocalStorage) {
+                const draftTitle = user?.note_draft_title || ""
+                const draftContent = user?.note_draft_content || ""
+                setInputNoteTitle(draftTitle)
+                setNoteTitle(draftTitle)
+                setInputNoteContent(draftContent)
+                setNoteContent(draftContent)
+                setProject(user?.note_draft_project_title ? { title: user.note_draft_project_title, id: -1 } : { title: "", id: -1 })
+            }
             setPasswordValue(password || "")
             setDecryptedContent(null)
+            // Reset last saved values for create mode
+            setLastSavedTitle("")
+            setLastSavedContent("")
+            setLastSavedProjectId(-1)
         }
     }, [isOpen, mode, note?.id, note?.title, note?.content, note?.project_id, note?.project_title, user?.note_draft_title, user?.note_draft_content, user?.note_draft_project_title, password, allProjects])
 
@@ -174,53 +216,26 @@ export default function NoteModal() {
         }
     }, [inputNoteTitle, inputNoteContent, project, mode, note?.id, isOpen, formChanged])
 
-    // Load from local storage when modal opens in create mode
     useEffect(() => {
-        if (typeof window === 'undefined' || !isOpen || mode !== "create") return
-        
-        const savedData = window.localStorage.getItem(NOTE_MODAL_STORAGE_KEY)
-        if (savedData) {
-            try {
-                const parsed = JSON.parse(savedData)
-                // Only restore if it's recent (within last 24 hours) and was create mode
-                if (parsed.mode === "create" && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-                    // Don't overwrite if user draft already exists (database takes precedence)
-                    if (!user?.note_draft_title && !user?.note_draft_content) {
-                        setInputNoteTitle(parsed.title || "")
-                        setNoteTitle(parsed.title || "")
-                        setInputNoteContent(parsed.content || "")
-                        setNoteContent(parsed.content || "")
-                        if (parsed.projectTitle || (parsed.projectId != null && parsed.projectId !== -1)) {
-                            setProject({ title: parsed.projectTitle || "", id: parsed.projectId || -1 })
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to parse local storage data:", e)
-            }
-        }
-    }, [isOpen, mode, user?.note_draft_title, user?.note_draft_content])
-
-    useEffect(() => {
-        const originalContent = (mode === "edit" && passwordValue && decryptedContent !== null)
-            ? decryptedContent
-            : (note?.content || "")
+        // Use lastSaved values if they exist (when keepEditing was used), otherwise use original note
+        const compareTitle = lastSavedTitle || (note?.title || "")
+        const compareContent = lastSavedContent || (mode === "edit" && passwordValue && decryptedContent !== null ? decryptedContent : (note?.content || ""))
+        const compareProjectId = lastSavedProjectId !== -1 ? lastSavedProjectId : (note?.project_id || -1)
         
         // For project comparison, check both ID and title
-        const originalProjectId = note?.project_id ? note.project_id : -1
         const originalProjectTitle = note?.project_title || ""
-        const projectChanged = project.id !== originalProjectId || 
+        const projectChanged = project.id !== compareProjectId || 
             (project.id === -1 && project.title !== originalProjectTitle)
         
         setFormChanged(
             mode === "edit"
-                ? inputNoteTitle.trim() !== (note?.title || "").trim()
-                    || inputNoteContent.trim() !== originalContent.trim()
+                ? inputNoteTitle.trim() !== compareTitle.trim()
+                    || inputNoteContent.trim() !== compareContent.trim()
                     || projectChanged
                     || passwordValue.trim() !== (password || "").trim()
                 : inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
         )
-    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, note?.project_title, password, decryptedContent])
+    }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, note?.project_title, password, decryptedContent, lastSavedTitle, lastSavedContent, lastSavedProjectId])
 
     // Keep project title in sync when projects list loads/changes
     useEffect(() => {
@@ -277,10 +292,12 @@ export default function NoteModal() {
 
         if (isSubmittingRef.current) return
         isSubmittingRef.current = true
+        setIsSubmitting(true)
 
         try {
             if (!noteTitle.trim()) {
                 isSubmittingRef.current = false
+                setIsSubmitting(false)
                 return
             }
 
@@ -338,17 +355,22 @@ export default function NoteModal() {
 
             if (!keepEditing) {
                 close()
+            } else {
+                // If keepEditing is true, update the lastSaved values so form change detection works correctly
+                setLastSavedTitle(noteTitle)
+                setLastSavedContent(noteContent)
+                setLastSavedProjectId(project.id)
             }
-            // If keepEditing is true, just keep the modal open with the current content
-            // The user can continue editing the same note
             
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
+            setIsSubmitting(false)
         } catch (error) {
             console.error("Erreur lors de la soumission:", error)
             toast.error(`Failed to ${mode === "edit" ? "update" : "create"} note. Try again later.`)
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
+            setIsSubmitting(false)
         }
     }
 
@@ -410,6 +432,7 @@ export default function NoteModal() {
                                 onChange={(e) => {
                                     setInputNoteTitle(e.target.value)
                                 }}
+                                disabled={isSubmitting}
                                 className="text-sm lg:text-base"
                             />
                         </div>
@@ -420,8 +443,8 @@ export default function NoteModal() {
                                     key={colorMode}
                                     id="content"
                                     value={inputNoteContent}
-                                    onChange={(val) => setInputNoteContent(val || '')}
-                                    textareaProps={{ placeholder: 'Write your note in Markdown...' }}
+                                    onChange={(val) => !isSubmitting && setInputNoteContent(val || '')}
+                                    textareaProps={{ placeholder: 'Write your note in Markdown...', disabled: isSubmitting }}
                                     preview={isMobile ? 'edit' : 'live'}
                                     className="!text-black"
                                 />
@@ -460,13 +483,14 @@ export default function NoteModal() {
                                 id="keep-editing"
                                 checked={keepEditing}
                                 onCheckedChange={() => setKeepEditing(!keepEditing)}
+                                disabled={isSubmitting}
                             />
-                            <label htmlFor="keep-editing" className="text-sm cursor-pointer">
+                            <label htmlFor="keep-editing" className={`text-sm ${isSubmitting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                                 Keep editing the note?
                             </label>
                         </div>
-                        <Button type="submit" disabled={!formChanged}>
-                            {mode === "create" ? "Create" : "Save"}
+                        <Button type="submit" disabled={!formChanged || isSubmitting}>
+                            {isSubmitting ? "Saving..." : (mode === "create" ? "Create" : "Save")}
                         </Button>
                     </DialogFooter>
                 </form>
