@@ -52,7 +52,7 @@ export function ProjectsMultipleSelects(
                                     defaultChecked={isSelected}
                                 />
                                 <label
-                                    htmlFor={`project-${project}`}
+                                    htmlFor={`project-${project.id}`}
                                     className={cn(
                                         "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border border-transparent",
                                         (isSelected || isRemoved) && "border-border bg-primary/10",
