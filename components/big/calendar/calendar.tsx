@@ -7,6 +7,9 @@ import { useDailyMoods } from '@/hooks/use-daily-moods';
 import { CalendarView } from '@/components/big/calendar/calendar-view';
 import { DateDisplay } from '@/components/big/calendar/date-display';
 import { DailyRecap } from '@/components/big/calendar/daily-recap';
+import { Button } from '@/components/ui/button';
+import { SquarePlus } from 'lucide-react';
+import { useTaskModal } from '@/contexts/modal-commands-context';
 
 export default function Calendar({
   className,
@@ -78,6 +81,12 @@ export default function Calendar({
 
   const currentMood = getCurrentDateMood();
 
+  const taskModal = useTaskModal();
+
+  const handleCreateTask = useCallback(() => {
+    taskModal.openModal(dayStart);
+  }, [taskModal, dayStart]);
+
   const handleMonthChange = useCallback((nextMonth: Date) => {
     setMonth(currentMonth => {
       if (!currentMonth) {
@@ -116,6 +125,17 @@ export default function Calendar({
       </div>
       <div className="w-full h-full flex flex-col items-start justify-between">
         <DailyRecap dayStart={dayStart} dayEnd={dayEnd} showNumberOfTasks={showNumberOfTasks} />
+        <div className="w-full flex justify-end mt-4 px-2">
+          <Button
+            onClick={handleCreateTask}
+            size="sm"
+            className="gap-2"
+            tooltip="Create a task"
+          >
+            <SquarePlus className="h-4 w-4" />
+            <span className="lg:hidden">Create Task</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
