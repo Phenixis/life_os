@@ -156,7 +156,9 @@ export default function NoteModal() {
     useEffect(() => {
         if (typeof window === 'undefined') return
         
-        // Only save to local storage for create mode or if content has changed in edit mode
+        // Save to local storage for create mode or when editing (if content has changed)
+        // Note: We only restore from local storage for create mode, not edit mode.
+        // For edit mode, the authoritative source is always the database.
         if (isOpen && (mode === "create" || formChanged)) {
             const draftData = {
                 title: noteTitle,
@@ -187,7 +189,7 @@ export default function NoteModal() {
                         setNoteTitle(parsed.title || "")
                         setInputNoteContent(parsed.content || "")
                         setNoteContent(parsed.content || "")
-                        if (parsed.projectTitle || parsed.projectId > 0) {
+                        if (parsed.projectTitle || (parsed.projectId != null && parsed.projectId !== -1)) {
                             setProject({ title: parsed.projectTitle || "", id: parsed.projectId || -1 })
                         }
                     }
@@ -460,7 +462,7 @@ export default function NoteModal() {
                                 onCheckedChange={() => setKeepEditing(!keepEditing)}
                             />
                             <label htmlFor="keep-editing" className="text-sm cursor-pointer">
-                                Keep editing the note
+                                Keep editing the note?
                             </label>
                         </div>
                         <Button type="submit" disabled={!formChanged}>
