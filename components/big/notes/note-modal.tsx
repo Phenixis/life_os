@@ -159,10 +159,11 @@ export default function NoteModal() {
         // Save to local storage for create mode or when editing (if content has changed)
         // Note: We only restore from local storage for create mode, not edit mode.
         // For edit mode, the authoritative source is always the database.
+        // Use inputNoteTitle/inputNoteContent (not debounced versions) for immediate updates
         if (isOpen && (mode === "create" || formChanged)) {
             const draftData = {
-                title: noteTitle,
-                content: noteContent,
+                title: inputNoteTitle,
+                content: inputNoteContent,
                 projectTitle: project.title,
                 projectId: project.id,
                 mode,
@@ -171,7 +172,7 @@ export default function NoteModal() {
             }
             window.localStorage.setItem(NOTE_MODAL_STORAGE_KEY, JSON.stringify(draftData))
         }
-    }, [noteTitle, noteContent, project, mode, note?.id, isOpen, formChanged])
+    }, [inputNoteTitle, inputNoteContent, project, mode, note?.id, isOpen, formChanged])
 
     // Load from local storage when modal opens in create mode
     useEffect(() => {
@@ -337,10 +338,9 @@ export default function NoteModal() {
 
             if (!keepEditing) {
                 close()
-            } else {
-                // Reset form but keep modal open
-                resetForm()
             }
+            // If keepEditing is true, just keep the modal open with the current content
+            // The user can continue editing the same note
             
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
