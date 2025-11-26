@@ -22,6 +22,7 @@ import {simplifiedProject} from "@/components/big/tasks/tasks-card";
 import {useProjects} from "@/hooks/use-projects";
 import { useIsMobile } from "@/hooks/use-mobile"
 import {Checkbox} from "@/components/ui/checkbox"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 // Local storage key for note modal content
 const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
@@ -48,6 +49,7 @@ export default function NoteModal() {
     const [passwordValue, setPasswordValue] = useState<string>(password || "")
     const [keepEditing, setKeepEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false)
     // Track the last saved state for comparison when keep editing is enabled
     const [lastSavedTitle, setLastSavedTitle] = useState<string>("")
     const [lastSavedContent, setLastSavedContent] = useState<string>("")
@@ -250,6 +252,7 @@ export default function NoteModal() {
 
     // Refs
     const isSubmittingRef = useRef(false)
+    const closeDialogRef = useRef<() => void>(() => {})
 
     // Handlers
     const resetForm = () => {
@@ -285,6 +288,29 @@ export default function NoteModal() {
     const close = () => {
         resetForm()
         closeModal()
+    }
+
+    // Handle dialog close attempt
+    const handleCloseAttempt = () => {
+        if (formChanged) {
+            // Store the close function for later use
+            closeDialogRef.current = () => close()
+            // Show confirmation dialog
+            setShowConfirmDialog(true)
+        } else {
+            // No changes, close immediately
+            close()
+        }
+    }
+
+    // Handle confirmation dialog result
+    const handleConfirmDiscard = () => {
+        // Close confirmation dialog
+        setShowConfirmDialog(false)
+        // Execute the stored close function
+        setTimeout(() => {
+            closeDialogRef.current()
+        }, 100)
     }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -397,13 +423,30 @@ export default function NoteModal() {
         debouncedDecrypt(pwd)
     }, [debouncedDecrypt, passwordValue, password, note?.id, note?.content, note?.salt, note?.iv, isOpen])
 
+    // Warn before leaving page with unsaved changes
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isOpen && formChanged) {
+                e.preventDefault()
+                // Chrome requires returnValue to be set
+                e.returnValue = ''
+            }
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload)
+        }
+    }, [isOpen, formChanged])
+
     // Effects
 
     return (
+        <>
         <Dialog open={isOpen} onOpenChange={(newOpenState) => {
             if (isOpen && !newOpenState) {
                 // Attempting to close
-                close()
+                handleCloseAttempt()
             } else {
                 // Opening the dialog
                 openModal()
@@ -496,5 +539,22 @@ export default function NoteModal() {
                 </form>
             </DialogContent>
         </Dialog>
+
+        {/* Confirmation dialog for unsaved changes */}
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You have unsaved changes. Are you sure you want to close without saving?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
     )
 }
