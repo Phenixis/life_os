@@ -40,7 +40,7 @@ export function ProjectsMultipleSelects(
 
                         return (
                             <div
-                                key={"project-" + project.id}
+                                key={`project-${project.id}`}
                                 className="flex items-center space-x-2 flex-shrink-0"
                                 onClick={() => onChange(project)}
                             >
