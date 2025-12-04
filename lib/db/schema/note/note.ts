@@ -16,6 +16,7 @@ export const table = lib.pgTable('note', {
     content: lib.text('content').notNull(),
     salt: lib.char('salt', {length: 24}),
     iv: lib.char('iv', {length: 16}),
+    share_token: lib.varchar('share_token', {length: 32}).unique(),
     created_at: lib.timestamp('created_at').notNull().defaultNow(),
     updated_at: lib.timestamp('updated_at').notNull().defaultNow(),
     deleted_at: lib.timestamp('deleted_at'),
