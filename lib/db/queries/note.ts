@@ -282,6 +282,7 @@ export async function permanentlyDeleteNote(userId: string, id: number) {
 }
 
 export async function generateShareToken(userId: string, noteId: number) {
+    // Generate 24-char token (DB field is VARCHAR(32) for flexibility)
     const shareToken = lib.nanoid(24)
     
     const result = await lib.db.update(lib.Schema.Note.Note.table)
@@ -305,7 +306,8 @@ export async function removeShareToken(userId: string, noteId: number) {
         .set({ share_token: null })
         .where(lib.and(
             lib.eq(lib.Schema.Note.Note.table.id, noteId),
-            lib.eq(lib.Schema.Note.Note.table.user_id, userId)
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+            lib.isNull(lib.Schema.Note.Note.table.deleted_at)
         ))
         .returning({ id: lib.Schema.Note.Note.table.id })
     

@@ -41,7 +41,9 @@ export default function ShareNoteButton({
     const [isRemoving, setIsRemoving] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
-    const shareUrl = shareToken ? `${window.location.origin}/shared/note/${shareToken}` : '';
+    const shareUrl = shareToken && typeof window !== 'undefined' 
+        ? `${window.location.origin}/shared/note/${shareToken}` 
+        : '';
 
     const handleGenerateToken = async () => {
         if (isEncrypted) {
