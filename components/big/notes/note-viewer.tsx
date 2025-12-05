@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { useNoteModal } from '@/contexts/modal-commands-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
+import ShareNoteButton from './share-note-button';
 
 interface NoteViewerProps {
     note: NoteWithProject | null;
@@ -228,6 +229,16 @@ export default function NoteViewer({ note, className }: NoteViewerProps) {
                                             <ClipboardPlus className="h-4 w-4" />
                                         )}
                                     </Button>
+                                    {user && (
+                                        <ShareNoteButton
+                                            noteId={note.id}
+                                            noteTitle={note.title}
+                                            initialShareToken={note.share_token}
+                                            apiKey={user.api_key}
+                                            isEncrypted={isEncrypted}
+                                            variant="icon"
+                                        />
+                                    )}
                                     <Button
                                         variant="outline"
                                         size="icon"

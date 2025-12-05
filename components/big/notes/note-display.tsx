@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { useNoteModal } from '@/contexts/modal-commands-context';
 import { useProjects } from '@/hooks/use-projects';
 import Link from 'next/link';
+import ShareNoteButton from './share-note-button';
 
 export default function NoteDisplay({ note, className }: { note?: Note.Note.Select; className?: string }) {
   const user = useUser().user;
@@ -219,6 +220,15 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
               <div className="flex items-center justify-end space-x-2">
                 {note.salt && note.iv && decryptedContent && (
                   <Lock className="w-4 h-4 cursor-pointer" onClick={cancelDecrypt} />
+                )}
+                {user && (
+                  <ShareNoteButton
+                    noteId={note.id}
+                    noteTitle={note.title}
+                    initialShareToken={note.share_token}
+                    apiKey={user.api_key}
+                    isEncrypted={!!(note.salt && note.iv)}
+                  />
                 )}
                 <Trash className="w-4 h-4 cursor-pointer text-red-500" onClick={handleDelete} />
                 {isCopied ? (
