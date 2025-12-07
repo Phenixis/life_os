@@ -84,6 +84,7 @@ export async function getNotes(
         content: lib.Schema.Note.Note.table.content,
         salt: lib.Schema.Note.Note.table.salt,
         iv: lib.Schema.Note.Note.table.iv,
+        share_token: lib.Schema.Note.Note.table.share_token,
         created_at: lib.Schema.Note.Note.table.created_at,
         updated_at: lib.Schema.Note.Note.table.updated_at,
         deleted_at: lib.Schema.Note.Note.table.deleted_at,
@@ -228,6 +229,7 @@ export async function getDeletedNotes(
         content: lib.Schema.Note.Note.table.content,
         salt: lib.Schema.Note.Note.table.salt,
         iv: lib.Schema.Note.Note.table.iv,
+        share_token: lib.Schema.Note.Note.table.share_token,
         created_at: lib.Schema.Note.Note.table.created_at,
         updated_at: lib.Schema.Note.Note.table.updated_at,
         deleted_at: lib.Schema.Note.Note.table.deleted_at,
@@ -277,4 +279,63 @@ export async function permanentlyDeleteNote(userId: string, id: number) {
     }
 
     return null
+}
+
+export async function generateShareToken(userId: string, noteId: number) {
+    // Generate 24-char token (DB field is VARCHAR(32) for flexibility)
+    const shareToken = lib.nanoid(24)
+    
+    const result = await lib.db.update(lib.Schema.Note.Note.table)
+        .set({ share_token: shareToken })
+        .where(lib.and(
+            lib.eq(lib.Schema.Note.Note.table.id, noteId),
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+            lib.isNull(lib.Schema.Note.Note.table.deleted_at)
+        ))
+        .returning({ share_token: lib.Schema.Note.Note.table.share_token })
+    
+    if (result.length > 0) {
+        return result[0].share_token
+    }
+    
+    return null
+}
+
+export async function removeShareToken(userId: string, noteId: number) {
+    const result = await lib.db.update(lib.Schema.Note.Note.table)
+        .set({ share_token: null })
+        .where(lib.and(
+            lib.eq(lib.Schema.Note.Note.table.id, noteId),
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+            lib.isNull(lib.Schema.Note.Note.table.deleted_at)
+        ))
+        .returning({ id: lib.Schema.Note.Note.table.id })
+    
+    return result.length > 0
+}
+
+export async function getSharedNote(shareToken: string) {
+    const notes = await lib.db.select({
+        id: lib.Schema.Note.Note.table.id,
+        user_id: lib.Schema.Note.Note.table.user_id,
+        project_id: lib.Schema.Note.Note.table.project_id,
+        title: lib.Schema.Note.Note.table.title,
+        content: lib.Schema.Note.Note.table.content,
+        salt: lib.Schema.Note.Note.table.salt,
+        iv: lib.Schema.Note.Note.table.iv,
+        share_token: lib.Schema.Note.Note.table.share_token,
+        created_at: lib.Schema.Note.Note.table.created_at,
+        updated_at: lib.Schema.Note.Note.table.updated_at,
+        deleted_at: lib.Schema.Note.Note.table.deleted_at,
+        project_title: lib.Schema.Project.table.title,
+    })
+        .from(lib.Schema.Note.Note.table)
+        .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Note.Note.table.project_id, lib.Schema.Project.table.id))
+        .where(lib.and(
+            lib.eq(lib.Schema.Note.Note.table.share_token, shareToken),
+            lib.isNull(lib.Schema.Note.Note.table.deleted_at)
+        ))
+        .limit(1)
+    
+    return notes.length > 0 ? notes[0] : null
 }

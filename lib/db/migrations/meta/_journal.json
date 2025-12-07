@@ -316,6 +316,13 @@
       "when": 1762376700445,
       "tag": "0044_worthless_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1764850655936,
+      "tag": "0045_awesome_blizzard",
+      "breakpoints": true
     }
   ]
 }
