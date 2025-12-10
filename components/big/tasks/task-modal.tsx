@@ -335,7 +335,7 @@ export default function TaskModal() {
                         if (dueBeforeFromSearchParams && item.due > new Date(dueBeforeFromSearchParams)) return false
 
                         if (projectsFromSearchParams && projectsFromSearchParams.length > 0) {
-                            return projectsFromSearchParams.some((project: simplifiedProject) => item.project?.title === project.title)
+                            return projectsFromSearchParams.some((project: simplifiedProject) => item.project_id === project.id)
                         }
                         return true
                     })
