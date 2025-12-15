@@ -27,6 +27,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 // Local storage key for note modal content
 const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
 
+// Auto-title generation constants
+const MAX_AUTO_TITLE_LENGTH = 27
+const MAX_CONTENT_LENGTH_WITHOUT_ELLIPSIS = 28
+
 export default function NoteModal() {
     const user = useUser().user;
     const isMobile = useIsMobile();
@@ -123,17 +127,17 @@ export default function NoteModal() {
     // Auto-generate title from content when title is not dirty
     useEffect(() => {
         if (!isTitleDirty && inputNoteContent) {
-            // Remove markdown syntax for a cleaner title
+            // Remove basic markdown syntax for a cleaner title
             const cleanContent = inputNoteContent.replace(/[#*_~`]/g, '').trim()
-            let autoTitle = cleanContent.substring(0, 27)
-            if (cleanContent.length > 28) {
+            let autoTitle = cleanContent.substring(0, MAX_AUTO_TITLE_LENGTH)
+            if (cleanContent.length > MAX_CONTENT_LENGTH_WITHOUT_ELLIPSIS) {
                 autoTitle += '...'
             }
             if (autoTitle && autoTitle !== inputNoteTitle) {
                 setInputNoteTitle(autoTitle)
             }
         }
-    }, [inputNoteContent, isTitleDirty, inputNoteTitle])
+    }, [inputNoteContent, isTitleDirty])
 
     // Sync form state when modal opens or when incoming note/user draft changes
     useEffect(() => {
