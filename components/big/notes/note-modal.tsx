@@ -50,6 +50,7 @@ export default function NoteModal() {
     const [keepEditing, setKeepEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+    const [isTitleDirty, setIsTitleDirty] = useState(false)
     // Track the last saved state for comparison when keep editing is enabled
     const [lastSavedTitle, setLastSavedTitle] = useState<string>("")
     const [lastSavedContent, setLastSavedContent] = useState<string>("")
@@ -119,6 +120,21 @@ export default function NoteModal() {
         updateNoteContent(inputNoteContent)
     }, [inputNoteContent, updateNoteContent])
 
+    // Auto-generate title from content when title is not dirty
+    useEffect(() => {
+        if (!isTitleDirty && inputNoteContent) {
+            // Remove markdown syntax for a cleaner title
+            const cleanContent = inputNoteContent.replace(/[#*_~`]/g, '').trim()
+            let autoTitle = cleanContent.substring(0, 27)
+            if (cleanContent.length > 28) {
+                autoTitle += '...'
+            }
+            if (autoTitle && autoTitle !== inputNoteTitle) {
+                setInputNoteTitle(autoTitle)
+            }
+        }
+    }, [inputNoteContent, isTitleDirty, inputNoteTitle])
+
     // Sync form state when modal opens or when incoming note/user draft changes
     useEffect(() => {
         if (!isOpen) return
@@ -140,6 +156,7 @@ export default function NoteModal() {
             )
             setPasswordValue(password || "")
             setDecryptedContent(null)
+            setIsTitleDirty(true) // In edit mode, title is from database so it's considered "dirty"
             // Set last saved values for edit mode
             setLastSavedTitle(safeTitle)
             setLastSavedContent(safeContent)
@@ -163,6 +180,8 @@ export default function NoteModal() {
                             } else {
                                 setProject({ title: "", id: -1 })
                             }
+                            // If there's a saved title, consider it dirty
+                            setIsTitleDirty(!!parsed.title)
                             loadedFromLocalStorage = true
                         }
                     } catch (e) {
@@ -180,6 +199,8 @@ export default function NoteModal() {
                 setInputNoteContent(draftContent)
                 setNoteContent(draftContent)
                 setProject(user?.note_draft_project_title ? { title: user.note_draft_project_title, id: -1 } : { title: "", id: -1 })
+                // If there's a draft title, consider it dirty
+                setIsTitleDirty(!!draftTitle)
             }
             setPasswordValue(password || "")
             setDecryptedContent(null)
@@ -268,6 +289,7 @@ export default function NoteModal() {
         setDecryptedContent(null)
         setFormChanged(false)
         setShowAdvancedOptions(false)
+        setIsTitleDirty(false)
 
         // Clear local storage
         if (typeof window !== 'undefined') {
@@ -474,6 +496,7 @@ export default function NoteModal() {
                                 autoFocus
                                 onChange={(e) => {
                                     setInputNoteTitle(e.target.value)
+                                    setIsTitleDirty(true)
                                 }}
                                 disabled={isSubmitting}
                                 className="text-sm lg:text-base"
