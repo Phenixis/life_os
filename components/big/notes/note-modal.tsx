@@ -514,7 +514,14 @@ export default function NoteModal() {
                                     id="content"
                                     value={inputNoteContent}
                                     onChange={(val) => !isSubmitting && setInputNoteContent(val || '')}
-                                    textareaProps={{ placeholder: 'Write your note in Markdown...', disabled: isSubmitting }}
+                                    textareaProps={{ 
+                                        placeholder: 'Write your note in Markdown...', 
+                                        disabled: isSubmitting,
+                                        autoComplete: 'on',
+                                        autoCorrect: 'on',
+                                        autoCapitalize: 'on',
+                                        spellCheck: true
+                                    }}
                                     preview={isMobile ? 'edit' : 'live'}
                                     className="!text-black"
                                 />
