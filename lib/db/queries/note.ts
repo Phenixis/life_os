@@ -20,20 +20,21 @@ export async function getNotes(
     projectTitle?: string,
     limit: number = 25,
     page: number = 1,
-    projectTitles?: string[],
-    excludedProjectTitles?: string[],
+    projectIds?: number[],
+    excludedProjectIds?: number[],
     createdAfter?: Date,
     createdBefore?: Date
 ) {
     // Build date filter condition
     const dateCondition = (() => {
         if (createdAfter && createdBefore) {
-            const startDay = new Date(createdAfter.getFullYear(), createdAfter.getMonth(), createdAfter.getDate())
-            const endDay = new Date(createdBefore.getFullYear(), createdBefore.getMonth(), createdBefore.getDate())
+            // Use UTC methods to properly compare dates across timezones
+            const startDay = new Date(Date.UTC(createdAfter.getUTCFullYear(), createdAfter.getUTCMonth(), createdAfter.getUTCDate()))
+            const endDay = new Date(Date.UTC(createdBefore.getUTCFullYear(), createdBefore.getUTCMonth(), createdBefore.getUTCDate()))
             
             if (startDay.getTime() === endDay.getTime()) {
-                // Single day filter
-                return lib.sql`DATE(${lib.Schema.Note.Note.table.created_at}) = DATE(${createdAfter.toISOString()}::timestamp)`
+                // Single day filter - use AT TIME ZONE to ensure proper date comparison
+                return lib.sql`DATE(${lib.Schema.Note.Note.table.created_at} AT TIME ZONE 'UTC') = DATE(${createdAfter.toISOString()}::timestamp AT TIME ZONE 'UTC')`
             } else {
                 // Range filter
                 return lib.and(
@@ -63,14 +64,26 @@ export async function getNotes(
                     lib.isNotNull(lib.Schema.Note.Note.table.project_id),
                     lib.sql`LOWER(${lib.Schema.Project.table.title}) LIKE LOWER(${'%' + projectTitle + '%'})`,
                 )) : undefined,
-                projectTitles && projectTitles.length > 0 ? lib.or(
-                    lib.inArray(lib.Schema.Project.table.title, projectTitles.filter(p => p !== "No project")),
-                    projectTitles.includes("No project") ? lib.isNull(lib.Schema.Note.Note.table.project_id) : undefined
-                ) : undefined,
-                excludedProjectTitles && excludedProjectTitles.length > 0 ? lib.and(
-                    lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles.filter(p => p !== "No project"))),
-                    excludedProjectTitles.includes("No project") ? lib.isNotNull(lib.Schema.Note.Note.table.project_id) : lib.sql`1 = 1`
-                ) : undefined,
+                projectIds && projectIds.length > 0 
+                    ? lib.or(
+                        lib.inArray(lib.Schema.Project.table.id, projectIds.filter(p => p !== -1)),
+                        projectIds.includes(-1) ? lib.isNull(lib.Schema.Note.Note.table.project_id) : undefined
+                    )
+                    : undefined,
+                excludedProjectIds && excludedProjectIds.length > 0 
+                    ? lib.and(
+                        lib.or(
+                            lib.isNull(lib.Schema.Note.Note.table.project_id),
+                            lib.not(lib.inArray(
+                                lib.Schema.Project.table.id,
+                                excludedProjectIds.filter(p => p !== -1)
+                            ))
+                        ),
+                        excludedProjectIds.includes(-1)
+                            ? lib.isNotNull(lib.Schema.Note.Note.table.project_id)
+                            : lib.sql`1 = 1`
+                    )
+                    : undefined,
                 dateCondition
             )
         )
@@ -100,25 +113,26 @@ export async function getNotes(
                 lib.isNotNull(lib.Schema.Note.Note.table.project_id),
                 lib.sql`LOWER(${lib.Schema.Project.table.title}) LIKE LOWER(${'%' + projectTitle + '%'})`
             )) : undefined,
-            projectTitles && projectTitles.length > 0 ? (
-                projectTitles.includes("No project")
-                    ?   lib.or(
-                        lib.inArray(lib.Schema.Project.table.title, projectTitles.filter(p => p !== "No project")),
-                        lib.isNull(lib.Schema.Note.Note.table.project_id)
-                    )
-                    : lib.inArray(lib.Schema.Project.table.title, projectTitles)
-            ) : undefined,
-            excludedProjectTitles && excludedProjectTitles.length > 0 ? (
-                excludedProjectTitles.includes("No project")
-                    ? lib.and(
-                        lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles.filter(p => p !== "No project"))),
-                        lib.isNotNull(lib.Schema.Note.Note.table.project_id)
-                    )
-                    : lib.or(
-                        lib.not(lib.inArray(lib.Schema.Project.table.title, excludedProjectTitles)),
-                        lib.isNull(lib.Schema.Note.Note.table.project_id)
-                    )
-            ) : undefined,
+            projectIds && projectIds.length > 0 
+                ? lib.or(
+                    lib.inArray(lib.Schema.Project.table.id, projectIds.filter(p => p !== -1)),
+                    projectIds.includes(-1) ? lib.isNull(lib.Schema.Note.Note.table.project_id) : undefined
+                )
+                : undefined,
+            excludedProjectIds && excludedProjectIds.length > 0 
+                ? lib.and(
+                    lib.or(
+                        lib.isNull(lib.Schema.Note.Note.table.project_id),
+                        lib.not(lib.inArray(
+                            lib.Schema.Project.table.id,
+                            excludedProjectIds.filter(p => p !== -1)
+                        ))
+                    ),
+                    excludedProjectIds.includes(-1)
+                        ? lib.isNotNull(lib.Schema.Note.Note.table.project_id)
+                        : lib.sql`1 = 1`
+                )
+                : undefined,
             dateCondition
         )
     )

@@ -10,15 +10,19 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const title = searchParams.get("title") || undefined
     const projectTitle = searchParams.get("projectTitle") || undefined
-    const projectTitles = searchParams.get("projectTitles")?.split(",") || undefined
-    const excludedProjectTitles = searchParams.get("excludedProjectTitles")?.split(",") || undefined
+    const projectIds = searchParams.get("projectIds")
+        ? searchParams.get("projectIds")?.split(",").map(Number)
+        : undefined
+    const excludedProjectIds = searchParams.get("excludedProjectIds")
+        ? searchParams.get("excludedProjectIds")?.split(",").map(Number)
+        : undefined
     const limit = searchParams.get("limit") ? Number.parseInt(searchParams.get("limit") as string) : undefined
     const page = searchParams.get("page") ? Number.parseInt(searchParams.get("page") as string) : undefined
     const createdAfter = searchParams.get("createdAfter") ? new Date(searchParams.get("createdAfter")!) : undefined
     const createdBefore = searchParams.get("createdBefore") ? new Date(searchParams.get("createdBefore")!) : undefined
 
     try {
-        const result = await NoteQueries.getNotes(verification.userId, title, projectTitle, limit, page, projectTitles, excludedProjectTitles, createdAfter, createdBefore)
+        const result = await NoteQueries.getNotes(verification.userId, title, projectTitle, limit, page, projectIds, excludedProjectIds, createdAfter, createdBefore)
         return NextResponse.json(result)
     } catch (error) {
         console.error("Error fetching notes:", error)

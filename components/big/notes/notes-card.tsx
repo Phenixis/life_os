@@ -101,8 +101,8 @@ export function NotesCard(
     const {data: notesData, isLoading} = useNotes({
         title,
         limit,
-        projects: groupByProject && selectedProjects.length > 0 ? selectedProjects : undefined,
-        excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects : undefined,
+        selectedProjects: groupByProject && selectedProjects.length > 0 ? selectedProjects.map(project => project.id) : undefined,
+        excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects.map(project => project.id) : undefined,
     })
 
     // -------------------- Effects --------------------
@@ -172,20 +172,20 @@ export function NotesCard(
      *
      * @param projectTitle - The title of the project to toggle
      */
-    const toggleProject = useCallback((project: simplifiedProject) => {
+    const toggleProject = useCallback((clickedProject: simplifiedProject) => {
         startTransition(() => {
-            if (selectedProjects.filter(title => title.id === project.id).length > 0) {
+            if (selectedProjects.filter(selectedProject => selectedProject.id === clickedProject.id).length > 0) {
                 if (selectedProjects.length === 1) {
-                    setRemovedProjects(prev => [...prev, project]);
+                    setRemovedProjects(prev => [...prev, clickedProject]);
                 }
-                setSelectedProjects(prev => prev.filter(title => title.id !== project.id));
-            } else if (removedProjects.filter(title => title.id === project.id).length > 0) {
-                setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
+                setSelectedProjects(prev => prev.filter(title => title.id !== clickedProject.id));
+            } else if (removedProjects.filter(removedProject => removedProject.id === clickedProject.id).length > 0) {
+                setRemovedProjects(prev => prev.filter(title => title.id !== clickedProject.id));
             } else {
                 if (selectedProjects.length === 0) {
-                    setRemovedProjects(prev => prev.filter(title => title.id !== project.id));
+                    setRemovedProjects(prev => prev.filter(removedProject => removedProject.id !== clickedProject.id));
                 }
-                setSelectedProjects(prev => [...prev, project]);
+                setSelectedProjects(prev => [...prev, clickedProject]);
             }
         });
     }, [selectedProjects, removedProjects])
@@ -305,9 +305,9 @@ export function NotesCard(
                             .map(([projectId, group]) => {
                                 const {name, notes} = group as { name: string; notes: Note.Note.Select[] };
                                 return (
-                                    <div key={projectId} className="mb-4">
-                                        <h3 className="font-medium text-sm p-2 rounded-md">{name}</h3>
-                                        <div className="pl-2">
+                                    <div key={projectId} className="mb-2">
+                                        <h3 className="font-medium text-sm rounded-md">{name}</h3>
+                                        <div className="border-l ml-1 pl-1">
                                             {notes.map((note: Note.Note.Select) => (
                                                 <NoteDisplay note={note} className="mt-2" key={note.id}/>
                                             ))}

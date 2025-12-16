@@ -126,7 +126,7 @@ export function TasksCard(
         limit,
         orderingDirection,
         withProject,
-        projects: groupByProject && selectedProjects.length > 0 ? selectedProjects.map(project => project.id) : undefined,
+        selectedProjects: groupByProject && selectedProjects.length > 0 ? selectedProjects.map(project => project.id) : undefined,
         excludedProjects: groupByProject && removedProjects.length > 0 ? removedProjects.map(project => project.id) : undefined,
         dueBefore: dueBeforeDate,
     })

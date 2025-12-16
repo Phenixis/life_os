@@ -10,7 +10,7 @@ interface UseTasksParams {
   limit?: number
   orderingDirection?: "asc" | "desc"
   withProject?: boolean
-  projects?: number[]
+  selectedProjects?: number[]
   excludedProjects?: number[]
   dueBefore?: Date
   dueAfter?: Date
@@ -24,7 +24,7 @@ export function useTasks(params: UseTasksParams = {}) {
     limit,
     orderingDirection,
     withProject,
-    projects,
+    selectedProjects: projects,
     excludedProjects,
     dueBefore,
     dueAfter,

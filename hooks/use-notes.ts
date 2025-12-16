@@ -9,8 +9,8 @@ interface UseNotesParams {
     projectTitle?: string
     limit?: number
     page?: number
-    projects?: simplifiedProject[]
-    excludedProjects?: simplifiedProject[]
+  selectedProjects?: number[]
+  excludedProjects?: number[]
 }
 
 export function useNotes(params: UseNotesParams = {}) {
@@ -19,7 +19,7 @@ export function useNotes(params: UseNotesParams = {}) {
         projectTitle,
         limit,
         page,
-        projects,
+        selectedProjects: projects,
         excludedProjects
     } = params
 
@@ -30,8 +30,8 @@ export function useNotes(params: UseNotesParams = {}) {
             projectTitle,
             limit: limit ? limit + 1 : undefined,
             page,
-            projectTitles: projects?.join(","),
-            excludedProjectTitles: excludedProjects?.join(",")
+            projectIds: projects?.join(","),
+            excludedProjectIds: excludedProjects?.join(",")
         },
     })
 

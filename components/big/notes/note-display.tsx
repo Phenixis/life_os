@@ -165,7 +165,22 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                 {note.salt && note.iv ? <Lock className="size-3 cursor-pointer" /> : null}
                 {note.title}
               </CardTitle>
-              {projectTitle ? <p className="text-xs lg:text-sm text-gray-500">{projectTitle}</p> : null}
+                <div className="flex w-full justify-between items-center">
+                  {projectTitle ? (
+                    <p className="text-xs lg:text-sm text-gray-500">{projectTitle}</p>
+                  ) : (
+                    <span />
+                  )}
+                  {note.created_at && (
+                    <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                      {new Date(note.created_at).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  )}
+                </div>
             </div>
           )}
           <div
@@ -211,10 +226,7 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
               )}
             </CardContent>
             <CardFooter className="flex flex-row justify-between space-x-2">
-              <Link 
-                href={`/my/notes?note_id=${note.id}`}
-                className="flex items-center hover:underline cursor-pointer"
-              >
+              <Link href={`/my/notes?note_id=${note.id}`} className="flex items-center hover:underline cursor-pointer">
                 See more
               </Link>
               <div className="flex items-center justify-end space-x-2">
