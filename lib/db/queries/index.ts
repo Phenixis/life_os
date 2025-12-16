@@ -8,6 +8,8 @@ export * as MeteoQueries from "./meteo"
 
 export * as MovieQueries from "./movie/movie"
 
+export * as NotificationQueries from "./notification"
+
 export * as NoteQueries from "./note"
 
 export * as ProjectQueries from "./project"

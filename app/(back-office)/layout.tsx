@@ -4,6 +4,7 @@ import { getUser } from "@/lib/db/queries/user/user"
 import { getDarkModeCookie } from "@/lib/cookies"
 import { ModalCommandsProvider } from "@/contexts/modal-commands-context"
 import ModalManager from "@/components/big/modal-manager"
+import { NotificationChecker } from "@/components/utils/notification-checker"
 
 export default async function BackOfficeLayout({
   children,
@@ -21,6 +22,7 @@ export default async function BackOfficeLayout({
           <div className="w-full h-full">{children}</div>
         </main>
         <ModalManager />
+        <NotificationChecker />
       </ModalCommandsProvider>
     </UserProvider>
   )

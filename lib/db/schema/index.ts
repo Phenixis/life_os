@@ -11,4 +11,5 @@ export * as User from "./user";
 // FILE
 export * as DailyMood from "./daily-mood"
 export * as Meteo from "./meteo"
+export * as Notification from "./notification"
 export * as Project from "./project"

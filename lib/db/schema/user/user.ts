@@ -1,5 +1,5 @@
 import * as lib from "../lib";
-import { Task, Project, Note, Workout,DailyMood, Meteo, Movie, WMCDM, Habit, Ai } from "..";
+import { Task, Project, Note, Workout,DailyMood, Meteo, Movie, WMCDM, Habit, Ai, Notification } from "..";
 import * as Subscription from "./subscription";
 
 export const table = lib.pgTable('user', {
@@ -24,6 +24,14 @@ export const table = lib.pgTable('user', {
     note_draft_project_title: lib.varchar('note_draft_project_title', { length: 255 }).notNull().default(""),
     
     daily_recap_email_enabled: lib.boolean('daily_recap_email_enabled').notNull().default(false),
+    
+    // Notification preferences for daily mood reminders
+    mood_reminder_morning_enabled: lib.boolean('mood_reminder_morning_enabled').notNull().default(true),
+    mood_reminder_morning_hour: lib.integer('mood_reminder_morning_hour').notNull().default(8),
+    mood_reminder_morning_minute: lib.integer('mood_reminder_morning_minute').notNull().default(0),
+    mood_reminder_evening_enabled: lib.boolean('mood_reminder_evening_enabled').notNull().default(true),
+    mood_reminder_evening_hour: lib.integer('mood_reminder_evening_hour').notNull().default(20),
+    mood_reminder_evening_minute: lib.integer('mood_reminder_evening_minute').notNull().default(0),
     
     stripe_customer_id: lib.varchar('stripe_customer_id', { length: 255 }),
 
@@ -50,6 +58,7 @@ export const relations = lib.relations(table, ({ many }) => ({
     aiProfiles: many(Ai.Profile.table),
     conversations: many(Ai.Conversation.table),
     subscriptions: many(Subscription.table),
+    notifications: many(Notification.table),
 }));
 
 export type Select = typeof table.$inferSelect;

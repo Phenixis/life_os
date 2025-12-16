@@ -1,5 +1,6 @@
 import { getUser } from "@/lib/db/queries/user/user"
 import { NotificationsForm } from "@/components/big/settings/notifications-form"
+import { MoodReminderForm } from "@/components/big/settings/mood-reminder-form"
 import { NotificationsFormSkeleton } from "@/components/big/settings/notifications-form-skeleton"
 import { Suspense } from "react"
 
@@ -16,7 +17,12 @@ async function NotificationsContent() {
         )
     }
 
-    return <NotificationsForm user={user} />
+    return (
+        <div className="space-y-6">
+            <NotificationsForm user={user} />
+            <MoodReminderForm user={user} />
+        </div>
+    )
 }
 
 export default function NotificationsSettingsPage() {
@@ -24,7 +30,7 @@ export default function NotificationsSettingsPage() {
         <section className="page">
             <h1 className="page-title">Notifications</h1>
             <p className="page-description">
-                Manage your email notification preferences and stay informed about your tasks.
+                Manage your notification preferences and reminders.
             </p>
             <div className="mt-8">
                 <Suspense fallback={<NotificationsFormSkeleton />}>
