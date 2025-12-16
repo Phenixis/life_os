@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { useUser } from "@/hooks/use-user"
 import { useDailyMoods } from "@/hooks/use-daily-moods"
@@ -23,6 +23,10 @@ export function NotificationChecker() {
         endDate: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate() + 1),
     })
 
+    // Track if notifications have been shown today to avoid duplicates
+    const lastMorningNotificationDate = useRef<string>("")
+    const lastEveningNotificationDate = useRef<string>("")
+
     useEffect(() => {
         if (!user) return
 
@@ -30,12 +34,24 @@ export function NotificationChecker() {
             const now = new Date()
             const currentHour = now.getHours()
             const currentMinute = now.getMinutes()
+            const currentDateKey = now.toDateString()
 
-            // Check morning reminder
+            // Helper function to check if current time is within reminder window
+            const isInTimeRange = (reminderHour: number, reminderMinute: number) => {
+                // Calculate reminder time in minutes from midnight
+                const reminderTimeInMinutes = reminderHour * 60 + reminderMinute
+                // Calculate current time in minutes from midnight
+                const currentTimeInMinutes = currentHour * 60 + currentMinute
+                // Check if current time is within 2-hour window (120 minutes) after reminder time
+                return currentTimeInMinutes >= reminderTimeInMinutes && 
+                       currentTimeInMinutes < reminderTimeInMinutes + 120
+            }
+
+            // Check morning reminder (e.g., 8:00 AM - 10:00 AM)
             if (
                 user.mood_reminder_morning_enabled &&
-                currentHour === user.mood_reminder_morning_hour &&
-                currentMinute === user.mood_reminder_morning_minute
+                isInTimeRange(user.mood_reminder_morning_hour, user.mood_reminder_morning_minute) &&
+                lastMorningNotificationDate.current !== currentDateKey
             ) {
                 // Check if yesterday's mood is missing
                 if (!yesterdayMood || yesterdayMood.length === 0) {
@@ -47,14 +63,15 @@ export function NotificationChecker() {
                             onClick: () => openModal(yesterday)
                         }
                     })
+                    lastMorningNotificationDate.current = currentDateKey
                 }
             }
 
-            // Check evening reminder
+            // Check evening reminder (e.g., 8:00 PM - 10:00 PM)
             if (
                 user.mood_reminder_evening_enabled &&
-                currentHour === user.mood_reminder_evening_hour &&
-                currentMinute === user.mood_reminder_evening_minute
+                isInTimeRange(user.mood_reminder_evening_hour, user.mood_reminder_evening_minute) &&
+                lastEveningNotificationDate.current !== currentDateKey
             ) {
                 // Check if today's mood is missing
                 if (!todayMood || todayMood.length === 0) {
@@ -66,7 +83,17 @@ export function NotificationChecker() {
                             onClick: () => openModal(today)
                         }
                     })
+                    lastEveningNotificationDate.current = currentDateKey
                 }
+            }
+
+            // Reset notification tracking at midnight
+            const currentDate = now.toDateString()
+            if (lastMorningNotificationDate.current && lastMorningNotificationDate.current !== currentDate) {
+                lastMorningNotificationDate.current = ""
+            }
+            if (lastEveningNotificationDate.current && lastEveningNotificationDate.current !== currentDate) {
+                lastEveningNotificationDate.current = ""
             }
         }
 
