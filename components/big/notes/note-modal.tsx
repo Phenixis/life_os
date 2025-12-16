@@ -29,7 +29,6 @@ const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
 
 // Auto-title generation constants
 const MAX_AUTO_TITLE_LENGTH = 27
-const MAX_CONTENT_LENGTH_WITHOUT_ELLIPSIS = 28
 
 export default function NoteModal() {
     const user = useUser().user;
@@ -130,7 +129,7 @@ export default function NoteModal() {
             // Remove basic markdown syntax for a cleaner title
             const cleanContent = inputNoteContent.replace(/[#*_~`]/g, '').trim()
             let autoTitle = cleanContent.substring(0, MAX_AUTO_TITLE_LENGTH)
-            if (cleanContent.length > MAX_CONTENT_LENGTH_WITHOUT_ELLIPSIS) {
+            if (cleanContent.length > MAX_AUTO_TITLE_LENGTH) {
                 autoTitle += '...'
             }
             if (autoTitle && autoTitle !== inputNoteTitle) {
