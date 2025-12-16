@@ -176,18 +176,21 @@ export default function TaskModal() {
                 duration: durationValue,
                 score: score,
                 due: dueDate,
-                project_id: project.id,
+                project_id: project.id >= 0 ? project.id : null,
                 created_at: mode === "create" ? new Date() : task?.created_at,
                 updated_at: new Date(),
                 deleted_at: task?.deleted_at || null,
                 completed_at: task?.completed_at || null,
-                project: {
+                project: project.id >= 0 ? {
                     id: project.id,
                     title: project.title,
                     completed: false,
                     created_at: new Date(),
                     updated_at: new Date(),
-                } as Project.Select,
+                    user_id: user?.id || "",
+                    description: null,
+                    deleted_at: null,
+                } as Project.Select : null,
                 importanceDetails: {
                     level: importanceValue,
                     name: importanceData?.find((item) => item.level === importanceValue)?.name || "",
@@ -335,7 +338,7 @@ export default function TaskModal() {
                         if (dueBeforeFromSearchParams && item.due > new Date(dueBeforeFromSearchParams)) return false
 
                         if (projectsFromSearchParams && projectsFromSearchParams.length > 0) {
-                            return projectsFromSearchParams.some((project: simplifiedProject) => item.project?.title === project.title)
+                            return projectsFromSearchParams.some((project: simplifiedProject) => item.project_id === project.id)
                         }
                         return true
                     })
