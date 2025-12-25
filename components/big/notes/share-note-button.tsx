@@ -130,9 +130,8 @@ export default function ShareNoteButton({
           />
         </div>
       ) : (
-        <Button variant="outline" size="sm" onClick={handleOpenDialog} disabled={isEncrypted} className={className}>
-          <Share2 className="w-4 h-4 mr-2" />
-          Share
+        <Button variant="outline" size="icon" onClick={handleOpenDialog} disabled={isEncrypted} className={className}>
+          <Share2 className="w-4 h-4" />
         </Button>
       )}
 

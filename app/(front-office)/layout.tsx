@@ -1,17 +1,20 @@
 "use client";
 
-import {MotionA, MotionButton, MotionDiv, MotionFooter} from "@/lib/services/motion";
+import { MotionA, MotionButton, MotionDiv, MotionFooter } from "@/lib/services/motion";
 import Logo from "@/components/big/logo";
-import React, {useRef, useState} from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
-import {Button} from "@/components/ui/button";
-import {Menu, X} from "lucide-react";
-import {useRouter} from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
-export default function FrontOfficeLayout({children}: { children: React.ReactNode }) {
+export default function FrontOfficeLayout({ children }: { children: React.ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const router = useRouter();
+    const pathname = usePathname();
+
+    const onSharedPage = pathname.startsWith('/shared');
 
     // Animation variants
     const staggerContainer = {
@@ -59,49 +62,54 @@ export default function FrontOfficeLayout({children}: { children: React.ReactNod
                 className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 backdrop-blur-sm bg-white/80 dark:bg-black/80 sticky top-0 z-50">
                 <MotionDiv
                     className="flex items-center space-x-2"
-                    whileHover={{scale: 1.02}}
-                    transition={{type: "spring", stiffness: 400, damping: 17}}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                    <Logo size={48} title/>
+                    <Logo size={48} title />
                 </MotionDiv>
 
                 {/* Desktop Navigation Links */}
-                <MotionDiv
-                    className="hidden md:flex items-center space-x-8"
-                    variants={staggerContainer}
-                    initial="initial"
-                    animate="animate"
-                >
-                    {navigationItems.map((item) => (
-                        <MotionA
-                            key={item.name}
-                            href={item.href}
-                            variants={staggerItem}
-                            className="text-sm text-gray-600 dark:text-gray-400 lg:hover:text-black dark:lg:hover:text-white transition-colors relative group"
-                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)}
-                            whileHover={{y: -2}}
-                            transition={{type: "spring", stiffness: 400, damping: 17}}
+                {
+                    !onSharedPage && (
+
+                        <MotionDiv
+                            className="hidden md:flex items-center space-x-8"
+                            variants={staggerContainer}
+                            initial="initial"
+                            animate="animate"
                         >
-                            {item.name}
-                            <MotionDiv
-                                className="absolute -bottom-1 left-0 right-0 h-0.5 bg-black dark:bg-white"
-                                initial={{scaleX: 0}}
-                                whileHover={{scaleX: 1}}
-                                transition={{duration: 0.2}}
-                            />
-                        </MotionA>
-                    ))}
-                </MotionDiv>
+                            {navigationItems.map((item) => (
+                                <MotionA
+                                    key={item.name}
+                                    href={item.href}
+                                    variants={staggerItem}
+                                    className="text-sm text-gray-600 dark:text-gray-400 lg:hover:text-black dark:lg:hover:text-white transition-colors relative group"
+                                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)}
+                                    whileHover={{ y: -2 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                >
+                                    {item.name}
+                                    <MotionDiv
+                                        className="absolute -bottom-1 left-0 right-0 h-0.5 bg-black dark:bg-white"
+                                        initial={{ scaleX: 0 }}
+                                        whileHover={{ scaleX: 1 }}
+                                        transition={{ duration: 0.2 }}
+                                    />
+                                </MotionA>
+                            ))}
+                        </MotionDiv>
+                    )
+                }
 
                 {/* Desktop CTA Buttons */}
                 <div className="hidden md:flex items-center space-x-4">
-                    <MotionDiv whileHover={{scale: 1.05}} whileTap={{scale: 0.95}}>
+                    <MotionDiv whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                         <Link href="/login" className="text-sm lg:hover:underline">Sign In</Link>
                     </MotionDiv>
-                    <MotionDiv whileHover={{scale: 1.05}} whileTap={{scale: 0.95}}>
+                    <MotionDiv whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                         <Link href="/sign-up">
                             <Button size="sm"
-                                    className="bg-black dark:bg-white text-white dark:text-black lg:hover:bg-gray-800 dark:lg:hover:bg-gray-200">
+                                className="bg-black dark:bg-white text-white dark:text-black lg:hover:bg-gray-800 dark:lg:hover:bg-gray-200">
                                 Get Started
                             </Button>
                         </Link>
@@ -112,14 +120,14 @@ export default function FrontOfficeLayout({children}: { children: React.ReactNod
                 <MotionButton
                     className="md:hidden p-2"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    whileHover={{scale: 1.05}}
-                    whileTap={{scale: 0.95}}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                 >
                     <MotionDiv
-                        animate={{rotate: isMobileMenuOpen ? 180 : 0}}
-                        transition={{duration: 0.3}}
+                        animate={{ rotate: isMobileMenuOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
                     >
-                        {isMobileMenuOpen ? <X className="h-6 w-6"/> : <Menu className="h-6 w-6"/>}
+                        {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                     </MotionDiv>
                 </MotionButton>
             </nav>
@@ -128,10 +136,10 @@ export default function FrontOfficeLayout({children}: { children: React.ReactNod
             {isMobileMenuOpen && (
                 <MotionDiv
                     className="md:hidden fixed inset-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-sm"
-                    initial={{opacity: 0, y: -20}}
-                    animate={{opacity: 1, y: 0}}
-                    exit={{opacity: 0, y: -20}}
-                    transition={{duration: 0.3}}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
                 >
                     <div className="flex flex-col items-center justify-center h-full space-y-8">
                         <MotionDiv
@@ -150,8 +158,8 @@ export default function FrontOfficeLayout({children}: { children: React.ReactNod
                                         handleNavClick(e, item.href)
                                         setIsMobileMenuOpen(false)
                                     }}
-                                    whileHover={{scale: 1.05}}
-                                    whileTap={{scale: 0.95}}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
                                 >
                                     {item.name}
                                 </MotionA>
