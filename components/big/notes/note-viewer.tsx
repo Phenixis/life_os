@@ -202,7 +202,7 @@ export default function NoteViewer({ note, className }: NoteViewerProps) {
                                 Last updated: {new Date(note.updated_at).toLocaleDateString()}
                             </p>
                         </div>
-                        
+
                         {/* Action buttons */}
                         <div className="flex items-center gap-2">
                             {isEncrypted && decryptedContent && (
@@ -236,7 +236,7 @@ export default function NoteViewer({ note, className }: NoteViewerProps) {
                                             initialShareToken={note.share_token}
                                             apiKey={user.api_key}
                                             isEncrypted={isEncrypted}
-                                            variant="icon"
+                                            variant='button'
                                         />
                                     )}
                                     <Button

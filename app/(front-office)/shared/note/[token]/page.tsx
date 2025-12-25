@@ -54,11 +54,15 @@ export default function SharedNotePage() {
             });
     }, [token]);
 
+    if (!note) {
+        return null;
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center p-4">
                 <Card className="w-full max-w-4xl">
-                    <CardContent className="p-8 text-center">
+                    <CardContent className="p-8 text-center" fullPadding>
                         <div className="animate-pulse">
                             <FileText className="h-16 w-16 mx-auto mb-4 opacity-20" />
                             <p className="text-muted-foreground">Loading note...</p>
@@ -72,7 +76,7 @@ export default function SharedNotePage() {
     if (error) {
         return (
             <div className="min-h-screen flex items-center justify-center p-4">
-                <Card className="w-full max-w-4xl">
+                <Card className="w-full max-w-4xl" >
                     <CardContent className="p-8 text-center">
                         {error.includes('Encrypted') ? (
                             <>
@@ -95,10 +99,6 @@ export default function SharedNotePage() {
                 </Card>
             </div>
         );
-    }
-
-    if (!note) {
-        return null;
     }
 
     return (

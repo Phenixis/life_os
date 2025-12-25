@@ -130,14 +130,13 @@ export default function ShareNoteButton({
           />
         </div>
       ) : (
-        <Button variant="outline" size="sm" onClick={handleOpenDialog} disabled={isEncrypted} className={className}>
-          <Share2 className="w-4 h-4 mr-2" />
-          Share
+        <Button variant="outline" size="icon" onClick={handleOpenDialog} disabled={isEncrypted} className={className}>
+          <Share2 className="w-4 h-4" />
         </Button>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent maxHeight={shareToken ? "max-h-85" : "max-h-70"} className="sm:max-w-md">
+        <DialogContent maxHeight={shareToken ? "max-h-75" : "max-h-70"} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Share Note</DialogTitle>
             <DialogDescription>
@@ -146,8 +145,8 @@ export default function ShareNoteButton({
           </DialogHeader>
 
           {shareToken ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
+            <div className="space-y-2">
+              <div className="space-y-1">
                 <Label>Share Link</Label>
                 <div className="flex gap-2">
                   <Input value={shareUrl} readOnly className="flex-1" />
