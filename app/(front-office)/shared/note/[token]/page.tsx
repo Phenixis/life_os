@@ -54,6 +54,10 @@ export default function SharedNotePage() {
             });
     }, [token]);
 
+    if (!note) {
+        return null;
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center p-4">
@@ -95,10 +99,6 @@ export default function SharedNotePage() {
                 </Card>
             </div>
         );
-    }
-
-    if (!note) {
-        return null;
     }
 
     return (
