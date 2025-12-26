@@ -144,7 +144,7 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                         )}
 
                         {/* Hover overlay with action button */}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 lg:group-hover/Poster:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <div className="absolute inset-0 bg-black/60 hidden lg:group-hover/Poster:flex transition-opacity flex-col items-center justify-center gap-2">
                             <Button
                                 onClick={handleMarkAsWatched}
                                 size="sm"
@@ -153,23 +153,27 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                                 <Eye className="w-3 h-3" />
                                 Mark as Watched
                             </Button>
-                            <div className="w-[80%] bg-primary/90 backdrop-blur-xs p-3 rounded-md">
-                                <StarRating
-                                    rating={null}
-                                    onRatingChange={handleRateMovie}
-                                    size="md"
-                                    className="justify-center"
-                                />
-                            </div>
-                            <Button
-                                onClick={() => setShowDeleteDialog(true)}
-                                size="sm"
-                                variant="destructive"
-                                className="gap-2 w-[80%]"
-                            >
-                                <Trash2 className="w-3 h-3" />
-                                Remove
-                            </Button>
+                            {movie.watch_status !== 'watch_again' && (
+                                <>
+                                    <div className="w-[80%] bg-primary/90 backdrop-blur-xs p-3 rounded-md">
+                                        <StarRating
+                                            rating={null}
+                                            onRatingChange={handleRateMovie}
+                                            size="md"
+                                            className="justify-center"
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={() => setShowDeleteDialog(true)}
+                                        size="sm"
+                                        variant="destructive"
+                                        className="gap-2 w-[80%]"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                        Remove
+                                    </Button>
+                                </>
+                            )}
                         </div>
 
                         {/* TMDb rating badge */}
@@ -194,22 +198,26 @@ export function WatchlistCard({ movie }: WatchlistCardProps) {
                                         <Eye className="mr-2 h-4 w-4" />
                                         Mark as Watched
                                     </DropdownMenuItem>
-                                    <div className="px-2 py-1.5">
-                                        <StarRating
-                                            rating={null}
-                                            onRatingChange={handleRateMovie}
-                                            size="md"
-                                            className="justify-start"
-                                        />
-                                    </div>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        onClick={() => setShowDeleteDialog(true)}
-                                        className="text-destructive focus:text-destructive"
-                                    >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Remove
-                                    </DropdownMenuItem>
+                                    {movie.watch_status !== 'watch_again' && (
+                                        <>
+                                            <div className="px-2 py-1.5">
+                                                <StarRating
+                                                    rating={null}
+                                                    onRatingChange={handleRateMovie}
+                                                    size="md"
+                                                    className="justify-start"
+                                                />
+                                            </div>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                onClick={() => setShowDeleteDialog(true)}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Remove
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
