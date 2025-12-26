@@ -41,26 +41,14 @@ export function ProjectsMultipleSelects(
                         return (
                             <div
                                 key={`project-${project.id}`}
-                                className="flex items-center space-x-2 flex-shrink-0"
+                                className={cn(
+                                    "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border border-transparent flex-shrink-0",
+                                    (isSelected || isRemoved) && "border-border bg-primary/10",
+                                    isRemoved && "line-through text-muted-foreground"
+                                )}
                                 onClick={() => onChange(project)}
                             >
-                                <input
-                                    type="checkbox"
-                                    className="hidden"
-                                    id={`project-${project.id}`}
-                                    // Show checked only when project is selected
-                                    defaultChecked={isSelected}
-                                />
-                                <label
-                                    htmlFor={`project-${project.id}`}
-                                    className={cn(
-                                        "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border border-transparent",
-                                        (isSelected || isRemoved) && "border-border bg-primary/10",
-                                        isRemoved && "line-through text-muted-foreground"
-                                    )}
-                                >
-                                    {project.title}
-                                </label>
+                                {project.title}
                             </div>
                         )
                     }

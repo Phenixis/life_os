@@ -1,21 +1,21 @@
 "use client"
 
-import {RadioButtons} from "@/components/big/filtering/radio-buttons";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
-import {cn} from "@/lib/utils"
-import type {Task} from "@/lib/db/schema"
-import {useCallback, useEffect, useMemo, useRef, useState, useTransition} from "react"
-import {Button} from "@/components/ui/button"
-import {Calendar, Filter, FolderTree, PlusIcon, Square, SquareMinus} from "lucide-react"
-import TaskDisplay from "./task-display"
-import {useTasks} from "@/hooks/use-tasks"
-import {useProjects} from "@/hooks/use-projects"
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
-import {Calendar as CalendarComponent} from "@/components/ui/calendar"
-import {format} from "date-fns"
-import {useNumberOfTasks} from "@/hooks/use-number-of-tasks"
-import {ProjectsMultipleSelects} from "@/components/big/filtering/projects-multiple-selects";
-import {useTaskModal} from "@/contexts/modal-commands-context";
+import { ProjectsMultipleSelects } from "@/components/big/filtering/projects-multiple-selects";
+import { RadioButtons } from "@/components/big/filtering/radio-buttons";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useTaskModal } from "@/contexts/modal-commands-context";
+import { useNumberOfTasks } from "@/hooks/use-number-of-tasks";
+import { useProjects } from "@/hooks/use-projects";
+import { useTasks } from "@/hooks/use-tasks";
+import type { Task } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Calendar, Filter, FolderTree, PlusIcon, Square, SquareMinus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import TaskDisplay from "./task-display";
 
 // Constants for URL parameters
 export const TASK_PARAMS = {
@@ -113,14 +113,14 @@ export function TasksCard(
     const isSavedFiltersBeenUsed = useRef(false);
 
     // -------------------- Data Fetching --------------------
-    const {projects, isLoading: projectsLoading} = useProjects({
+    const { projects, isLoading: projectsLoading } = useProjects({
         completed: false,
         taskCompleted: completed,
         taskDueDate: dueBeforeDate,
         taskDeleted: false,
     })
 
-    const {tasks, isLoading} = useTasks({
+    const { tasks, isLoading } = useTasks({
         completed,
         orderBy,
         limit,
@@ -278,7 +278,7 @@ export function TasksCard(
                 const projectName = projects?.find((p) => p.id === task.project_id)?.title || "No Project"
 
                 if (!acc[projectId]) {
-                    acc[projectId] = {name: projectName, tasks: []}
+                    acc[projectId] = { name: projectName, tasks: [] }
                 }
 
                 acc[projectId].tasks.push(task)
@@ -294,13 +294,13 @@ export function TasksCard(
         >
             <CardHeader className="flex flex-col sticky top-0 bg-background z-10 pt-6 md:pt-6">
                 <div className="absolute top-0 left-0 w-full h-1 bg-muted"
-                     title={`${tasksCompleted} task${tasksCompleted > 1 ? 's' : ''} completed out of ${tasksTotal} task${tasksTotal > 1 ? 's' : ''}`}>
+                    title={`${tasksCompleted} task${tasksCompleted > 1 ? 's' : ''} completed out of ${tasksTotal} task${tasksTotal > 1 ? 's' : ''}`}>
                     <div
                         className={cn(
                             "absolute top-0 left-0 h-full transition-all duration-300",
                             isCountLoading ? "bg-muted animate-pulse" : "bg-primary"
                         )}
-                        style={{width: isCountLoading ? "100%" : `${progression}%`}}
+                        style={{ width: isCountLoading ? "100%" : `${progression}%` }}
                     />
                     <div className="w-full flex justify-between items-center pt-2 px-1">
                         {isCountLoading || isCountError ? null : (
@@ -328,7 +328,7 @@ export function TasksCard(
                             tooltip="Filter/group the tasks"
                             className="h-10 py-2 flex items-center border-none"
                         >
-                            <Filter className="h-4 w-4"/>
+                            <Filter className="h-4 w-4" />
                         </Button>
                         {/*<TaskModal />*/}
                         <Button
@@ -340,7 +340,7 @@ export function TasksCard(
                                 taskModal.openModal()
                             }}
                         >
-                            <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]"/>
+                            <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]" />
                         </Button>
                     </div>
                 </div>
@@ -356,7 +356,7 @@ export function TasksCard(
                                     tooltip="Filter by due date"
                                     className="flex items-center gap-1"
                                 >
-                                    <Calendar className="h-4 w-4"/>
+                                    <Calendar className="h-4 w-4" />
                                     {dueBeforeDate ? format(dueBeforeDate, "MMM d") : "Due Before"}
                                 </Button>
                             </PopoverTrigger>
@@ -382,18 +382,18 @@ export function TasksCard(
                 `}
                         >
                             {completed === true ? (
-                                <Square className="rounded-xs bg-card-foreground h-4 w-4"/>
+                                <Square className="rounded-xs bg-card-foreground h-4 w-4" />
                             ) : completed === false ? (
-                                <Square className="h-4 w-4"/>
+                                <Square className="h-4 w-4" />
                             ) : (
-                                <SquareMinus className="h-4 w-4"/>
+                                <SquareMinus className="h-4 w-4" />
                             )}
                         </Button>
                         <RadioButtons
                             values={[5, 10, 25, 50]}
                             currentValue={limit}
                             onChange={setLimit}
-                            disabled={isPending || isLoading}/>
+                            disabled={isPending || isLoading} />
                         <Button
                             variant={groupByProject ? "default" : "outline"}
                             size="sm"
@@ -401,7 +401,7 @@ export function TasksCard(
                             disabled={isPending || isLoading}
                             tooltip="Group by project"
                         >
-                            <FolderTree className="h-4 w-4"/>
+                            <FolderTree className="h-4 w-4" />
                         </Button>
                     </div>
                     <div className="flex items-center justify-between w-full">
@@ -429,7 +429,7 @@ export function TasksCard(
                     // Show loading state
                     Array(5)
                         .fill(null)
-                        .map((_, i) => <TaskDisplay key={i}/>)
+                        .map((_, i) => <TaskDisplay key={i} />)
                 ) : tasks?.length > 0 ? (
                     // Show tasks, grouped or ungrouped based on the groupByProject state
                     groupByProject ? (
@@ -472,7 +472,7 @@ export function TasksCard(
                                         task={task}
                                         orderedBy={orderBy}
                                         currentLimit={limit}
-                                        currentDueBefore={dueBeforeDate}/>
+                                        currentDueBefore={dueBeforeDate} />
                                 ),
                             )
                     )
