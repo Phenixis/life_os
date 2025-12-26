@@ -2,7 +2,7 @@
 
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import {Button} from "@/components/ui/button"
-import {ChevronDown} from "lucide-react"
+import {ChevronDown, Eye, EyeOff} from "lucide-react"
 import {useUser} from "@/hooks/use-user"
 import {Note} from "@/lib/db/schema"
 import {useEffect, useRef, useState} from "react"
@@ -50,6 +50,7 @@ export default function NoteModal() {
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
     const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
     const [passwordValue, setPasswordValue] = useState<string>(password || "")
+    const [showPassword, setShowPassword] = useState(false)
     const [keepEditing, setKeepEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -541,13 +542,28 @@ export default function NoteModal() {
                             <CollapsibleContent className="space-y-4">
                                 <div>
                                     <Label htmlFor="password">Password</Label>
-                                    <Input
-                                        type="text"
-                                        id="password"
-                                        name="password"
-                                        value={passwordValue}
-                                        onChange={(e) => setPasswordValue(e.target.value)}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            id="password"
+                                            name="password"
+                                            value={passwordValue}
+                                            onChange={(e) => setPasswordValue(e.target.value)}
+                                            className="pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                            tabIndex={-1}
+                                        >
+                                            {showPassword ? (
+                                                <Eye className="h-4 w-4" />
+                                            ) : (
+                                                <EyeOff className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
