@@ -294,7 +294,29 @@ export default function TaskModal() {
             )
 
             mutate(
-                (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
+                (key: unknown) => {
+                    if (typeof key !== "string") return false
+                    if (key !== "/api/task" && !key.startsWith("/api/task?")) return false
+                    
+                    // Check if this cache key has date filters that would exclude the task
+                    if (key.includes("?")) {
+                        const urlParams = new URLSearchParams(key.split("?")[1])
+                        const dueAfterParam = urlParams.get("dueAfter")
+                        const dueBeforeParam = urlParams.get("dueBefore")
+                        
+                        if (dueAfterParam) {
+                            const dueAfter = new Date(dueAfterParam)
+                            if (todoData.due < dueAfter) return false
+                        }
+                        
+                        if (dueBeforeParam) {
+                            const dueBefore = new Date(dueBeforeParam)
+                            if (todoData.due > dueBefore) return false
+                        }
+                    }
+                    
+                    return true
+                },
                 async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
                     if (!Array.isArray(currentData)) return currentData
 
