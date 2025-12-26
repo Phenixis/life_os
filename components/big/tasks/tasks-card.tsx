@@ -61,7 +61,8 @@ export function TasksCard(
         limit: initialLimit = 5,
         orderBy: initialOrderBy = "score",
         orderingDirection: initialOrderingDirection = "desc",
-        withProject = true
+        withProject = true,
+        initialSelectedProjects = []
     }: {
         className?: string
         initialCompleted?: boolean
@@ -69,6 +70,7 @@ export function TasksCard(
         orderBy?: keyof Task.Task.Select
         orderingDirection?: "asc" | "desc"
         withProject?: boolean
+        initialSelectedProjects?: simplifiedProject[]
     }
 ) {
     const taskModal = useTaskModal()
@@ -93,7 +95,7 @@ export function TasksCard(
 
     const [orderingDirection, setOrderingDirection] = useState<"asc" | "desc">(initialOrderingDirection)
 
-    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>([])
+    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>(initialSelectedProjects)
 
     const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>([])
 

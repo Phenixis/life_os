@@ -4,8 +4,8 @@ import {useFilteredData} from "./use-filtered-data"
 import {Project} from "@/lib/db/schema"
 
 interface UseProjectsParams {
-    /** Filter by exact project title */
-    projectTitle?: string
+    /** Filter by exact project ID */
+    projectId?: number
     /** Maximum number of projects to return */
     limit?: number
     /** Include the synthetic "No project" option (default: true) */
@@ -14,7 +14,7 @@ interface UseProjectsParams {
 
 export function useProjects(params: UseProjectsParams = {}) {
     const {
-        projectTitle,
+        projectId,
         limit,
         includeNoProject,
     } = params
@@ -22,7 +22,7 @@ export function useProjects(params: UseProjectsParams = {}) {
     const {data, isLoading, isError, mutate} = useFilteredData<Project.Select[]>({
         endpoint: "/api/project",
         params: {
-            projectTitle,
+            projectId,
             limit,
             includeNoProject,
         },

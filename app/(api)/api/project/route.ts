@@ -8,13 +8,14 @@ export async function GET(request: NextRequest) {
     if ('error' in verification) return verification.error
 
     const searchParams = request.nextUrl.searchParams;
-    const projectTitle = searchParams.get('projectTitle');
+    const projectIdParam = searchParams.get('projectId');
+    const projectId = projectIdParam ? Number.parseInt(projectIdParam) : undefined;
     const limitParam = searchParams.get('limit');
     const limit = limitParam ? Number.parseInt(limitParam) : undefined;
     const includeNoProject = searchParams.get('includeNoProject') !== "false"; // Default true
 
-    const projects = projectTitle
-        ? await ProjectQueries.getProjectByTitle(verification.userId, projectTitle)
+    const projects = projectId
+        ? await ProjectQueries.getProjectById(verification.userId, projectId)
         : await ProjectQueries.getProjects(verification.userId, { limit, includeNoProject });
 
     return NextResponse.json(projects);

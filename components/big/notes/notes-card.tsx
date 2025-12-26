@@ -56,12 +56,14 @@ export function NotesCard({
   className,
   limit: initialLimit,
   orderBy: initialOrderBy = 'created_at',
-  orderingDirection: initialOrderingDirection = 'desc'
+  orderingDirection: initialOrderingDirection = 'desc',
+  initialSelectedProjects = []
 }: {
   className?: string;
   limit?: number;
   orderBy?: keyof Note.Note.Select;
   orderingDirection?: 'asc' | 'desc';
+  initialSelectedProjects?: simplifiedProject[];
 }) {
   // -------------------- Imports & Hooks --------------------
   const router = useRouter();
@@ -78,7 +80,7 @@ export function NotesCard({
 
   const [orderingDirection, setOrderingDirection] = useState<'asc' | 'desc' | undefined>(initialOrderingDirection);
 
-  const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>(initialSelectedProjects);
 
   const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>([]);
 

@@ -30,7 +30,8 @@ const items: Record<string, MenuItem[]> = {
     "Suggestions": [
         { name: "Dashboard", href: "/my", alternativeNames: ["home"] },
         { name: "Notes", href: "/my/notes", alternativeNames: ["note"] },
-        { name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"] },
+        { name: "Projects", href: "/my/projects", alternativeNames: ["project"] },
+        // { name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"] },
     ],
     "Tools": tools.flatMap(tool => {
         if (isToolsCategorie(tool)) {
