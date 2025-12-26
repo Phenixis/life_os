@@ -9,16 +9,16 @@ import {
     CommandList,
     CommandShortcut,
 } from "@/components/ui/command"
-import {MenuIcon} from "lucide-react"
-import {useCallback, useEffect, useState} from "react"
-import {Button} from "@/components/ui/button"
-import {useRouter} from "next/navigation"
-import {useDarkMode} from "@/hooks/use-dark-mode"
-import {useDailyMoodModal, useNoteModal, useTaskModal} from "@/contexts/modal-commands-context"
-import {isToolsCategorie, tools} from "@/lib/tools-data"
-import {toast} from "sonner"
-import {settingsItems} from "@/components/big/settings/settings-sidebar"
-import {useModalsState} from "@/contexts/modal-commands-context"
+import { MenuIcon } from "lucide-react"
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { useDarkMode } from "@/hooks/use-dark-mode"
+import { useDailyMoodModal, useNoteModal, useTaskModal } from "@/contexts/modal-commands-context"
+import { isToolsCategorie, tools } from "@/lib/tools-data"
+import { toast } from "sonner"
+import { settingsItems } from "@/components/big/settings/settings-sidebar"
+import { useModalsState } from "@/contexts/modal-commands-context"
 
 interface MenuItem {
     name: string
@@ -28,9 +28,9 @@ interface MenuItem {
 
 const items: Record<string, MenuItem[]> = {
     "Suggestions": [
-        {name: "Dashboard", href: "/my", alternativeNames: ["home"]},
-        {name: "Notes", href: "/my/notes", alternativeNames: ["note"]},
-        {name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"]},
+        { name: "Dashboard", href: "/my", alternativeNames: ["home"] },
+        { name: "Notes", href: "/my/notes", alternativeNames: ["note"] },
+        { name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"] },
     ],
     "Tools": tools.flatMap(tool => {
         if (isToolsCategorie(tool)) {
@@ -61,12 +61,16 @@ const items: Record<string, MenuItem[]> = {
     ],
 }
 
-export default function Menu() {
+export default function Menu({
+    isOpen,
+    setIsOpen
+}: {
+    isOpen: boolean
+    setIsOpen: Dispatch<SetStateAction<boolean>>
+}) {
     const { someModalOpen } = useModalsState()
     const router = useRouter()
-    const [open, setOpen] = useState(false)
-
-    const {toggleDarkMode} = useDarkMode()
+    const { toggleDarkMode } = useDarkMode()
     const taskModal = useTaskModal()
     const noteModal = useNoteModal()
     const dailyMoodModal = useDailyMoodModal()
@@ -76,27 +80,27 @@ export default function Menu() {
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault()
                 if (!someModalOpen()) {
-                    setOpen((open) => !open)
+                    setIsOpen((prev) => !prev)
                 }
             }
         }
         document.addEventListener("keydown", down)
         return () => document.removeEventListener("keydown", down)
-    }, [someModalOpen])
+    }, [someModalOpen, setIsOpen])
 
     const runCommand = useCallback((command: () => unknown) => {
-        setOpen(false)
+        setIsOpen(false)
         command()
-    }, [])
+    }, [setIsOpen])
 
     return (
         <>
-            <Button onClick={() => setOpen(true)} variant="outline" size="icon"
-                    className="whitespace-nowrap transition-transform duration-300" tooltip="Open menu (Ctrl/⌘+K)">
-                <MenuIcon size={24}/>
+            <Button onClick={() => setIsOpen(true)} variant="outline" size="icon"
+                className="whitespace-nowrap transition-transform duration-300" tooltip="Open menu (Ctrl/⌘+K)">
+                <MenuIcon size={24} />
             </Button>
-            <CommandDialog open={open} onOpenChange={setOpen} showCloseButton={false}>
-                <CommandInput placeholder="Type a command or search..."/>
+            <CommandDialog open={isOpen} onOpenChange={setIsOpen} showCloseButton={false}>
+                <CommandInput placeholder="Type a command or search..." />
                 <CommandList>
                     <CommandEmpty>No results found.</CommandEmpty>
                     {
@@ -145,7 +149,7 @@ export default function Menu() {
                                 toast.loading("Logging out...", {
                                     id: "logout"
                                 })
-                                setOpen(false)
+                                setIsOpen(false)
                                 window.location.href = "/api/auth/logout"
                             }}
                             keywords={["sign out", "logout"]}
