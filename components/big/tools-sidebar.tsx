@@ -35,22 +35,21 @@ export function ToolsSidebar() {
                         {tool.tools.map(toolItem => (
                           <SidebarMenuItem key={toolItem.name}>
                             <SidebarMenuButton
-                              className={`flex items-center space-x-2 text-wrap ${
-                                pathname === toolItem.href ? 'bg-gray-200/70 dark:bg-gray-800/70' : ''
-                              }`}
+                              className={`flex items-center space-x-2 text-wrap ${pathname === toolItem.href ? 'bg-gray-200/70 dark:bg-gray-800/70' : ''
+                                }`}
                               asChild
                               tooltip={toolItem.name + ': ' + toolItem.description}
                             >
-                              {(toolItem.available || process.env.NEXT_PUBLIC_ENVIRONMENT !== 'development') ? (
-                                <p>
-                                  {toolItem.icon}
-                                  <span>{toolItem.name}</span>
-                                </p>
-                              ) : (
+                              {(toolItem.available || process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') ? (
                                 <Link href={toolItem.href}>
                                   {toolItem.icon}
                                   <span>{toolItem.name}</span>
                                 </Link>
+                              ) : (
+                                <p>
+                                  {toolItem.icon}
+                                  <span>{toolItem.name}</span>
+                                </p>
                               )}
                             </SidebarMenuButton>
                           </SidebarMenuItem>
@@ -64,9 +63,8 @@ export function ToolsSidebar() {
                     <Fragment key={tool.name}>
                       <SidebarMenuItem key={tool.name}>
                         <SidebarMenuButton
-                          className={`flex items-center space-x-2 text-wrap ${
-                            pathname === tool.href ? 'bg-gray-200/70 dark:bg-gray-800/70' : ''
-                          }`}
+                          className={`flex items-center space-x-2 text-wrap ${pathname === tool.href ? 'bg-gray-200/70 dark:bg-gray-800/70' : ''
+                            }`}
                           asChild
                           tooltip={tool.name + ': ' + tool.description}
                         >

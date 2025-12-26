@@ -36,7 +36,7 @@ function ToolCard(tool: ToolCardProps) {
 function ToolsCategorie(categorie: ToolsCategorieProps) {
   return (
     <div className={'group/category'}>
-      <header className={'flex flex-col lg:flex-row items-baseline lg:gap-6'}>
+      <header className={'flex flex-col md:flex-row items-baseline md:gap-4 lg:gap-6'}>
         <h2 className="page-title">{categorie.name}</h2>
         <p className="text-muted-foreground mb-6 lg:opacity-0 duration-300 lg:group-hover/category:opacity-100">
           {categorie.description}
