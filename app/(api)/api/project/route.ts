@@ -11,24 +11,11 @@ export async function GET(request: NextRequest) {
     const projectTitle = searchParams.get('projectTitle');
     const limitParam = searchParams.get('limit');
     const limit = limitParam ? Number.parseInt(limitParam) : undefined;
-    const completed = searchParams.get('completed');
-    const taskCompleted = searchParams.get('taskCompleted') == "true";
-    const taskDueDate = searchParams.get('taskDueDate') ? new Date(searchParams.get('taskDueDate') as string) : undefined;
-    const taskDeleted = searchParams.get('taskDeleted') == "true";
-    const withNotes = searchParams.get('withNotes') == "true";
-    // const noteLimit = searchParams.get('noteLimit') ? Number.parseInt(searchParams.get('noteLimit') as string) : undefined;
-    // const noteOrderBy = searchParams.get('noteOrderBy') as keyof Note.Note.Select | undefined;
-    // const noteOrderingDirection = searchParams.get('noteOrderingDirection') as "asc" | "desc" | undefined;
-    // const noteProjectTitle = searchParams.get('noteProjectTitle') || undefined;
+    const includeNoProject = searchParams.get('includeNoProject') !== "false"; // Default true
 
-    const projects = projectTitle ?
-        await ProjectQueries.getProjectByTitle(verification.userId, projectTitle) :
-        withNotes ? await ProjectQueries.getProjectsWithNotes(
-                verification.userId,
-            ) :
-            completed == "true" ? await ProjectQueries.getCompletedProjectsWithTasks(verification.userId, taskCompleted, taskDueDate, taskDeleted) :
-                completed == "false" ? await ProjectQueries.getUncompletedProjectsWithTasks(verification.userId, taskCompleted, taskDueDate, taskDeleted) :
-                    await ProjectQueries.getProjects(verification.userId, limit);
+    const projects = projectTitle
+        ? await ProjectQueries.getProjectByTitle(verification.userId, projectTitle)
+        : await ProjectQueries.getProjects(verification.userId, { limit, includeNoProject });
 
     return NextResponse.json(projects);
 }

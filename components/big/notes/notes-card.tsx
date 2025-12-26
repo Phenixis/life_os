@@ -90,11 +90,7 @@ export function NotesCard({
   const isSavedFiltersBeenUsed = useRef(false);
 
   // -------------------- Data Fetching --------------------
-  const { projects, isLoading: projectsLoading } = useProjects({
-    completed: false,
-    taskDeleted: false,
-    withNotes: true
-  });
+  const { projects, isLoading: projectsLoading } = useProjects();
 
   const { data: notesData, isLoading } = useNotes({
     title,
