@@ -26,11 +26,6 @@ export default function Header(
 
     useEffect(() => {
         setShouldDisplayAllHeaderElements(isMenuOpen || isHovering)
-        
-        // Reset hover state when menu closes to ensure header collapses properly
-        if (!isMenuOpen) {
-            setIsHovering(false)
-        }
     }, [isMenuOpen, isHovering])
 
     return (
@@ -73,7 +68,10 @@ export default function Header(
                         `overflow-hidden transition-all duration-300 ease-in-out flex items-center justify-center w-fit max-w-[40px] ml-2 lg:w-0 lg:max-w-0 lg:opacity-0 lg:m-0 ${shouldDisplayAllHeaderElements ? 'lg:w-fit lg:max-w-[40px] lg:opacity-100 lg:ml-2 xl:ml-4' : ''}`
                     }
                 >
-                    <Menu isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
+                    <Menu isOpen={isMenuOpen} setIsOpen={(state: boolean) => {
+                        setIsMenuOpen(state)
+                        if (!state) setIsHovering(false)
+                    }} />
                 </div>
             </div>
         </header>

@@ -66,7 +66,7 @@ export default function Menu({
     setIsOpen
 }: {
     isOpen: boolean
-    setIsOpen: Dispatch<SetStateAction<boolean>>
+    setIsOpen: (state: boolean) => void
 }) {
     const { someModalOpen } = useModalsState()
     const router = useRouter()
@@ -80,7 +80,7 @@ export default function Menu({
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault()
                 if (!someModalOpen()) {
-                    setIsOpen((prev) => !prev)
+                    setIsOpen(!isOpen)
                 }
             }
         }
