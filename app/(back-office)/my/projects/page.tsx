@@ -270,7 +270,7 @@ export default function ProjectsPage() {
     };
 
     return (
-        <section className="page max-h-screen overflow-hidden flex flex-col pb-20! lg:pb-8!">
+        <section className="page max-h-screen overflow-hidden flex flex-col pb-20!">
             <header className="flex items-center gap-6 shrink-0">
                 <h1 className="page-title">My Projects</h1>
                 <p className="page-description text-gray-500">Manage your projects.</p>
