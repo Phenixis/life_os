@@ -119,7 +119,7 @@ export default function ProjectsPage() {
             setSelectedProject(null);
             await mutate();
         } catch (error) {
-            console.error(error);
+            console.log(error);
             toast.error(error instanceof Error ? error.message : String(error));
         } finally {
             setIsDeleting(false);
@@ -190,7 +190,7 @@ export default function ProjectsPage() {
             setIsEditingProject(false);
             await mutate();
         } catch (error) {
-            console.error(error);
+            console.log(error);
             toast.error(error instanceof Error ? error.message : String(error));
         } finally {
             setIsSaving(false);
@@ -248,7 +248,7 @@ export default function ProjectsPage() {
                 setSelectedProject(newProject);
             }
         } catch (error) {
-            console.error(error);
+            console.log(error);
             toast.error(error instanceof Error ? error.message : String(error));
         } finally {
             setIsSubmittingNew(false);
@@ -576,7 +576,7 @@ export default function ProjectsPage() {
                         setShowMergeDialog(false);
                         await mutate();
                     } catch (error) {
-                        console.error(error);
+                        console.log(error);
                         toast.error(error instanceof Error ? error.message : String(error));
                     } finally {
                         setIsSaving(false);
