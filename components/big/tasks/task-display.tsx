@@ -554,23 +554,24 @@ export default function TaskDisplay({
                     <Tooltip tooltip={`${new Date(task.due).toLocaleDateString()}`} cursor="cursor-auto">
                       <p className="text-muted-foreground">
                         {task.completed_at ? (
-                          <>
-                            {/* Show absolute difference between completion date and due date when completed */}
+                            <>
+                            {/* Show completion date and difference between completion date and due date */}
                             Completed:{' '}
                             <span className="text-black dark:text-white">
+                              {new Date(task.completed_at).toLocaleDateString()}
                               {(() => {
-                                const due = new Date(task.due);
-                                const completed = new Date(task.completed_at);
-                                // Difference in days (positive = completed after due, negative = completed before due)
-                                const diffDays = Math.floor(
-                                  (completed.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)
-                                );
-                                if (diffDays === 0) return 'on time';
-                                const abs = Math.abs(diffDays);
-                                return `${abs} day${abs > 1 ? 's' : ''} ${diffDays < 0 ? 'early' : 'late'}`;
+                              const due = new Date(task.due);
+                              const completed = new Date(task.completed_at);
+                              // Difference in days (positive = completed after due, negative = completed before due)
+                              const diffDays = Math.floor(
+                                (completed.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)
+                              );
+                              if (diffDays === 0) return ' (on time)';
+                              const abs = Math.abs(diffDays);
+                              return ` (${abs} day${abs > 1 ? 's' : ''} ${diffDays < 0 ? 'early' : 'late'})`;
                               })()}
                             </span>
-                          </>
+                            </>
                         ) : (
                           <>
                             {/* Show relative time until due when not completed */}

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const dueBefore = searchParams.get('dueBefore') ? new Date(searchParams.get('dueBefore') as string) : undefined;
   const dueAfter = searchParams.get('dueAfter') ? new Date(searchParams.get('dueAfter') as string) : undefined;
   const state = searchParams.get('state') || undefined;
-  const limit = limitParam ? Number.parseInt(limitParam) : undefined;
+  const limit = limitParam ? Number.parseInt(limitParam) : -1;
   const completed: boolean | undefined =
     completedParam === 'true' ? true : completedParam === 'false' ? false : undefined;
 
