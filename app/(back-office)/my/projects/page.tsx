@@ -2,17 +2,23 @@
 
 import { ProjectsTasksAndNotesFilterBar } from "@/components/big/projects/projects-tasks-and-notes";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useProjects } from "@/hooks/use-projects";
+import { useUser } from "@/hooks/use-user";
 import { Project } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { Pen, Trash } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export default function ProjectsPage() {
     const [selectedProject, setSelectedProject] = useState<Project.Select | null>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const { projects, isLoading } = useProjects();
+    const { projects, isLoading, mutate } = useProjects();
+    const { user } = useUser();
 
     const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
         if (!containerRef.current) return;
@@ -34,6 +40,34 @@ export default function ProjectsPage() {
             setSelectedProject(project);
         }
     }, [selectedProject]);
+
+    const handleDeleteProject = async () => {
+        if (!selectedProject || !user) return;
+
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/project?id=${selectedProject.id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${user.api_key}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete project");
+            }
+
+            toast.success("Project deleted successfully");
+            setSelectedProject(null);
+            await mutate();
+        } catch (error) {
+            console.error("Error deleting project:", error);
+            toast.error("Failed to delete project");
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteDialog(false);
+        }
+    };
 
     return (
         <section className="page max-h-screen overflow-hidden flex flex-col">
@@ -88,16 +122,22 @@ export default function ProjectsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
-                                disabled={selectedProject === null}
+                                disabled={selectedProject === null || selectedProject.id === -1}
                                 variant="outline"
                                 size="icon"
-                            >
+                                onClick={() => {
+                                    // TODO: Implement edit functionality
+                                    toast.info("Edit functionality coming soon");
+                                }}
+                            > 
                                 <Pen className="w-4 h-4" />
                             </Button>
                             <Button
-                                disabled={selectedProject === null}
+                                disabled={selectedProject === null || selectedProject.id === -1}
                                 variant="destructive"
                                 size="icon"
+                                loading={isDeleting}
+                                onClick={() => setShowDeleteDialog(true)}
                             >
                                 <Trash className="w-4 h-4" />
                             </Button>
@@ -118,6 +158,21 @@ export default function ProjectsPage() {
                     }
                 </article>
             </div>
+
+            <ConfirmationDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                title="Delete Project"
+                description={
+                    selectedProject
+                        ? `Are you sure you want to delete "${selectedProject.title}"? This action cannot be undone.\n\nAll tasks and notes associated with this project will remain but will no longer be linked to a project.`
+                        : "Are you sure you want to delete this project?"
+                }
+                confirmText="Delete Project"
+                cancelText="Cancel"
+                onConfirm={handleDeleteProject}
+                variant="destructive"
+            />
         </section>
     )
 }

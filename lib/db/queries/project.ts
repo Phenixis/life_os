@@ -96,8 +96,8 @@ export async function getProjects(userId: string, options: GetProjectsOptions = 
     if (includeNoProject) {
         projects.unshift({
             id: -1,
-            title: "No project",
-            description: null,
+            title: "No Project",
+            description: "All entities without a project",
             completed: false,
             created_at: new Date(0),
             updated_at: new Date(0),
@@ -183,14 +183,30 @@ export async function uncompleteProject(userId: string, title: string) {
 
 // ## Delete
 
-export async function deleteProject(userId: string, title: string) {
+export async function deleteProject(userId: string, id: number) {
+    // First, unlink all tasks and notes from this project
+    await lib.db.update(lib.Schema.Task.Task.table)
+        .set({ project_id: null })
+        .where(lib.and(
+            lib.eq(lib.Schema.Task.Task.table.project_id, id),
+            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+        ))
+
+    await lib.db.update(lib.Schema.Note.Note.table)
+        .set({ project_id: null })
+        .where(lib.and(
+            lib.eq(lib.Schema.Note.Note.table.project_id, id),
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+        ))
+
+    // Then soft-delete the project
     const result = await lib.db.update(table)
         .set({
             deleted_at: lib.sql`CURRENT_TIMESTAMP`,
             updated_at: lib.sql`CURRENT_TIMESTAMP`
         })
         .where(lib.and(
-            lib.eq(table.title, title),
+            lib.eq(table.id, id),
             lib.eq(table.user_id, userId),
         ))
         .returning({title: table.title})
