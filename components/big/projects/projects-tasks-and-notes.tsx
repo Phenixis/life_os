@@ -29,7 +29,7 @@ export function ProjectsTasksAndNotesFilterBar({
     }
 
     return (
-        <div className="space-y-4 flex items-start justify-between gap-6">
+        <div className="space-y-4 flex flex-col lg:flex-row items-start justify-between gap-6">
             <div className="w-full">
                 <h3 className="font-medium mb-2">Tasks ({isLoadingTasks ? '?' : tasks?.length || 0})</h3>
                 {isLoadingTasks ? (

@@ -51,11 +51,20 @@ export async function PATCH(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { id, title, description } = body;
+        const { id, title, description, merge, targetProjectId } = body;
 
         // Validation
         if (!id) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // Handle merge operation
+        if (merge && targetProjectId) {
+            const result = await ProjectQueries.mergeProjects(verification.userId, id, targetProjectId);
+            if (!result) {
+                return NextResponse.json({ error: 'Failed to merge projects' }, { status: 500 });
+            }
+            return NextResponse.json({ message: 'Projects merged successfully', merged: true }, { status: 200 });
         }
 
         const success = await ProjectQueries.updateProject(verification.userId, id, title, description);
@@ -66,7 +75,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ message: 'Project updated successfully' }, { status: 200 });
     } catch (error) {
         console.error('Error updating project:', error);
-        return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
 }
 
