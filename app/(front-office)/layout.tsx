@@ -37,7 +37,7 @@ export default function FrontOfficeLayout({ children }: { children: React.ReactN
     }
 
     const navigationItems = [
-        { name: 'Problems', href: '#problems' },
+        { name: 'Problem', href: '#problem' },
         { name: 'Features', href: '#features' },
         { name: 'Benefits', href: '#benefits' },
         { name: 'Pricing', href: '#pricing' }
@@ -71,7 +71,6 @@ export default function FrontOfficeLayout({ children }: { children: React.ReactN
                 {/* Desktop Navigation Links */}
                 {
                     !onSharedPage && (
-
                         <MotionDiv
                             className="hidden md:flex items-center space-x-8"
                             variants={staggerContainer}
