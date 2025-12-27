@@ -1,28 +1,30 @@
 "use client"
 
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog"
-import {Button} from "@/components/ui/button"
-import {ChevronDown, Eye, EyeOff} from "lucide-react"
-import {useUser} from "@/hooks/use-user"
-import {Note} from "@/lib/db/schema"
-import {useEffect, useRef, useState} from "react"
-import {Input} from "@/components/ui/input"
-import {Label} from "@/components/ui/label"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Camera, ChevronDown, Eye, EyeOff, Mic } from "lucide-react"
+import { useUser } from "@/hooks/use-user"
+import { Note } from "@/lib/db/schema"
+import { useEffect, useRef, useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import MDEditor from '@uiw/react-md-editor'
-import {useSWRConfig} from "swr"
-import {toast} from "sonner"
-import {decryptNote, encryptNote} from "@/lib/utils/crypt"
-import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
-import {useDebouncedCallback} from "use-debounce"
+import { useSWRConfig } from "swr"
+import { toast } from "sonner"
+import { decryptNote, encryptNote } from "@/lib/utils/crypt"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, } from "@/components/ui/collapsible"
+import { useDebouncedCallback } from "use-debounce"
 import SearchProjectsInput from "@/components/big/projects/search-projects-input"
-import {NotesAndData, NoteWithProject} from "@/lib/db/queries/note"
-import {updateUserDraftNote} from "@/lib/db/queries/user/user"
-import {useNoteModal} from "@/contexts/modal-commands-context";
-import {simplifiedProject} from "@/components/big/tasks/tasks-card";
-import {useProjects} from "@/hooks/use-projects";
+import { NotesAndData, NoteWithProject } from "@/lib/db/queries/note"
+import { updateUserDraftNote } from "@/lib/db/queries/user/user"
+import { useNoteModal } from "@/contexts/modal-commands-context";
+import { simplifiedProject } from "@/components/big/tasks/tasks-card";
+import { useProjects } from "@/hooks/use-projects";
 import { useIsMobile } from "@/hooks/use-mobile"
-import {Checkbox} from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/ui/checkbox"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import Tooltip from "../tooltip"
+import { devEnv } from "@/lib/utils"
 
 // Local storage key for note modal content
 const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
@@ -42,8 +44,8 @@ export default function NoteModal() {
         password
     } = useNoteModal()
     const mode = (note !== undefined && note !== null) ? "edit" : "create"
-    const {mutate} = useSWRConfig()
-    const {projects: allProjects} = useProjects({})
+    const { mutate } = useSWRConfig()
+    const { projects: allProjects } = useProjects({})
 
     // State - use external control if provided
     const [formChanged, setFormChanged] = useState(false)
@@ -66,9 +68,9 @@ export default function NoteModal() {
     const [inputNoteContent, setInputNoteContent] = useState<string>(note ? note.content : (user?.note_draft_content || ""))
     const [project, setProject] = useState<simplifiedProject>(
         note && note.project_id
-            ? { 
-                title: note.project_title || allProjects.find(p => p.id === note.project_id)?.title || "", 
-                id: note.project_id 
+            ? {
+                title: note.project_title || allProjects.find(p => p.id === note.project_id)?.title || "",
+                id: note.project_id
             }
             : user?.note_draft_project_title
                 ? { title: user.note_draft_project_title, id: -1 }
@@ -110,7 +112,7 @@ export default function NoteModal() {
             note_content: noteContent,
             note_project_title: project.title,
         }).then(() => {
-            }
+        }
         ).catch((error) => {
             console.error("Error updating draft note:", error)
         })
@@ -152,9 +154,9 @@ export default function NoteModal() {
             setNoteContent(safeContent)
             setProject(
                 note.project_id
-                    ? { 
-                        title: note.project_title || allProjects.find(p => p.id === note.project_id)?.title || "", 
-                        id: note.project_id 
+                    ? {
+                        title: note.project_title || allProjects.find(p => p.id === note.project_id)?.title || "",
+                        id: note.project_id
                     }
                     : { title: "", id: -1 }
             )
@@ -193,7 +195,7 @@ export default function NoteModal() {
                     }
                 }
             }
-            
+
             // If not loaded from local storage, use database draft
             if (!loadedFromLocalStorage) {
                 const draftTitle = user?.note_draft_title || ""
@@ -224,7 +226,7 @@ export default function NoteModal() {
     // Save to local storage whenever content changes
     useEffect(() => {
         if (typeof window === 'undefined') return
-        
+
         // Save to local storage for create mode or when editing (if content has changed)
         // Note: We only restore from local storage for create mode, not edit mode.
         // For edit mode, the authoritative source is always the database.
@@ -248,18 +250,18 @@ export default function NoteModal() {
         const compareTitle = lastSavedTitle || (note?.title || "")
         const compareContent = lastSavedContent || (mode === "edit" && passwordValue && decryptedContent !== null ? decryptedContent : (note?.content || ""))
         const compareProjectId = lastSavedProjectId !== -1 ? lastSavedProjectId : (note?.project_id || -1)
-        
+
         // For project comparison, check both ID and title
         const originalProjectTitle = note?.project_title || ""
-        const projectChanged = project.id !== compareProjectId || 
+        const projectChanged = project.id !== compareProjectId ||
             (project.id === -1 && project.title !== originalProjectTitle)
-        
+
         setFormChanged(
             mode === "edit"
                 ? inputNoteTitle.trim() !== compareTitle.trim()
-                    || inputNoteContent.trim() !== compareContent.trim()
-                    || projectChanged
-                    || passwordValue.trim() !== (password || "").trim()
+                || inputNoteContent.trim() !== compareContent.trim()
+                || projectChanged
+                || passwordValue.trim() !== (password || "").trim()
                 : inputNoteTitle.trim() !== "" && inputNoteContent.trim() !== ""
         )
     }, [inputNoteTitle, inputNoteContent, project, passwordValue, mode, note?.title, note?.content, note?.project_id, note?.project_title, password, decryptedContent, lastSavedTitle, lastSavedContent, lastSavedProjectId])
@@ -277,7 +279,7 @@ export default function NoteModal() {
 
     // Refs
     const isSubmittingRef = useRef(false)
-    const closeDialogRef = useRef<() => void>(() => {})
+    const closeDialogRef = useRef<() => void>(() => { })
 
     // Handlers
     const resetForm = () => {
@@ -413,7 +415,7 @@ export default function NoteModal() {
                 setLastSavedContent(noteContent)
                 setLastSavedProjectId(project.id)
             }
-            
+
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
             isSubmittingRef.current = false
             setIsSubmitting(false)
@@ -469,141 +471,165 @@ export default function NoteModal() {
 
     return (
         <>
-        <Dialog open={isOpen} onOpenChange={(newOpenState) => {
-            if (isOpen && !newOpenState) {
-                // Attempting to close
-                handleCloseAttempt()
-            } else {
-                // Opening the dialog
-                openModal()
-            }
-        }}>
-            <DialogContent
-                aria-describedby={undefined}
-                maxHeight="max-h-155"
-            >
-                <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
-                    <main className="space-y-4">
-                        <DialogHeader>
-                            <DialogTitle>
-                                {mode === "create" ? "Create Note" : "Edit Note"}
-                            </DialogTitle>
-                        </DialogHeader>
+            <Dialog open={isOpen} onOpenChange={(newOpenState) => {
+                if (isOpen && !newOpenState) {
+                    // Attempting to close
+                    handleCloseAttempt()
+                } else {
+                    // Opening the dialog
+                    openModal()
+                }
+            }}>
+                <DialogContent
+                    aria-describedby={undefined}
+                    maxHeight="max-h-155"
+                >
+                    <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
+                        <main className="space-y-4">
+                            <DialogHeader>
+                                <DialogTitle>
+                                    {mode === "create" ? "Create Note" : "Edit Note"}
+                                </DialogTitle>
+                            </DialogHeader>
 
-                        <div>
-                            <Label htmlFor="title" required>Title</Label>
-                            <Input
-                                type="text"
-                                id="title"
-                                name="title"
-                                value={inputNoteTitle}
-                                autoFocus
-                                onChange={(e) => {
-                                    setInputNoteTitle(e.target.value)
-                                    setIsTitleDirty(true)
-                                }}
-                                disabled={isSubmitting}
-                                className="text-sm lg:text-base"
-                            />
-                        </div>
-                        <div className="w-full">
-                            <Label htmlFor="content" required>Content</Label>
-                            <div data-color-mode={colorMode} className="max-w-full">
-                                <MDEditor
-                                    key={colorMode}
-                                    id="content"
-                                    value={inputNoteContent}
-                                    onChange={(val) => !isSubmitting && setInputNoteContent(val || '')}
-                                    textareaProps={{ 
-                                        placeholder: 'Write your note in Markdown...', 
-                                        disabled: isSubmitting,
-                                        autoComplete: 'on',
-                                        autoCorrect: 'on',
-                                        autoCapitalize: 'on',
-                                        spellCheck: true
+                            <div>
+                                <Label htmlFor="title" required>Title</Label>
+                                <Input
+                                    type="text"
+                                    id="title"
+                                    name="title"
+                                    value={inputNoteTitle}
+                                    autoFocus
+                                    onChange={(e) => {
+                                        setInputNoteTitle(e.target.value)
+                                        setIsTitleDirty(true)
                                     }}
-                                    preview={isMobile ? 'edit' : 'live'}
-                                    className="!text-black"
+                                    disabled={isSubmitting}
+                                    className="text-sm lg:text-base"
                                 />
                             </div>
-                        </div>
-                        <SearchProjectsInput
-                            project={project}
-                            setProject={setProject}
-                            defaultValue={project.title}
-                        />
-                        <Collapsible className="w-full" open={showAdvancedOptions}
-                                     onOpenChange={setShowAdvancedOptions}>
-                            <CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
-                                Advanced Options
-                                <ChevronDown
-                                    className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`}/>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="space-y-4">
-                                <div>
-                                    <Label htmlFor="password">Password</Label>
-                                    <div className="relative">
-                                        <Input
-                                            type={showPassword ? "text" : "password"}
-                                            id="password"
-                                            name="password"
-                                            value={passwordValue}
-                                            onChange={(e) => setPasswordValue(e.target.value)}
-                                            className="pr-10"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                            tabIndex={-1}
-                                        >
-                                            {showPassword ? (
-                                                <Eye className="h-4 w-4" />
-                                            ) : (
-                                                <EyeOff className="h-4 w-4" />
-                                            )}
-                                        </button>
-                                    </div>
+                            <div className="w-full">
+                                <Label htmlFor="content" required>Content</Label>
+                                <div data-color-mode={colorMode} className="max-w-full">
+                                    <MDEditor
+                                        key={colorMode}
+                                        id="content"
+                                        value={inputNoteContent}
+                                        onChange={(val) => !isSubmitting && setInputNoteContent(val || '')}
+                                        textareaProps={{
+                                            placeholder: 'Write your note in Markdown...',
+                                            disabled: isSubmitting,
+                                            autoComplete: 'on',
+                                            autoCorrect: 'on',
+                                            autoCapitalize: 'on',
+                                            spellCheck: true
+                                        }}
+                                        preview={isMobile ? 'edit' : 'live'}
+                                        className="text-black! dark:text-white!"
+                                    />
+                                    {
+                                        devEnv() && (
+
+                                            <div className="rounded-b-md border-t-0 border flex justify-between items-center">
+                                                <Tooltip tooltip="Extract text from image" className="w-full">
+                                                    <div className="w-full px-4 py-2 flex flex-col items-center justify-center lg:hover:bg-secondary/50 cursor-pointer transition-colors">
+                                                        <Camera className="size-4 md:size-6 shrink-0" />
+                                                        <p className="text-xs md:sr-only">
+                                                            Extract text from image
+                                                        </p>
+                                                    </div>
+                                                </Tooltip>
+                                                <div className="border-r h-8" />
+                                                <Tooltip tooltip="Extract text from audio recording" className="w-full">
+                                                    <div className="w-full px-4 py-2 flex flex-col items-center justify-center lg:hover:bg-secondary/50 cursor-pointer transition-colors">
+                                                        <Mic className="size-4 md:size-6 shrink-0" />
+                                                        <p className="text-xs md:sr-only">
+                                                            Extract text from audio recording
+                                                        </p>
+                                                    </div>
+                                                </Tooltip>
+                                            </div>
+                                        )
+                                    }
                                 </div>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    </main>
-
-                    <DialogFooter className="w-full sm:justify-between">
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="keep-editing"
-                                checked={keepEditing}
-                                onCheckedChange={() => setKeepEditing(!keepEditing)}
-                                disabled={isSubmitting}
+                            </div>
+                            <SearchProjectsInput
+                                project={project}
+                                setProject={setProject}
+                                defaultValue={project.title}
                             />
-                            <label htmlFor="keep-editing" className={`text-sm ${isSubmitting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
-                                Keep editing the note?
-                            </label>
-                        </div>
-                        <Button type="submit" disabled={!formChanged || isSubmitting}>
-                            {isSubmitting ? "Saving..." : (mode === "create" ? "Create" : "Save")}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                            <Collapsible className="w-full" open={showAdvancedOptions}
+                                onOpenChange={setShowAdvancedOptions}>
+                                <CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
+                                    Advanced Options
+                                    <ChevronDown
+                                        className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`} />
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="password">Password</Label>
+                                        <div className="relative">
+                                            <Input
+                                                type={showPassword ? "text" : "password"}
+                                                id="password"
+                                                name="password"
+                                                value={passwordValue}
+                                                onChange={(e) => setPasswordValue(e.target.value)}
+                                                className="pr-10"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                tabIndex={-1}
+                                            >
+                                                {showPassword ? (
+                                                    <Eye className="h-4 w-4" />
+                                                ) : (
+                                                    <EyeOff className="h-4 w-4" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </main>
 
-        {/* Confirmation dialog for unsaved changes */}
-        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Discard changes?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        You have unsaved changes. Are you sure you want to close without saving?
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    </>
+                        <DialogFooter className="w-full sm:justify-between">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="keep-editing"
+                                    checked={keepEditing}
+                                    onCheckedChange={() => setKeepEditing(!keepEditing)}
+                                    disabled={isSubmitting}
+                                />
+                                <label htmlFor="keep-editing" className={`text-sm ${isSubmitting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                                    Keep editing the note?
+                                </label>
+                            </div>
+                            <Button type="submit" disabled={!formChanged || isSubmitting}>
+                                {isSubmitting ? "Saving..." : (mode === "create" ? "Create" : "Save")}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirmation dialog for unsaved changes */}
+            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You have unsaved changes. Are you sure you want to close without saving?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }

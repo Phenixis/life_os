@@ -13,13 +13,13 @@ export default function Tooltip({
 }: {
     children: React.ReactNode
     tooltip: string
-    cursor?: "cursor-auto" | "cursor-pointer" | "cursor-default" | "cursor-help" | "cursor-wait" | "cursor-not-allowed" 
+    cursor?: "cursor-auto" | "cursor-pointer" | "cursor-default" | "cursor-help" | "cursor-wait" | "cursor-not-allowed"
     className?: string
     asChild?: boolean
 }) {
     return (
         <TooltipRoot>
-            <TooltipTrigger className={`${className} ${cursor}`} asChild={asChild}>{children}</TooltipTrigger>
+            <TooltipTrigger type="button" className={`${className} ${cursor}`} asChild={asChild}>{children}</TooltipTrigger>
             <TooltipContent>{tooltip.split("<br/>").map((line) => (
                 <div key={line} className="text-sm">
                     {line}

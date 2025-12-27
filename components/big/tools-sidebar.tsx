@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { isToolCard, isToolsCategorie, tools } from '@/lib/tools-data';
 import { usePathname } from 'next/navigation';
 import { Fragment } from 'react';
+import { devEnv } from '@/lib/utils';
 
 export function ToolsSidebar() {
   const pathname = usePathname();
@@ -40,7 +41,7 @@ export function ToolsSidebar() {
                               asChild
                               tooltip={toolItem.name + ': ' + toolItem.description}
                             >
-                              {(toolItem.available || process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') ? (
+                              {(toolItem.available || devEnv()) ? (
                                 <Link href={toolItem.href}>
                                   {toolItem.icon}
                                   <span>{toolItem.name}</span>

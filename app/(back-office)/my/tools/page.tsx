@@ -1,6 +1,7 @@
 import type React from 'react';
 import { isToolCard, isToolsCategorie, type ToolCardProps, tools, ToolsCategorieProps } from '@/lib/tools-data';
 import Link from 'next/link';
+import { devEnv } from '@/lib/utils';
 
 function ToolCard(tool: ToolCardProps) {
   function ToolCardLayout(tool: ToolCardProps) {
@@ -15,7 +16,7 @@ function ToolCard(tool: ToolCardProps) {
     );
   }
 
-  if (tool.available || process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
+  if (tool.available || devEnv()) {
     return (
       <Link
         href={tool.href}

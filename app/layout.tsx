@@ -7,6 +7,7 @@ import {Analytics} from '@vercel/analytics/next';
 import {Toaster} from "@/components/ui/sonner"
 import {darkMode} from "@/lib/flags"
 import ColorModeSync from '@/components/ui/color-mode-sync'
+import { devEnv } from '@/lib/utils';
 
 const spaceGrotesk = Space_Grotesk({
     subsets: ['latin'],
@@ -69,7 +70,7 @@ export default async function RootLayout(
             <link rel="manifest" href="/manifest.json"/>
             <link rel="apple-touch-icon" href="/favicon.png"/>
             {
-                (process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && false) ?
+                (devEnv() && false) ?
                     (
                         <script
                             crossOrigin="anonymous"
