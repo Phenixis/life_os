@@ -8,7 +8,7 @@ import { useUser } from "@/hooks/use-user";
 import { Project } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { Pen, Trash } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function ProjectsPage() {
@@ -20,14 +20,49 @@ export default function ProjectsPage() {
     const { projects, isLoading, mutate } = useProjects();
     const { user } = useUser();
 
+    useEffect(() => {
+        const element = containerRef.current;
+        if (!element) return;
+
+        const handleWheelNative = (e: WheelEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Convert vertical scrolling to horizontal
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                element.scrollBy({
+                    left: e.deltaY,
+                    behavior: "smooth",
+                });
+            } else {
+                element.scrollBy({
+                    left: e.deltaX,
+                    behavior: "smooth",
+                });
+            }
+        };
+
+        element.addEventListener('wheel', handleWheelNative, { passive: false });
+        return () => element.removeEventListener('wheel', handleWheelNative);
+    }, []);
+
     const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
         if (!containerRef.current) return;
 
-        // Only hijack vertical scrolling
+        // Prevent default scrolling behavior and stop propagation
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Convert vertical scrolling to horizontal
         if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-            e.preventDefault();
             containerRef.current.scrollBy({
                 left: e.deltaY,
+                behavior: "smooth",
+            });
+        } else {
+            // Handle horizontal scrolling normally
+            containerRef.current.scrollBy({
+                left: e.deltaX,
                 behavior: "smooth",
             });
         }
@@ -54,15 +89,16 @@ export default function ProjectsPage() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to delete project");
+                const errorBody = await response.json();
+                throw new Error("Failed to delete project: " + errorBody.error);
             }
 
             toast.success("Project deleted successfully");
             setSelectedProject(null);
             await mutate();
         } catch (error) {
-            console.error("Error deleting project:", error);
-            toast.error("Failed to delete project");
+            console.error(error);
+            toast.error(error instanceof Error ? error.message : String(error));
         } finally {
             setIsDeleting(false);
             setShowDeleteDialog(false);
@@ -75,11 +111,11 @@ export default function ProjectsPage() {
                 <h1 className="page-title">My Projects</h1>
                 <p className="page-description text-gray-500">Manage your projects.</p>
             </header>
-            <div className="py-4 border rounded-md flex-1 min-h-0 overflow-auto scrollbar-hide">
+            <div className="border rounded-md flex-1 min-h-0 overflow-auto scrollbar-hide">
                 <div
                     ref={containerRef}
                     onWheel={handleWheel}
-                    className="px-2 flex gap-2 w-full overflow-x-auto overflow-y-hidden scrollbar-hide"
+                    className="py-4 px-2 flex gap-2 w-full overflow-x-auto overflow-y-hidden scrollbar-hide sticky top-0 bg-background border-b z-10"
                     style={{ scrollBehavior: "smooth" }}
                 >
                     {isLoading ? (
@@ -89,8 +125,6 @@ export default function ProjectsPage() {
                     ) : projects?.length > 0 ? (
                         projects
                             .sort((a, b) => {
-                                if (a.id === selectedProject?.id) return -1;
-                                if (b.id === selectedProject?.id) return 1;
                                 if (a.id === -1) return -1;
                                 if (b.id === -1) return 1;
                                 return a.title.localeCompare(b.title);
@@ -113,8 +147,7 @@ export default function ProjectsPage() {
                         </div>
                     )}
                 </div>
-                <div className="border-b w-full my-4" />
-                <article className="px-4">
+                <article className="p-4">
                     <header className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <h2 className="text-lg font-medium">{selectedProject ? selectedProject.title : "Project"}'s Details</h2>
@@ -129,7 +162,7 @@ export default function ProjectsPage() {
                                     // TODO: Implement edit functionality
                                     toast.info("Edit functionality coming soon");
                                 }}
-                            > 
+                            >
                                 <Pen className="w-4 h-4" />
                             </Button>
                             <Button
