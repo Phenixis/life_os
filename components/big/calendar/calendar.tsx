@@ -31,7 +31,7 @@ export default function Calendar({
 
   // Only fetch data when showNumberOfTasks is true
   const {
-    data: numberOfTasks,
+    data: numberOfTasks = [],
     isLoading: isTaskCountLoading,
     isError: isTaskCountError
   } = useNumberOfTasks({

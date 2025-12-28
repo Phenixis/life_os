@@ -7,7 +7,8 @@ import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
 import type {Project, Task} from "@/lib/db/schema"
 import {ChevronDown, CircleHelp, Minus, Plus} from "lucide-react"
-import {useSWRConfig} from "swr"
+import {useQueryClient} from '@tanstack/react-query'
+import { useCreateTask, useUpdateTask } from '@/hooks/queries/use-task-mutations'
 import {Calendar, TaskCount} from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {calculateUrgency} from "@/lib/utils/task"
@@ -84,7 +85,11 @@ export default function TaskModal() {
     })
 
     const {importanceData, durationData} = useImportanceAndDuration()
-    const {mutate} = useSWRConfig()
+    
+    // Mutation hooks
+    const createTaskMutation = useCreateTask()
+    const updateTaskMutation = useUpdateTask()
+    
     const [formChanged, setFormChanged] = useState(false)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
@@ -155,321 +160,57 @@ export default function TaskModal() {
             const title = titleRef.current?.value || ""
             const importanceValue = Number.parseInt(importance || "0")
             const durationValue = Number.parseInt(duration || "0")
-            const id = task?.id
 
             if (!title.trim()) {
                 isSubmittingRef.current = false
                 return
             }
 
-            const urgency = calculateUrgency(dueDate)
-            const score = importanceValue * urgency - durationValue
-            // Generate a unique temporary ID for optimistic updates (negative timestamp to avoid conflicts)
-            const optimisticId = mode === "edit" ? id : -Date.now()
-
-            const todoData = {
-                id: optimisticId,
-                user_id: user?.id,
-                title: title,
+            // Prepare data for API
+            const taskData = {
+                title: title.trim(),
                 importance: importanceValue,
-                urgency: urgency,
+                dueDate: dueDate.toISOString(),
                 duration: durationValue,
-                score: score,
-                due: dueDate,
-                project_id: project.id >= 0 ? project.id : null,
-                created_at: mode === "create" ? new Date() : task?.created_at,
-                updated_at: new Date(),
-                deleted_at: task?.deleted_at || null,
-                completed_at: task?.completed_at || null,
-                project: project.id >= 0 ? {
-                    id: project.id,
-                    title: project.title,
-                    completed: false,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                    user_id: user?.id || "",
-                    description: null,
-                    deleted_at: null,
-                } as Project.Select : null,
-                importanceDetails: {
-                    level: importanceValue,
-                    name: importanceData?.find((item) => item.level === importanceValue)?.name || "",
+                project: {
+                    id: project.id >= 0 ? project.id : -1,
+                    title: project.title || ""
                 },
-                durationDetails: {
-                    level: durationValue,
-                    name: durationData?.find((item) => item.level === durationValue)?.name || "",
-                },
-                tasksToDoAfter: tasks?.filter((task) => task.id === toDoAfter).map((task) => ({
-                    ...task
-                })) || [],
-                tasksToDoBefore: task?.tasksToDoBefore || [],
-                recursive: true,
-            } as Task.Task.TaskWithRelations
+                toDoAfterId: toDoAfter > 0 ? toDoAfter : -1,
+            }
 
+            // Close modal or reset form based on keepCreating
             if (!keepCreating) {
                 closeModal()
             } else {
-                resetForm();
+                resetForm()
             }
 
-            mutate(
-                (key: unknown) => typeof key === "string" && (key === "/api/task/count" || key.startsWith("/api/task/count?")),
-                async (currentData: unknown): Promise<TaskCount[] | unknown> => {
-                    if (!Array.isArray(currentData)) return currentData
-
-                    if (mode === "create") {
-                        const updatedData: TaskCount[] = currentData.map((item: TaskCount) => {
-                            if (new Date(item.due).toDateString() === new Date(todoData.due).toDateString()) {
-                                return {
-                                    ...item,
-                                    uncompleted_count: Number(item.uncompleted_count) + 1,
-                                }
-                            }
-                            return item
-                        })
-
-                        if (!updatedData.some((item) => new Date(item.due).toDateString() === new Date(todoData.due).toDateString())) {
-                            updatedData.push({
-                                due: todoData.due.toISOString(),
-                                uncompleted_count: 1,
-                                completed_count: 0,
-                            })
-                        }
-
-                        return updatedData
-                    } else {
-                        let updatedData: TaskCount[]
-                        if (todoData.completed_at) {
-                            updatedData = currentData.map((item: TaskCount) => {
-                                if (new Date(item.due).toDateString() === new Date(todoData.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        completed_count: Number(item.completed_count) + 1,
-                                    }
-                                } else if (task?.due && new Date(item.due).toDateString() === new Date(task?.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        completed_count: Number(item.completed_count) - 1,
-                                    }
-                                }
-                                return item
-                            })
-
-                            if (!updatedData.some((item) => new Date(item.due).toDateString() === new Date(todoData.due).toDateString())) {
-                                updatedData.push({
-                                    due: todoData.due.toISOString(),
-                                    uncompleted_count: 0,
-                                    completed_count: 1,
-                                })
-                            }
-                        } else {
-                            updatedData = currentData.map((item: TaskCount) => {
-                                if (new Date(item.due).toDateString() === new Date(todoData.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        uncompleted_count: Number(item.uncompleted_count) + 1,
-                                    }
-                                } else if (task?.due && new Date(item.due).toDateString() === new Date(task?.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        uncompleted_count: Number(item.uncompleted_count) - 1,
-                                    }
-                                }
-                                return item
-                            })
-
-                            if (!updatedData.some((item) => new Date(item.due).toDateString() === new Date(todoData.due).toDateString())) {
-                                updatedData.push({
-                                    due: todoData.due.toISOString(),
-                                    uncompleted_count: 1,
-                                    completed_count: 0,
-                                })
-                            }
-                        }
-
-                        return updatedData
-                    }
-                },
-                {revalidate: false},
-            )
-
-            mutate(
-                (key: unknown) => {
-                    if (typeof key !== "string") return false
-                    if (key !== "/api/task" && !key.startsWith("/api/task?")) return false
-                    
-                    // Check if this cache key has date filters that would exclude the task
-                    if (key.includes("?")) {
-                        const urlParams = new URLSearchParams(key.split("?")[1])
-                        const dueAfterParam = urlParams.get("dueAfter")
-                        const dueBeforeParam = urlParams.get("dueBefore")
-                        
-                        if (dueAfterParam) {
-                            const dueAfter = new Date(dueAfterParam)
-                            if (todoData.due < dueAfter) return false
-                        }
-                        
-                        if (dueBeforeParam) {
-                            const dueBefore = new Date(dueBeforeParam)
-                            if (todoData.due > dueBefore) return false
-                        }
-                    }
-                    
-                    return true
-                },
-                async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
-                    if (!Array.isArray(currentData)) return currentData
-
-                    let updatedData: Task.Task.TaskWithRelations[]
-                    if (mode === "edit") {
-                        updatedData = currentData.map((item: Task.Task.TaskWithRelations) => (item.id === id ? todoData : item.id === toDoAfter ? {
-                                ...item,
-                                tasksToDoBefore: [
-                                    ...(item.tasksToDoBefore ?? []),
-                                    {
-                                        ...todoData,
-                                        tasksToDoAfter: todoData.tasksToDoAfter?.map((task) => ({
-                                            id: -1,
-                                            task_id: task.id,
-                                            after_task_id: item.id,
-                                            created_at: new Date(),
-                                            updated_at: new Date(),
-                                            deleted_at: null,
-                                        })),
-                                        recursive: false,
-                                    } as Task.Task.TaskWithNonRecursiveRelations,
-                                ],
-                            } : item
-                        ))
-                    } else {
-                        updatedData = [todoData, ...currentData]
-                    }
-
-                    const raw = window.localStorage.getItem("tasks_filters")
-                    const savedFilters = (JSON.parse(raw || "{}") as tasksFilters | null)
-
-                    const filteredData: Task.Task.TaskWithRelations[] = updatedData.filter((item: Task.Task.TaskWithRelations) => {
-                        const dueBeforeFromSearchParams = savedFilters?.dueBeforeDate
-                        const projectsFromSearchParams = savedFilters?.selectedProjects ?? []
-                        const completedFromSearchParams = savedFilters?.completed
-
-                        if (completedFromSearchParams !== undefined && item.completed_at !== null && !completedFromSearchParams) {
-                            return false
-                        }
-
-                        if (dueBeforeFromSearchParams && item.due > new Date(dueBeforeFromSearchParams)) return false
-
-                        if (projectsFromSearchParams && projectsFromSearchParams.length > 0) {
-                            return projectsFromSearchParams.some((project: simplifiedProject) => item.project_id === project.id)
-                        }
-                        return true
-                    })
-
-                    const orderByFromSearchParams = savedFilters?.orderBy
-                    const orderingDirectionFromSearchParams = savedFilters?.orderingDirection === "desc" ? -1 : 1
-                    const sortedData: Task.Task.TaskWithRelations[] = filteredData.sort(
-                        (a: Task.Task.TaskWithRelations, b: Task.Task.TaskWithRelations) => {
-                            if (orderByFromSearchParams) {
-                                const aValue = a[orderByFromSearchParams]
-                                const bValue = b[orderByFromSearchParams]
-
-                                if (typeof aValue === "string" && typeof bValue === "string") {
-                                    return orderingDirectionFromSearchParams * aValue.localeCompare(bValue)
-                                } else if (typeof aValue === "number" && typeof bValue === "number") {
-                                    return orderingDirectionFromSearchParams * (aValue - bValue)
-                                }
-                            }
-                            // Default fallback sorting by score and title
-                            return orderingDirectionFromSearchParams * (b.score - a.score || (a.title || "").localeCompare(b.title || ""))
-                        }
-                    )
-                    const limitFromSearchParams = savedFilters?.limit
-                    return limitFromSearchParams ? sortedData.slice(0, limitFromSearchParams) : sortedData
-                },
-                {revalidate: false},
-            )
-
-            // Show success message immediately for better UX
-            toast.success(`Task ${mode === "edit" ? "updated" : "created"} successfully`)
-
-            fetch("/api/task", {
-                method: mode === "edit" ? "PUT" : "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user?.api_key}`
-                },
-                body: JSON.stringify({
-                    id: mode === "edit" ? id : undefined,
-                    title,
-                    importance: importanceValue,
-                    dueDate: dueDate.toISOString(),
-                    duration: durationValue,
-                    project: project,
-                    toDoAfterId: toDoAfter,
-                }),
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`Erreur HTTP: ${response.status}`)
-                    }
-                    return response.json()
-                })
-                .then((responseData: { id: number }) => {
-                    // After successful API call, replace the optimistic task with real data
-                    if (mode === "create") {
-                        mutate(
-                            (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
-                            async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
-                                if (!Array.isArray(currentData)) return currentData
-
-                                // Replace the optimistic task (with optimisticId) with the real task data
-                                return currentData.map((item: Task.Task.TaskWithRelations) => {
-                                    if (item.id === optimisticId) {
-                                        // Replace with real data, keeping the same position
-                                        return {
-                                            ...item,
-                                            id: responseData.id,
-                                        }
-                                    }
-                                    return item
-                                })
-                            },
-                            {revalidate: false},
-                        )
-                    }
-
-                    // Invalidate all task-related cache keys to ensure calendar and other components refresh
-                    mutate((key) => {
-                        if (typeof key === "string") {
-                            return key.startsWith("/api/task") ||
-                                key.startsWith("/api/number-of-tasks") ||
-                                key === "/api/task/count" ||
-                                key.startsWith("/api/task/count?")
-                        }
-                        return false
-                    })
-                })
-                .catch((error) => {
-                    console.error("Erreur lors de l'opération:", error)
-                    // On error, remove the optimistic update
-                    mutate(
-                        (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
-                        async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
-                            if (!Array.isArray(currentData)) return currentData
-
-                            // Remove the failed optimistic task
-                            return currentData.filter((item: Task.Task.TaskWithRelations) => item.id !== optimisticId)
+            // Use appropriate mutation based on mode
+            if (mode === "edit" && task?.id) {
+                updateTaskMutation.mutate(
+                    { id: task.id, data: taskData },
+                    {
+                        onSettled: () => {
+                            isSubmittingRef.current = false
                         },
-                        {revalidate: false},
-                    )
-                    toast.error(`Failed to ${mode === "edit" ? "update" : "create"} task. Try again later.`)
-                })
+                    }
+                )
+            } else {
+                createTaskMutation.mutate(
+                    taskData,
+                    {
+                        onSettled: () => {
+                            isSubmittingRef.current = false
+                        },
+                    }
+                )
+            }
 
-            resetForm();
-            isSubmittingRef.current = false
+            resetForm()
         } catch (error) {
             toast.error(`Failed to ${mode === "edit" ? "update" : "create"} task. Try again later.`)
-            console.error("Erreur lors de la soumission:", error)
+            console.error("Error submitting task:", error)
             isSubmittingRef.current = false
         }
     }

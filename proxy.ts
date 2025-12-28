@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { verifyToken, signToken } from "@/lib/auth/session"
+import { devEnv } from "./lib/utils"
 
 export type ActionState = {
 	error?: string
@@ -23,7 +24,7 @@ export async function proxy(request: NextRequest) {
 			return NextResponse.next()
 		}
 		const apiKey = request.headers.get('Authorization')?.replace('Bearer ', '')
-		
+
 		if (!apiKey) {
 			return NextResponse.json({ error: 'Missing API key' }, { status: 401 })
 		}

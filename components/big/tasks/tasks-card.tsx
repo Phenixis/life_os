@@ -135,7 +135,7 @@ export function TasksCard(
     }), [groupByProject, selectedProjects, removedProjects, dueBeforeDate, today, tomorrow])
 
     const {
-        data: numberOfTasks,
+        data: numberOfTasks = [],
         isLoading: isCountLoading,
         isError: isCountError
     } = useNumberOfTasks(numberOfTasksParams)
@@ -143,17 +143,17 @@ export function TasksCard(
     // -------------------- Effects --------------------
 
     useEffect(() => {
-        if (numberOfTasks && numberOfTasks.length > 0) {
+        if (numberOfTasks && Array.isArray(numberOfTasks) && numberOfTasks.length > 0) {
             // Filter tasks by due date if dueBeforeDate is set
-            const filteredTasks = numberOfTasks.filter(task => {
+            const filteredTasks = numberOfTasks.filter((task: any) => {
                 // Ensure task.due is a valid date before comparison
                 if (!task.due) return false;
                 const taskDueDate = new Date(task.due);
                 return taskDueDate <= (dueBeforeDate !== undefined ? dueBeforeDate : tomorrow);
             })
 
-            const completedCount = filteredTasks.reduce((sum, task) => sum + Number(task.completed_count), 0);
-            const uncompletedCount = filteredTasks.reduce((sum, task) => sum + Number(task.uncompleted_count), 0);
+            const completedCount = filteredTasks.reduce((sum: number, task: any) => sum + Number(task.completed_count), 0);
+            const uncompletedCount = filteredTasks.reduce((sum: number, task: any) => sum + Number(task.uncompleted_count), 0);
             const totalCount = completedCount + uncompletedCount
 
             setTasksCompleted(completedCount)

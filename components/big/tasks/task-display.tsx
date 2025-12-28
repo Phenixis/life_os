@@ -1,11 +1,10 @@
-'use client';
-
 import type React from 'react';
 import { startTransition, useOptimistic, useRef, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Task } from '@/lib/db/schema';
 import { ChevronsDownUp, ChevronsUpDown, PenIcon, TrashIcon, Unlink } from 'lucide-react';
-import { useSWRConfig } from 'swr';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToggleTask, useDeleteTask, useDeleteTaskDependency } from '@/hooks/queries/use-task-mutations';
 import { cn } from '@/lib/utils';
 import Tooltip from '@/components/big/tooltip';
 import {
@@ -41,13 +40,18 @@ export default function TaskDisplay({
 }) {
   const user = useUser().user;
   const taskModal = useTaskModal();
+  
+  // Mutation hooks
+  const toggleTaskMutation = useToggleTask();
+  const deleteTaskMutation = useDeleteTask();
+  const deleteDependencyMutation = useDeleteTaskDependency();
+  
   const [isToggled, setIsToggled] = useState(task ? task.completed_at !== null : false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
   const [optimisticState, toggleOptimistic] = useOptimistic(isToggled, prev => !prev);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { mutate } = useSWRConfig();
   const skeleton = task !== undefined;
   const daysBeforeDue = task
     ? Math.ceil(
@@ -55,13 +59,6 @@ export default function TaskDisplay({
           (1000 * 60 * 60 * 24)
       )
     : 4;
-
-  if (task?.title.startsWith('bug:')) {
-    console.log(
-      (new Date(task.due).getTime() - (task.completed_at ? new Date(task.completed_at).getTime() : Date.now())) /
-        (1000 * 60 * 60 * 24)
-    );
-  }
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDependencyDialogOpen, setIsDependencyDialogOpen] = useState(false);
@@ -95,7 +92,7 @@ export default function TaskDisplay({
     // Close the dialog if it was open
     setIsToggleDialogOpen(false);
 
-    // Immediately update local state
+    // Immediately update local state for instant UI feedback
     setIsToggled(newIsToggled);
 
     // Also update optimistic state for consistent UI
@@ -103,100 +100,22 @@ export default function TaskDisplay({
       toggleOptimistic(newIsToggled);
     });
 
-    try {
-      // Optimistic UI update for SWR cache
-      mutate(
-        (key: unknown) => typeof key === 'string' && (key === '/api/task/count' || key.startsWith('/api/task/count?')),
-        async (currentData: unknown): Promise<TaskCount[] | unknown> => {
-          if (!Array.isArray(currentData)) return currentData;
-
-          const updatedData: TaskCount[] = currentData.map((item: TaskCount) => {
-            if (new Date(item.due).getDate() === new Date(task.due).getDate()) {
-              return {
-                ...item,
-                completed_count: Number(item.completed_count) + 1,
-                uncompleted_count: Number(item.uncompleted_count) - 1
-              };
-            }
-            return item;
+    // Use mutation hook - handles optimistic updates, API call, and rollback
+    toggleTaskMutation.mutate(
+      { id: task.id, completed: newIsToggled },
+      {
+        onError: () => {
+          // Revert local state if API fails
+          setIsToggled(!newIsToggled);
+          startTransition(() => {
+            toggleOptimistic(!newIsToggled);
           });
-
-          return updatedData;
         },
-        { revalidate: false } // Don't revalidate immediately
-      );
-
-      mutate(
-        (key: unknown) => typeof key === 'string' && (key === '/api/task' || key.startsWith('/api/task?')),
-        async (currentData: unknown): Promise<unknown> => {
-          if (!Array.isArray(currentData)) return currentData;
-
-          return currentData.filter((item: Task.Task.Select) => item.id !== task.id);
-        },
-        { revalidate: false }
-      );
-
-      // Store original task state to revert if canceled
-      const originalState = { completed: !newIsToggled };
-
-      toast.success(`"${task.title}" ${newIsToggled ? 'completed. Well done!' : 'uncompleted'}`, {
-        action: {
-          label: 'Cancel',
-          onClick: async () => {
-            // Revert local state
-            setIsToggled(!newIsToggled);
-            startTransition(() => {
-              toggleOptimistic(!newIsToggled);
-            });
-
-            // Revert API state
-            try {
-              await fetch('/api/task', {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${user?.api_key}`
-                },
-                body: JSON.stringify({ id: task.id, completed: originalState.completed })
-              });
-              mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-              toast.success(
-                `"${task.title}" restored to ${originalState.completed ? 'completed' : 'uncompleted'} state`
-              );
-            } catch (error) {
-              console.error('Error canceling task toggle:', error);
-              toast.error('Error canceling. The action may have already been processed.');
-            }
-          }
-        }
-      });
-
-      // Actual API call
-      await fetch('/api/task', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.api_key}` },
-        body: JSON.stringify({ id: task.id, completed: !isToggled })
-      });
-
-      // No need to set state again since we already did it optimistically
-      // Revalidate after successful toggle
-      mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-    } catch (error) {
-      console.error('Error toggling task:', error);
-      toast.error('Error toggling task. Try again later.');
-
-      // Revert both states on error
-      setIsToggled(isToggled);
-      startTransition(() => {
-        toggleOptimistic(isToggled);
-      });
-
-      // Revalidate to restore the correct state
-      mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-    }
+      }
+    );
   }
 
-  // Fonction améliorée pour supprimer une task avec SWR
+  // Fonction améliorée pour supprimer une task avec React Query
   async function deleteTask(e?: React.MouseEvent) {
     if (e) e.stopPropagation(); // Empêche le clic de se propager
 
@@ -211,103 +130,14 @@ export default function TaskDisplay({
     // Close the dialog
     setIsDeleteDialogOpen(false);
 
-    try {
-      setIsDeleting(true);
+    setIsDeleting(true);
 
-      mutate(
-        (key: unknown) => typeof key === 'string' && (key === '/api/task/count' || key.startsWith('/api/task/count?')),
-        async (currentData: unknown): Promise<TaskCount[] | unknown> => {
-          if (!Array.isArray(currentData)) return currentData;
-
-          const updatedData: TaskCount[] = currentData.map((item: TaskCount) => {
-            if (new Date(item.due).getDate() === new Date(task.due).getDate()) {
-              if (task.completed_at) {
-                return {
-                  ...item,
-                  completed_count: Number(item.completed_count) - 1
-                };
-              } else {
-                return {
-                  ...item,
-                  uncompleted_count: Number(item.uncompleted_count) - 1
-                };
-              }
-            }
-            return item;
-          });
-
-          return updatedData;
-        },
-        { revalidate: false } // Don't revalidate immediately
-      );
-
-      // Optimistic UI update - remove the task from all lists
-      mutate(
-        (key: unknown) => typeof key === 'string' && (key === '/api/task' || key.startsWith('/api/task?')),
-        async (currentData: unknown): Promise<unknown> => {
-          // Filter out the task being deleted from all cached lists
-          if (Array.isArray(currentData)) {
-            return currentData
-              .filter(
-                (item: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations) => item.id !== task.id
-              )
-              .sort(
-                (
-                  a: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations,
-                  b: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations
-                ) => b.score - a.score || (a.title || '').localeCompare(b.title)
-              )
-              .slice(0, currentLimit || Number.MAX_SAFE_INTEGER);
-          }
-          return currentData;
-        },
-        { revalidate: false } // Don't revalidate immediately
-      );
-
-      // Store original task state to revert if canceled
-      const originalState = { id: task.id, completed_at: task.completed_at };
-
-      toast.success(`"${task.title}" deleted successfully`, {
-        action: {
-          label: 'Cancel',
-          onClick: async () => {
-            // Revert API state
-            try {
-              await fetch('/api/task', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${user?.api_key}`
-                },
-                body: JSON.stringify(originalState)
-              });
-              mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-              toast.success(`"${task.title}" restored successfully`);
-            } catch (error) {
-              console.error('Error canceling task deletion:', error);
-              toast.error('Error canceling. The action may have already been processed.');
-            }
-          }
-        }
-      });
-
-      // Actual deletion
-      await fetch(`/api/task?id=${task.id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.api_key}` }
-      });
-
-      // Revalidate after successful deletion
-      mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      toast.error('Error deleting task. Try again later.');
-
-      // Revalidate to restore the correct state
-      mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-    } finally {
-      setIsDeleting(false);
-    }
+    // Use mutation hook - handles optimistic updates, API call, and rollback
+    deleteTaskMutation.mutate(task.id, {
+      onSettled: () => {
+        setIsDeleting(false);
+      },
+    });
   }
 
   async function deleteDependency(id: number) {
@@ -329,71 +159,14 @@ export default function TaskDisplay({
 
     if (idToDelete === null) return;
 
-    try {
-      // Optimistic UI update - update the task's dependencies in all lists
-      mutate(
-        (key: unknown) => typeof key === 'string' && (key === '/api/task' || key.startsWith('/api/task?')),
-        async (currentData: unknown): Promise<unknown> => {
-          // Find the task and update its dependencies
-          if (Array.isArray(currentData)) {
-            const filteredData = currentData.map(
-              (item: Task.Task.TaskWithRelations | Task.Task.TaskWithNonRecursiveRelations) => {
-                if (item.id === task.id || item.id === idToDelete) {
-                  if (item.recursive) {
-                    return {
-                      ...item,
-                      tasksToDoBefore: item.tasksToDoBefore?.filter(
-                        task => task.id !== idToDelete && task.id !== task.id
-                      ),
-                      tasksToDoAfter: item.tasksToDoAfter?.filter(task => task.id !== idToDelete && task.id !== task.id)
-                    };
-                  } else {
-                    return {
-                      ...item,
-                      tasksToDoBefore: item.tasksToDoBefore?.filter(
-                        dep =>
-                          dep.task_id !== task.id &&
-                          dep.after_task_id !== idToDelete &&
-                          dep.task_id !== idToDelete &&
-                          dep.after_task_id !== task.id
-                      ),
-                      tasksToDoAfter: item.tasksToDoAfter?.filter(
-                        dep =>
-                          dep.task_id !== task.id &&
-                          dep.after_task_id !== idToDelete &&
-                          dep.task_id !== idToDelete &&
-                          dep.after_task_id !== task.id
-                      )
-                    };
-                  }
-                }
-                return item;
-              }
-            );
-            return filteredData;
-          }
-          return currentData;
-        },
-        { revalidate: false } // Don't revalidate immediately
-      );
-      toast.success('Dependency removed successfully');
+    setIsDeleting(true);
 
-      // Actual deletion
-      await fetch(`/api/task/dependency?id1=${task.id}&id2=${idToDelete}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.api_key}` }
-      });
-
-      // Revalidate after successful deletion
-      mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-    } catch (error) {
-      console.error('Error deleting dependency:', error);
-      toast.error('Error deleting dependency. Try again later.');
-      // Revalidate to restore the correct state
-      mutate(key => typeof key === 'string' && key.startsWith('/api/task'));
-    } finally {
-      setIsDeleting(false);
-    }
+    // Use mutation hook - handles API call and cache invalidation
+    deleteDependencyMutation.mutate(idToDelete, {
+      onSettled: () => {
+        setIsDeleting(false);
+      },
+    });
   }
 
   function handleMouseEnter() {
