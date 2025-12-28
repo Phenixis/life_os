@@ -215,8 +215,6 @@ export default function LandingPage() {
                             So I built Life OS, my <span className="font-semibold">ultimate productivity system</span><span className='italic'> (Imagine the climax of an epic music behind...)</span>.<br /><br />
 
                             I aim to build the best and most complete application to help ambitious students and side-hustlers organize their life and work so they can focus on what matters: <span className="font-semibold">creating</span>.<br /><br />
-
-                            Welcome to Life OS. Let&apos;s build something amazing together.
                         </MotionP>
                     </div>
 

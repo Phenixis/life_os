@@ -100,9 +100,9 @@ export default function Menu({
                 className="whitespace-nowrap transition-transform duration-300" tooltip="Open menu (Ctrl/⌘+K)">
                 <MenuIcon size={24} />
             </Button>
-            <CommandDialog open={isOpen} onOpenChange={setIsOpen} showCloseButton={false}>
+            <CommandDialog open={isOpen} onOpenChange={setIsOpen} showCloseButton={false} className="">
                 <CommandInput placeholder="Type a command or search..." />
-                <CommandList>
+                <CommandList className="scrollbar-hide">
                     <CommandEmpty>No results found.</CommandEmpty>
                     {
                         Object.entries(items).map(([groupName, groupItems]) => (
