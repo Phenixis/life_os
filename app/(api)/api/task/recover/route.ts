@@ -64,10 +64,6 @@ export async function DELETE(request: NextRequest) {
 
         const id = Number(idParam)
 
-        // Delete any task dependency relationships before permanent deletion
-        await TaskQueries.Task.deleteTaskToDoAfterByTodoId(id)
-        await TaskQueries.Task.deleteTaskToDoAfterByAfterId(id)
-
         const taskId = await TaskQueries.Task.permanentlyDeleteTaskById(verification.userId, id)
 
         if (!taskId) {

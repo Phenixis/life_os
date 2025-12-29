@@ -103,15 +103,6 @@ export const tasksApi = {
     },
 
     /**
-     * Delete task dependency
-     */
-    deleteTaskDependency: async (id: number, apiKey: string): Promise<void> => {
-        return fetchWithAuth(`/api/task/dependency?id=${id}`, apiKey, {
-            method: 'DELETE',
-        })
-    },
-
-    /**
      * Update task urgency
      */
     updateTaskUrgency: async (apiKey: string): Promise<void> => {
@@ -132,7 +123,6 @@ export interface TaskCreateInput {
         id: number
         title: string
     }
-    toDoAfterId?: number
 }
 
 export interface TaskUpdateInput {
@@ -144,6 +134,5 @@ export interface TaskUpdateInput {
         id: number
         title: string
     }
-    toDoAfterId?: number
     state?: string
 }

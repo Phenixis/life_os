@@ -20,9 +20,6 @@ export function buildOptimisticTask(input: TaskCreateInput, userId: string) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         user_id: userId,
-        recursive: true,
-        tasksToDoAfter: [],
-        tasksToDoBefore: [],
         // Minimal details - server will provide full details on refetch
         importanceDetails: {
             id: input.importance,

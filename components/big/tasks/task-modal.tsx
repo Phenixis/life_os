@@ -1,38 +1,26 @@
 "use client"
 
-import React, {useCallback, useEffect, useRef, useState} from "react"
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog"
-import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {Label} from "@/components/ui/label"
-import type {Project, Task} from "@/lib/db/schema"
-import {ChevronDown, CircleHelp, Minus, Plus} from "lucide-react"
-import {useQueryClient} from '@tanstack/react-query'
-import { useCreateTask, useUpdateTask } from '@/hooks/queries/use-task-mutations'
-import {Calendar, TaskCount} from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {calculateUrgency} from "@/lib/utils/task"
-import {format} from "date-fns"
-import {useDebouncedCallback} from "use-debounce"
-import {useSearchTasks} from "@/hooks/use-search-tasks"
-import {useImportanceAndDuration} from "@/hooks/use-importance-and-duration"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+import { DatePicker } from "@/components/big/date-picker"
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
-import Tooltip from "../tooltip"
-import {useUser} from "@/hooks/use-user"
-import {toast} from "sonner"
-import {simplifiedProject, tasksFilters} from "./tasks-card"
-import SearchProjectsInput from "../projects/search-projects-input"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useTaskModal } from "@/contexts/modal-commands-context"
+import { useCreateTask, useUpdateTask } from '@/hooks/queries/use-task-mutations'
+import { useImportanceAndDuration } from "@/hooks/use-importance-and-duration"
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 import Help from "../help"
-import {Checkbox} from "@/components/ui/checkbox";
-import {useTaskModal} from "@/contexts/modal-commands-context";
-import {DatePicker} from "@/components/big/date-picker";
+import SearchProjectsInput from "../projects/search-projects-input"
+import { simplifiedProject, tasksFilters } from "./tasks-card"
 
 export default function TaskModal() {
-    const user = useUser().user;
-    const {isOpen, task, openModal, closeModal, dueDate: contextDueDate} = useTaskModal();
+    const { isOpen, task, openModal, closeModal, dueDate: contextDueDate } = useTaskModal();
 
     // State management for the dialog
     const mode = task ? "edit" : "create"
@@ -44,7 +32,6 @@ export default function TaskModal() {
         initialDate.setHours(0, 0, 0, 0)
         return initialDate
     })
-    const [showCalendar, setShowCalendar] = useState(false)
 
     const [project, setProject] = useState<simplifiedProject>(task && task.project ? {
         title: task.project.title,
@@ -57,7 +44,7 @@ export default function TaskModal() {
     // Keep project state in sync when the task prop arrives/changes (e.g., when opening in edit mode)
     useEffect(() => {
         if (task && task.project) {
-            setProject({title: task.project.title, id: task.project.id})
+            setProject({ title: task.project.title, id: task.project.id })
         }
         if (task) {
             setImportance(task.importance?.toString() || "0")
@@ -74,25 +61,14 @@ export default function TaskModal() {
         }
     }, [task, contextDueDate])
 
-    const [toDoAfter, setToDoAfter] = useState<number>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].id : -1)
-    const [toDoAfterInputValue, setToDoAfterInputValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
-    const [toDoAfterDebounceValue, setToDoAfterDebounceValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
-    const {tasks, isLoading: isLoadingTasks, isError: isErrorTasks} = useSearchTasks({
-        query: toDoAfterDebounceValue, limit: 5, excludeIds: task ? [
-            task.id,
-            task.tasksToDoBefore ? task.tasksToDoBefore.map((task) => task.id) : -1,
-        ].flat() : []
-    })
+    const { importanceData, durationData } = useImportanceAndDuration()
 
-    const {importanceData, durationData} = useImportanceAndDuration()
-    
     // Mutation hooks
     const createTaskMutation = useCreateTask()
     const updateTaskMutation = useUpdateTask()
-    
+
     const [formChanged, setFormChanged] = useState(false)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-    const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
 
     // Use refs to access field values
     const closeDialogRef = useRef<() => void>(() => {
@@ -111,12 +87,8 @@ export default function TaskModal() {
             initialDate.setHours(0, 0, 0, 0)
             return initialDate
         })
-        setProject({title: "", id: -1})
-        setToDoAfter(-1)
-        setToDoAfterInputValue("")
-        setToDoAfterDebounceValue("")
+        setProject({ title: "", id: -1 })
         setFormChanged(false)
-        setShowAdvancedOptions(false)
         setImportance("0")
         setDuration("0")
         if (titleRef.current) {
@@ -175,8 +147,7 @@ export default function TaskModal() {
                 project: {
                     id: project.id >= 0 ? project.id : -1,
                     title: project.title || ""
-                },
-                toDoAfterId: toDoAfter > 0 ? toDoAfter : -1,
+                }
             }
 
             // Close modal or reset form based on keepCreating
@@ -237,21 +208,6 @@ export default function TaskModal() {
         isSubmittingRef.current = false
     }, [isOpen])
 
-    const handleDateChange = (date: Date | undefined) => {
-        if (date) {
-            date.setHours(0, 0, 0, 0)
-            setDueDate(date)
-            setFormChanged(
-                (mode === "edit" && task && date.toDateString() !== new Date(task.due).toDateString()) || date.toDateString() !== new Date().toDateString()
-            )
-        }
-        setShowCalendar(false)
-    }
-
-    const handleToDoAfterChange = useDebouncedCallback((value: string) => {
-        setToDoAfterDebounceValue(value)
-    }, 200)
-
     // Handle dialog close attempt
     const handleCloseAttempt = () => {
         if (formChanged) {
@@ -292,10 +248,10 @@ export default function TaskModal() {
                 <DialogContent
                     className=""
                     aria-describedby={undefined}
-                    maxHeight="max-h-110"
+                    maxHeight="max-h-95"
                 >
                     <form id="task-form" onSubmit={handleSubmit}
-                          className="space-y-4 h-full flex flex-col justify-between">
+                        className="space-y-4 h-full flex flex-col justify-between">
                         <main className="space-y-4">
                             <DialogHeader>
                                 <DialogTitle>{mode === "edit" ? "Edit Task" : "Create Task"}</DialogTitle>
@@ -328,7 +284,7 @@ export default function TaskModal() {
                                         }}
                                     >
                                         <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select importance"/>
+                                            <SelectValue placeholder="Select importance" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {importanceData ? (
@@ -383,7 +339,7 @@ export default function TaskModal() {
                                         }}
                                     >
                                         <SelectTrigger ref={durationTriggerRef} className="w-full">
-                                            <SelectValue placeholder="Select duration"/>
+                                            <SelectValue placeholder="Select duration" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {durationData ? (
@@ -411,76 +367,6 @@ export default function TaskModal() {
                                     enabled={isOpen}
                                 />
                             </div>
-                            <Collapsible className="w-full" open={showAdvancedOptions}
-                                         onOpenChange={setShowAdvancedOptions}>
-                                <CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
-                                    Advanced Options
-                                    <ChevronDown
-                                        className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`}/>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="space-y-4">
-                                    <div className="flex space-x-4">
-                                        <div className="w-full">
-                                            <Label htmlFor="task" className="flex items-center space-x-2 pb-1">
-                                                To do before
-                                                <Tooltip
-                                                    tooltip={`Select a task that needs to be done before this task.<br/>For example, if you are ${mode === 'edit' ? "editing" : "creating"} a Task B that needs to be done after a Task A, enter the title of the Task A here.`}>
-                                                    <CircleHelp className="ml-1 size-4 text-muted-foreground"/>
-                                                </Tooltip>
-                                            </Label>
-                                            <Input
-                                                type="text"
-                                                id="task"
-                                                name="task"
-                                                value={toDoAfterInputValue}
-                                                onChange={(e) => {
-                                                    setToDoAfterInputValue(e.target.value)
-                                                    handleToDoAfterChange(e.target.value)
-                                                    setFormChanged(
-                                                        (mode === "edit" && task && e.target.value !== task.project?.title) || e.target.value !== ""
-                                                    )
-                                                }}
-                                            />
-                                            {toDoAfterInputValue && !(tasks && tasks.length == 1 && tasks[0].id == toDoAfter) && (
-                                                <div
-                                                    className="mt-1 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
-                                                    {isLoadingTasks ? (
-                                                        <div className="p-2 text-sm text-muted-foreground">Loading
-                                                            tasks...</div>
-                                                    ) : isErrorTasks ? (
-                                                        <div className="p-2 text-sm text-destructive">Error loading
-                                                            tasks</div>
-                                                    ) : tasks && tasks.length > 0 ? (
-                                                        <ul className="py-1">
-                                                            {tasks.map((currentTask, index) => (
-                                                                <li
-                                                                    key={index}
-                                                                    className="cursor-pointer px-3 py-2 text-sm lg:hover:bg-accent"
-                                                                    onClick={() => {
-                                                                        setToDoAfterInputValue(currentTask.title)
-                                                                        setToDoAfterDebounceValue(currentTask.title)
-                                                                        setToDoAfter(currentTask.id)
-                                                                        setTimeout(() => {
-                                                                            if (durationTriggerRef.current) {
-                                                                                durationTriggerRef.current.focus()
-                                                                            }
-                                                                        }, 0)
-                                                                    }}
-                                                                >
-                                                                    {currentTask.title}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : (
-                                                        <div className="p-2 text-sm text-muted-foreground">No tasks
-                                                            found</div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CollapsibleContent>
-                            </Collapsible>
                         </main>
                         <DialogFooter className="w-full sm:justify-between">
                             <div className={"flex items-center gap-2"}>

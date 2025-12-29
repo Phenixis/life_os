@@ -172,7 +172,7 @@ function DeletedTasksList() {
                 </div>
             )}
             <div className="space-y-1">
-                {tasks.map((task: Task.Task.TaskWithNonRecursiveRelations) => (
+                {tasks.map((task: Task.Task.TaskWithRelations) => (
                     <div key={task.id}
                          className="flex items-center justify-between gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors">
                         <div className="flex-1 min-w-0">

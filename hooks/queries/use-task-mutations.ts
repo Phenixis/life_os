@@ -220,26 +220,3 @@ export function useDeleteTask() {
         },
     })
 }
-
-/**
- * Hook to delete task dependency
- */
-export function useDeleteTaskDependency() {
-    const { user } = useUser()
-    const queryClient = useQueryClient()
-
-    return useMutation({
-        mutationKey: ["deleteTaskDependency"],
-        mutationFn: (id: number) =>
-            tasksApi.deleteTaskDependency(id, user?.api_key || ""),
-
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
-            toast.success("Dependency removed")
-        },
-
-        onError: (error: Error) => {
-            toast.error(`Failed to remove dependency: ${error.message}`)
-        },
-    })
-}
