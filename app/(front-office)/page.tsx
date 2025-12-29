@@ -1,9 +1,9 @@
 import React from 'react'
 import { CheckCircle, Shield, Target, Users, Zap } from "lucide-react"
-import { HeroSection } from "./components/hero-section"
-import { FeatureCard } from "./components/feature-card"
-import { PricingSection } from "./components/pricing-section"
-import { ProblemSection, BenefitsSection, CTASection } from "./components/animated-sections"
+import { HeroSection } from "../../components/big/landing-page/hero-section"
+import { FeatureCard } from "../../components/big/landing-page/feature-card"
+import { PricingSection } from "../../components/big/landing-page/pricing-section"
+import { ProblemSection, BenefitsSection, CTASection } from "../../components/big/landing-page/animated-sections"
 
 // Calculate age at build/request time (server-side)
 function getAge() {
