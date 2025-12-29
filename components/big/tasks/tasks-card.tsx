@@ -196,6 +196,9 @@ export function TasksCard(
                     setLimit(savedFilters.limit)
                 }
                 if (typeof savedFilters.orderBy === "string") {
+                    if (savedFilters.orderBy as string === "score") {
+                        setOrderBy("due")
+                    }
                     setOrderBy(savedFilters.orderBy as keyof Task.Task.Select)
                 }
                 if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") {
