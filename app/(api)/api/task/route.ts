@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
 
   const searchParams = request.nextUrl.searchParams;
   const completedParam = searchParams.get('completed');
-  const orderBy = searchParams.get('orderBy') as keyof Task.Task.Select | null;
+  const orderByParam = searchParams.get('orderBy');
+  const orderBy = orderByParam && orderByParam in ({} as Task.Task.Select) 
+    ? orderByParam as keyof Task.Task.Select 
+    : null;
   const limitParam = searchParams.get('limit');
   const orderingDirection = searchParams.get('orderingDirection') as 'asc' | 'desc' | undefined;
   const projectIds = searchParams.get('projectIds')
