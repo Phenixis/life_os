@@ -22,7 +22,6 @@ export async function createTask(
             ...values,
             urgency: urgency,
             state: values.state || lib.Schema.Task.Task.State.TODO,
-            score: 0, // SCORE PLACEHOLDER
         })
         .returning({ id: table.id })
 
@@ -263,13 +262,12 @@ export async function getTasks(
                 ...row,
                 importanceDetails: row.importanceDetails!,
                 durationDetails: row.durationDetails!,
-                score: 0, // SCORE PLACEHOLDER
             }
         }
     }
 
     // Preserve the original ordering from distinctTasks
-    const result = taskIds.map((id) => groupedTasks[id]).filter(Boolean).sort((a, b) => b.due.getTime() - a.due.getTime() || (a.title || "").localeCompare(b.title))
+    const result = taskIds.map((id) => groupedTasks[id]).filter(Boolean)
 
     return result as lib.Schema.Task.Task.TaskWithRelations[]
 }
@@ -371,7 +369,6 @@ export async function getDeletedTasks(userId: string, orderBy: keyof Existing = 
         tasksToDoBefore: null,
         importanceDetails: task.importanceDetails!,
         durationDetails: task.durationDetails!,
-        score: 0 // SCORE PLACEHOLDER
     })) as lib.Schema.Task.Task.TaskWithRelations[]
 
     return {

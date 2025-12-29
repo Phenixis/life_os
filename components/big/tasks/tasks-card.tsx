@@ -60,7 +60,7 @@ export function TasksCard(
         initialCompleted = false,
         limit: initialLimit = 5,
         orderBy: initialOrderBy = "due",
-        orderingDirection: initialOrderingDirection = "desc",
+        orderingDirection: initialOrderingDirection = "asc",
         withProject = true
     }: {
         className?: string

@@ -40,7 +40,12 @@ export function ProjectsTasksAndNotesFilterBar({
                         <ul className="space-y-1">
                             {tasks
                                 .filter(task => task.completed_at === null)
-                                .sort((a, b) => (b.score || 0) - (a.score || 0))
+                                .sort((a, b) => {
+                                    if (!a.due && !b.due) return 0;
+                                    if (!a.due) return 1;
+                                    if (!b.due) return -1;
+                                    return new Date(a.due).getTime() - new Date(b.due).getTime();
+                                })
                                 .map((task) => (
                                     <TaskDisplay key={task.id} task={task} />
                                 ))}

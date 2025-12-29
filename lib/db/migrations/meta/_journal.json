@@ -330,6 +330,13 @@
       "when": 1767004299847,
       "tag": "0046_gigantic_ghost_rider",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1767004809350,
+      "tag": "0047_jazzy_omega_flight",
+      "breakpoints": true
     }
   ]
 }

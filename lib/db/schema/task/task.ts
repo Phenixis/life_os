@@ -17,7 +17,6 @@ export const table = lib.pgTable('task', {
     duration: lib.integer('duration')
         .notNull()
         .references(() => Duration.table.level),
-    score: lib.integer('score').notNull(),
     due: lib.timestamp('due').notNull(),
 
     project_id: lib.integer('project_id')
