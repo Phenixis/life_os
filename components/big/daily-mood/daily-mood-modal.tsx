@@ -402,63 +402,63 @@ export default function DailyMoodModal() {
                         }
                     </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-4 lg:flex lg:space-y-0 lg:space-x-4 w-full">
                     <div>
-                        <Label>Select your mood</Label>
-                        <div className="grid grid-cols-5 gap-2 mt-2">
+                        <Label className="lg:sr-only">Select your mood</Label>
+                        <div className="grid grid-cols-5 lg:grid-cols-1 gap-2 mt-2">
                             <Button
-                                variant={selectedMood === 0 ? "default" : "outline"}
+                                variant={selectedMood === 4 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 0 ? "bg-red-100 border border-red-500 dark:bg-red-900/30 lg:hover:bg-red-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(0)}
+                                className={`p-3 flex flex-col gap-1 h-auto aspect-square order-5 lg:order-1 ${selectedMood === 4 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(4)}
                                 disabled={isFutureDate()}
                             >
-                                <Angry className="size-6 text-red-700 flex-shrink-0" />
-                                <span className="text-xs">Angry</span>
-                            </Button>
-                            <Button
-                                variant={selectedMood === 1 ? "default" : "outline"}
-                                size="sm"
-                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 1 ? "bg-blue-100 border border-blue-500 dark:bg-blue-900/30 lg:hover:bg-blue-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(1)}
-                                disabled={isFutureDate()}
-                            >
-                                <Frown className="size-6 text-blue-400 flex-shrink-0" />
-                                <span className="text-xs">Sad</span>
-                            </Button>
-                            <Button
-                                variant={selectedMood === 2 ? "default" : "outline"}
-                                size="sm"
-                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 2 ? "bg-amber-100 border border-amber-500 dark:bg-amber-900/30 lg:hover:bg-amber-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(2)}
-                                disabled={isFutureDate()}
-                            >
-                                <Meh className="size-6 text-amber-300 flex-shrink-0" />
-                                <span className="text-xs">Meh</span>
+                                <Laugh className="size-6 text-green-800 shrink-0" />
+                                <span className="text-xs lg:sr-only">Amazing</span>
                             </Button>
                             <Button
                                 variant={selectedMood === 3 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 3 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
+                                className={`p-3 flex flex-col gap-1 h-auto aspect-square order-4 lg:order-2 ${selectedMood === 3 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
                                 onClick={() => setSelectedMood(3)}
                                 disabled={isFutureDate()}
                             >
-                                <Smile className="size-6 text-green-400 flex-shrink-0" />
-                                <span className="text-xs">Happy</span>
+                                <Smile className="size-6 text-green-400 shrink-0" />
+                                <span className="text-xs lg:sr-only">Happy</span>
                             </Button>
                             <Button
-                                variant={selectedMood === 4 ? "default" : "outline"}
+                                variant={selectedMood === 2 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 4 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(4)}
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square order-3 lg:order-3 ${selectedMood === 2 ? "bg-amber-100 border border-amber-500 dark:bg-amber-900/30 lg:hover:bg-amber-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(2)}
                                 disabled={isFutureDate()}
                             >
-                                <Laugh className="size-6 text-green-800 flex-shrink-0" />
-                                <span className="text-xs">Amazing</span>
+                                <Meh className="size-6 text-amber-300 shrink-0" />
+                                <span className="text-xs lg:sr-only">Meh</span>
+                            </Button>
+                            <Button
+                                variant={selectedMood === 1 ? "default" : "outline"}
+                                size="sm"
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square order-2 lg:order-4 ${selectedMood === 1 ? "bg-blue-100 border border-blue-500 dark:bg-blue-900/30 lg:hover:bg-blue-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(1)}
+                                disabled={isFutureDate()}
+                            >
+                                <Frown className="size-6 text-blue-400 shrink-0" />
+                                <span className="text-xs lg:sr-only">Sad</span>
+                            </Button>
+                            <Button
+                                variant={selectedMood === 0 ? "default" : "outline"}
+                                size="sm"
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square order-1 lg:order-5 ${selectedMood === 0 ? "bg-red-100 border border-red-500 dark:bg-red-900/30 lg:hover:bg-red-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(0)}
+                                disabled={isFutureDate()}
+                            >
+                                <Angry className="size-6 text-red-700 shrink-0" />
+                                <span className="text-xs lg:sr-only">Angry</span>
                             </Button>
                         </div>
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <Label htmlFor="comment">Comment (optional)</Label>
                         <Textarea
                             id="comment"
@@ -468,6 +468,7 @@ export default function DailyMoodModal() {
                             disabled={isFutureDate()}
                             className="mt-1"
                             rows={3}
+                            maxHeight={260}
                         />
                     </div>
                 </div>
