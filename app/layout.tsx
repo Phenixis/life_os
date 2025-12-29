@@ -1,11 +1,11 @@
 import './globals.css'
-import type {Metadata} from 'next'
-import {Inter, Space_Grotesk} from 'next/font/google';
-import {TooltipProvider} from "@/components/ui/tooltip"
-import {SpeedInsights} from "@vercel/speed-insights/next"
-import {Analytics} from '@vercel/analytics/next';
-import {Toaster} from "@/components/ui/sonner"
-import {darkMode} from "@/lib/flags"
+import type { Metadata } from 'next'
+import { Inter, Space_Grotesk } from 'next/font/google';
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from '@vercel/analytics/next';
+import { Toaster } from "@/components/ui/sonner"
+import { darkMode } from "@/lib/flags"
 import ColorModeSync from '@/components/ui/color-mode-sync'
 import { devEnv } from '@/lib/utils';
 
@@ -79,35 +79,42 @@ export default async function RootLayout(
             className={"overflow-x-hidden " + (isDarkMode ? 'dark' : '')}
             suppressHydrationWarning
         >
-        <head>
-            <link rel="icon" href="/favicon.png" sizes='any'/>
-            <link rel="manifest" href="/manifest.json"/>
-            <link rel="apple-touch-icon" href="/favicon.png"/>
-            {
-                (devEnv() && false) ?
-                    (
-                        <script
-                            crossOrigin="anonymous"
-                            src="//unpkg.com/react-scan/dist/auto.global.js"
-                            defer
-                        />
-                    ) : null
-            }
-        </head>
-        <body className={cx(
-            'antialiased text-black bg-white dark:text-white dark:bg-black h-full min-h-screen w-full min-w-screen max-w-screen',
-            spaceGrotesk.variable,
-            inter.variable,
-            inter.className,
-        )}>
-        <TooltipProvider>
-            <ColorModeSync />
-            {children}
-        </TooltipProvider>
-        <SpeedInsights/>
-        <Analytics/>
-        <Toaster/>
-        </body>
+            <head>
+                <link rel="icon" href="/favicon.png" sizes='any' />
+                <link rel="manifest" href="/manifest.json" />
+                <link rel="apple-touch-icon" href="/favicon.png" />
+                {
+                    (devEnv() && false) ?
+                        (
+                            <script
+                                crossOrigin="anonymous"
+                                src="//unpkg.com/react-scan/dist/auto.global.js"
+                                defer
+                            />
+                        ) : null
+                }
+            </head>
+            <body className={cx(
+                'antialiased text-black bg-white dark:text-white dark:bg-black h-full min-h-screen w-full min-w-screen max-w-screen',
+                spaceGrotesk.variable,
+                inter.variable,
+                inter.className,
+            )}>
+                <TooltipProvider>
+                    {
+                        process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? (
+                            <div className="sticky top-0 left-0 h-5 w-full bg-red-600 text-white text-center text-xs py-1 z-50 pointer-events-none">
+                                Instance de DEV
+                            </div>
+                        ) : null
+                    }
+                    <ColorModeSync />
+                    {children}
+                </TooltipProvider>
+                <SpeedInsights />
+                <Analytics />
+                <Toaster />
+            </body>
         </html>
     )
 }

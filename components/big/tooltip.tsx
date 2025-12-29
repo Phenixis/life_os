@@ -9,18 +9,20 @@ export default function Tooltip({
     tooltip,
     cursor,
     className,
-    asChild
+    asChild,
+    position = "top"
 }: {
     children: React.ReactNode
     tooltip: string
     cursor?: "cursor-auto" | "cursor-pointer" | "cursor-default" | "cursor-help" | "cursor-wait" | "cursor-not-allowed"
     className?: string
     asChild?: boolean
+    position?: "top" | "bottom" | "left" | "right"
 }) {
     return (
         <TooltipRoot>
             <TooltipTrigger type="button" className={`${className} ${cursor}`} asChild={asChild}>{children}</TooltipTrigger>
-            <TooltipContent>{tooltip.split("<br/>").map((line) => (
+            <TooltipContent side={position}>{tooltip.split("<br/>").map((line) => (
                 <div key={line} className="text-sm">
                     {line}
                 </div>
