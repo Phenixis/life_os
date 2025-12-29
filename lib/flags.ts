@@ -46,7 +46,7 @@ export const defaultValueCookie = {
 export const defaultTaskFilterCookie: TaskFilterCookie = {
     completed: false,
     limit: 5,
-    orderBy: "score",
+    orderBy: "due",
     orderingDirection: "desc",
     projects: [],
     removedProjects: [],

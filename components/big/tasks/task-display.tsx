@@ -306,13 +306,6 @@ export default function TaskDisplay({
               )}
               <div className={`flex space-x-4 justify-between`}>
                 <div className="space-y-1">
-                  <Tooltip
-                    tooltip={`(Urgency * Importance) - Duration = Score<br/>(${task.urgency} * ${task.importance}) - ${task.duration} = ${task.score}`}
-                  >
-                    <p className="text-muted-foreground">
-                      Score: <span className="text-black dark:text-white">{task.score}</span>
-                    </p>
-                  </Tooltip>
                   {task.project && task.project.title !== '' && (
                     <p className="text-muted-foreground">
                       Project: <span className="text-black dark:text-white">{task.project.title}</span>

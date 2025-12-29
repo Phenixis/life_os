@@ -24,7 +24,6 @@ export async function createTask(
         .values({
             ...values,
             urgency: urgency,
-            score: (values.importance * urgency) - values.duration,
             state: values.state || lib.Schema.Task.Task.State.TODO
         })
         .returning({id: table.id})
@@ -46,7 +45,6 @@ export async function duplicateTask(id: number, newValues: Partial<Existing> = {
         importance: newValues.importance ?? task.importance,
         duration: newValues.duration ?? task.duration,
         due: newValues.due ?? task.due,
-        score: newValues.score ?? task.score,
         project_id: newValues.project_id ?? task.project_id,
         user_id: task.user_id
     } as New);
@@ -61,7 +59,6 @@ export async function getTaskById(id: number, recursive: boolean = false) {
             importance: table.importance,
             duration: table.duration,
             urgency: table.urgency,
-            score: table.score,
             due: table.due,
             project_id: table.project_id,
             state: table.state,
@@ -152,7 +149,6 @@ export async function getTaskById(id: number, recursive: boolean = false) {
             recursive: false
         } as lib.Schema.Task.Task.TaskWithNonRecursiveRelations : null;
     }
-
 }
 
 export async function getNumberOfTasks(userId: string, projectTitles?: string[], excludedProjectTitles?: string[], dueAfter?: Date, dueBefore?: Date) {
@@ -197,8 +193,8 @@ export async function getNumberOfTasks(userId: string, projectTitles?: string[],
 
 export async function getTasks(
     userId: string,
-    orderBy: keyof Existing = "score",
-    orderingDirection?: "asc" | "desc",
+    orderBy: keyof Existing = "due",
+    orderingDirection: "asc" | "desc" = "asc",
     limit = 50,
     projectIds?: number[],
     excludedProjectIds?: number[],
@@ -277,7 +273,6 @@ export async function getTasks(
             urgency: table.urgency,
             duration: table.duration,
             due: table.due,
-            score: table.score,
             state: table.state,
             completed_at: table.completed_at,
             created_at: table.created_at,
@@ -341,6 +336,7 @@ export async function getTasks(
                 importanceDetails: row.importanceDetails!,
                 durationDetails: row.durationDetails!,
                 recursive: true,
+                score: 0,
             }
         }
 
@@ -376,7 +372,7 @@ export async function getTasks(
     }
 
     // Preserve the original ordering from distinctTasks
-    const result = taskIds.map((id) => groupedTasks[id]).filter(Boolean).sort((a, b) => b.score - a.score || (a.title || "").localeCompare(b.title))
+    const result = taskIds.map((id) => groupedTasks[id]).filter(Boolean).sort((a, b) => b.due.getTime() - a.due.getTime() || (a.title || "").localeCompare(b.title))
 
     return result as lib.Schema.Task.Task.TaskWithRelations[]
 }
@@ -385,7 +381,7 @@ export async function getCompletedTasks(userId: string, orderBy: keyof Existing 
     return getTasks(userId, orderBy, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter, true);
 }
 
-export async function getUncompletedTasks(userId: string, orderBy: keyof Existing = "score", orderingDirection?: "asc" | "desc", limit = 50, projectIds?: number[], excludedProjectIds?: number[], dueBefore?: Date, dueAfter?: Date) {
+export async function getUncompletedTasks(userId: string, orderBy: keyof Existing = "due", orderingDirection?: "asc" | "desc", limit = 50, projectIds?: number[], excludedProjectIds?: number[], dueBefore?: Date, dueAfter?: Date) {
     return getTasks(userId, orderBy, orderingDirection, limit, projectIds, excludedProjectIds, dueBefore, dueAfter, false);
 }
 
@@ -402,7 +398,7 @@ export async function searchTasksByTitle(userId: string, title: string, limit = 
         .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as Existing[]
 }
 
-export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: string, orderBy: keyof Existing = "score", orderingDirection?: "asc" | "desc") {
+export async function getUncompletedAndDueInTheNextThreeDaysOrLessTasks(userId: string, orderBy: keyof Existing = "due", orderingDirection?: "asc" | "desc") {
     const today = new Date()
     const threeDaysFromNow = new Date(today)
     threeDaysFromNow.setDate(today.getDate() + 3)
@@ -430,7 +426,6 @@ export async function getDeletedTasks(userId: string, orderBy: keyof Existing = 
             urgency: table.urgency,
             duration: table.duration,
             due: table.due,
-            score: table.score,
             state: table.state,
             completed_at: table.completed_at,
             created_at: table.created_at,
@@ -515,7 +510,6 @@ export async function updateTask(id: number, values: Partial<Existing>) {
         .set({
             ...values,
             urgency: urgency,
-            score: importance * urgency - duration,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
@@ -545,7 +539,6 @@ export async function updateTaskUrgency(userId: string, id: number) {
         .update(table)
         .set({
             urgency: urgency,
-            score: todoData.importance * urgency - todoData.duration,
             updated_at: lib.sql`CURRENT_TIMESTAMP`,
         })
         .where(lib.and(
