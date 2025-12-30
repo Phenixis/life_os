@@ -4,6 +4,7 @@ import { HeroSection } from "../../components/big/landing-page/hero-section"
 import { FeatureCard } from "../../components/big/landing-page/feature-card"
 import { PricingSection } from "../../components/big/landing-page/pricing-section"
 import { ProblemSection, BenefitsSection, CTASection } from "../../components/big/landing-page/animated-sections"
+import { getNbUsers } from '@/lib/db/queries/user/user'
 
 // Calculate age at build/request time (server-side)
 function getAge() {
@@ -81,13 +82,14 @@ const features = [
     }
 ]
 
-export default function LandingPage() {
+export default async function LandingPage() {
     const age = getAge()
+    const nbUsers = await getNbUsers()
 
     return (
         <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
             {/* Hero Section - Client Component for scroll animations */}
-            <HeroSection />
+            <HeroSection nbUsers={nbUsers} />
 
             {/* Problem Section - Client Component for animations */}
             <ProblemSection age={age} />

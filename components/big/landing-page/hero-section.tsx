@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 
-export function HeroSection() {
+export function HeroSection({
+    nbUsers
+}: {
+    nbUsers?: number
+}) {
     const containerRef = useRef<HTMLDivElement>(null)
     const { scrollYProgress } = useScroll({
         target: containerRef as React.RefObject<HTMLElement>,
@@ -48,7 +52,7 @@ export function HeroSection() {
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4">
                         <Link href="/sign-up">
-                            <Button 
+                            <Button
                                 size="lg"
                                 className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 px-8 hover:scale-105 active:scale-95 transition-transform"
                             >
@@ -59,10 +63,20 @@ export function HeroSection() {
                     </div>
 
                     <p className="text-sm text-gray-500 dark:text-gray-500">
-                        Join the growing community of organized achievers
+                        {
+                            nbUsers ? (
+                                <>
+                                    Join {(Math.ceil(nbUsers / 10) * 10).toLocaleString()}+ organized achievers
+                                </>
+                            ) : (
+                                <>
+                                    Join the growing community of organized achievers
+                                </>
+                            )
+                        }
                     </p>
                 </div>
-            </MotionSection>
-        </div>
+            </MotionSection >
+        </div >
     )
 }
