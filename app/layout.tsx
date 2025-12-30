@@ -100,14 +100,16 @@ export default async function RootLayout(
                 inter.variable,
                 inter.className,
             )}>
-                <TooltipProvider>
-                    {
-                        process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? (
-                            <div className="sticky top-0 left-0 h-5 w-full bg-red-600 text-white text-center text-xs py-1 z-50 pointer-events-none">
+                {
+                    process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? (
+                        <div className="fixed top-0 left-0 w-full z-50 pointer-events-none">
+                            <div className="bg-red-600 text-white text-center text-xs h-5 w-fit px-2 rounded-b-md mx-auto">
                                 Instance de DEV
                             </div>
-                        ) : null
-                    }
+                        </div>
+                    ) : null
+                }
+                <TooltipProvider>
                     <ColorModeSync />
                     {children}
                 </TooltipProvider>
