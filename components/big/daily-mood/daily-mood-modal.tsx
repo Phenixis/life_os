@@ -466,7 +466,7 @@ export default function DailyMoodModal() {
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             disabled={isFutureDate()}
-                            className="mt-1"
+                            className="mt-1 resize-none"
                             rows={3}
                             maxHeight={260}
                         />

@@ -7,11 +7,12 @@ const table = lib.Schema.Task.Task.table;
 type New = lib.Schema.Task.Task.Insert
 type Existing = lib.Schema.Task.Task.Select
 
-function resultEmpty(result: any): boolean {
-    return !result || result.length === 0;
-}
 
 export class TaskModel extends QueryModel<New, Existing> {
+
+    constructor() {
+        super(table);
+    }
 
     // Verifications
     async isExistingForUser(taskId: number, userId: string): Promise<boolean> {
@@ -48,7 +49,7 @@ export class TaskModel extends QueryModel<New, Existing> {
             })
             .returning()
 
-        if (resultEmpty(result)) {
+        if (lib.resultEmpty(result)) {
             return { error: "Failed to create task" };
         }
 
@@ -80,7 +81,7 @@ export class TaskModel extends QueryModel<New, Existing> {
             .from(table)
             .where(lib.inArray(table.id, ids))
 
-        if (resultEmpty(tasks)) {
+        if (lib.resultEmpty(tasks)) {
             return {
                 error: "No tasks found"
             }
@@ -146,7 +147,7 @@ export class TaskModel extends QueryModel<New, Existing> {
             .limit(limit || 100)
             .offset(offset || 0)
 
-        if (resultEmpty(distinctTaskIds)) {
+        if (lib.resultEmpty(distinctTaskIds)) {
             return {
                 error: "No tasks found. Try adjusting your filters."
             }
@@ -172,7 +173,7 @@ export class TaskModel extends QueryModel<New, Existing> {
             .limit(limit || 50)
             .offset(offset || 0)
 
-        if (resultEmpty(tasks)) {
+        if (lib.resultEmpty(tasks)) {
             return { error: "No tasks found matching the title query" };
         }
 
@@ -202,7 +203,7 @@ export class TaskModel extends QueryModel<New, Existing> {
             ))
             .returning()
 
-        if (resultEmpty(result)) {
+        if (lib.resultEmpty(result)) {
             return { error: "Failed to update task" };
         }
 
@@ -238,7 +239,7 @@ export class TaskModel extends QueryModel<New, Existing> {
             ))
             .returning()
 
-        if (resultEmpty(result)) {
+        if (lib.resultEmpty(result)) {
             return { error: "Failed to update task urgency" };
         }
 
@@ -269,7 +270,7 @@ export class TaskModel extends QueryModel<New, Existing> {
                 lib.eq(table.id, id),
             ))
 
-        if (resultEmpty(result)) {
+        if (lib.resultEmpty(result)) {
             return { error: "Failed to delete task" };
         }
 
@@ -285,7 +286,7 @@ export class TaskModel extends QueryModel<New, Existing> {
             ))
             .returning()
 
-        if (resultEmpty(result)) {
+        if (lib.resultEmpty(result)) {
             return { error: "Failed to recover task" };
         }
 
@@ -299,7 +300,7 @@ export class TaskModel extends QueryModel<New, Existing> {
                 lib.eq(table.id, id),
             ))
 
-        if (resultEmpty(result)) {
+        if (lib.resultEmpty(result)) {
             return { error: "Failed to hard delete task" };
         }
 

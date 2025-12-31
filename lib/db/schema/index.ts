@@ -7,6 +7,7 @@ export * as Task from "./task";
 export * as WMCDM from "./wmcdm";
 export * as Workout from "./workout";
 export * as User from "./user";
+export * as AddictionTracker from "./addiction-tracker";
 
 // FILE
 export * as DailyMood from "./daily-mood"

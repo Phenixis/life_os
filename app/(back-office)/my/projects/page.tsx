@@ -3,12 +3,12 @@
 import { ProjectsTasksAndNotesFilterBar } from "@/components/big/projects/projects-tasks-and-notes";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { HorizontalList } from "@/components/ui/horizontal-list";
 import { useProjects } from "@/hooks/use-projects";
 import { useUser } from "@/hooks/use-user";
 import { Project } from "@/lib/db/schema";
-import { cn } from "@/lib/utils";
 import { Pen, Trash, Check, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,67 +28,26 @@ export default function ProjectsPage() {
     const [isSubmittingNew, setIsSubmittingNew] = useState(false);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [conflictingProject, setConflictingProject] = useState<Project.Select | null>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
 
     const { projects, isLoading, mutate } = useProjects();
     const { user } = useUser();
 
-    useEffect(() => {
-        const element = containerRef.current;
-        if (!element) return;
-
-        const handleWheelNative = (e: WheelEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // Convert vertical scrolling to horizontal
-            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-                element.scrollBy({
-                    left: e.deltaY,
-                    behavior: "smooth",
-                });
+    const handleItemClick = useCallback((itemName: string) => {
+        // Check if it's the special "create new" button
+        if (itemName === "+") {
+            if (isCreatingProject) {
+                setIsCreatingProject(false);
             } else {
-                element.scrollBy({
-                    left: e.deltaX,
-                    behavior: "smooth",
-                });
+                setIsCreatingProject(true);
             }
-        };
-
-        element.addEventListener('wheel', handleWheelNative, { passive: false });
-        return () => element.removeEventListener('wheel', handleWheelNative);
-    }, []);
-
-    const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-        if (!containerRef.current) return;
-
-        // Prevent default scrolling behavior and stop propagation
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Convert vertical scrolling to horizontal
-        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-            containerRef.current.scrollBy({
-                left: e.deltaY,
-                behavior: "smooth",
-            });
-        } else {
-            // Handle horizontal scrolling normally
-            containerRef.current.scrollBy({
-                left: e.deltaX,
-                behavior: "smooth",
-            });
-        }
-    };
-
-    const clickOnProject = useCallback((project: Project.Select) => {
-        // Check if it's the special "create new" project
-        if (project.id === -2) {
-            setIsCreatingProject(true);
             setSelectedProject(null);
             setIsEditingProject(false);
             return;
         }
+
+        // Find the project by title
+        const project = projects?.find(p => p.title === itemName);
+        if (!project) return;
 
         if (selectedProject && selectedProject.id === project.id) {
             setSelectedProject(null);
@@ -96,7 +55,7 @@ export default function ProjectsPage() {
             setSelectedProject(project);
             setIsCreatingProject(false);
         }
-    }, [selectedProject]);
+    }, [selectedProject, projects, isCreatingProject]);
 
     const handleDeleteProject = async () => {
         if (!selectedProject || !user) return;
@@ -276,75 +235,21 @@ export default function ProjectsPage() {
                 <p className="page-description text-gray-500">Manage your projects.</p>
             </header>
             <div className="border rounded-md flex-1 min-h-0 overflow-auto scrollbar-hide">
-                <div
-                    ref={containerRef}
-                    onWheel={handleWheel}
-                    className="py-4 px-2 flex gap-2 w-full overflow-x-auto overflow-y-hidden scrollbar-hide sticky top-0 bg-background border-b z-10"
-                    style={{ scrollBehavior: "smooth" }}
-                >
-                    {isLoading ? (
-                        <div className="w-full text-sm text-center text-muted-foreground">
-                            Loading projects...
-                        </div>
-                    ) : (
-                        <>
-                            {(() => {
-                                // Helper to render a project item (DRY)
-                                const renderProjectItem = (project: Project.Select) => (
-                                    <div
-                                        key={`project-${project.id}`}
-                                        className={cn(
-                                            "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border shrink-0",
-                                            project.id === -2 && "gap-1 font-medium",
-                                            (selectedProject?.id === project.id || (isCreatingProject && project.id === -2)) && "border-border bg-primary/10"
-                                        )}
-                                        onClick={clickOnProject.bind(null, project)}
-                                    >
-                                        {project.id === -2 ? (
-                                            <>
-                                                <span className="text-lg">+</span>
-                                                <span className="sr-only">New Project</span>
-                                            </>
-                                        ) : (
-                                            project.title
-                                        )}
-                                    </div>
-                                );
-
-                                // Prepare all projects with "Create New" button
-                                const allProjects = [
-                                    { id: -2, title: "+", description: null, completed: false, created_at: new Date(), updated_at: new Date(), deleted_at: null, user_id: "" } as Project.Select,
-                                    ...(projects || [])
-                                ];
-
-                                // Separate special items (negative IDs) from regular projects (positive IDs)
-                                const specialItems = allProjects.filter(p => p.id < 0).sort((a, b) => a.id - b.id); // -2 comes before -1
-                                const regularProjects = allProjects.filter(p => p.id > 0).sort((a, b) => a.title.localeCompare(b.title));
-
-                                return (
-                                    <>
-                                        {/* Special items (Create New, No Project, etc.) */}
-                                        {specialItems.map(renderProjectItem)}
-
-                                        {/* Separator */}
-                                        {regularProjects.length > 0 && (
-                                            <div className="h-8 w-px bg-border shrink-0" />
-                                        )}
-
-                                        {/* Regular projects */}
-                                        {regularProjects.length > 0 ? (
-                                            regularProjects.map(renderProjectItem)
-                                        ) : (
-                                            <div className="text-sm text-center text-muted-foreground pl-2">
-                                                No projects found
-                                            </div>
-                                        )}
-                                    </>
-                                );
-                            })()}
-                        </>
-                    )}
-                </div>
+                {isLoading ? (
+                    <div className="py-4 px-2 w-full text-sm text-center text-muted-foreground border-b">
+                        Loading projects...
+                    </div>
+                ) : (
+                    <HorizontalList
+                        itemsName={["+", ...(projects || []).sort((a, b) => {
+                            if (a.id === -1) return -1;
+                            if (b.id === -1) return 1;
+                            return a.title.localeCompare(b.title);
+                        }).map(p => p.title)]}
+                        onClick={handleItemClick}
+                        activeItemName={isCreatingProject ? "+" : (selectedProject?.title || "")}
+                    />
+                )}
                 <article className="p-4">
                     <header className="flex justify-between items-start gap-4">
                         {isCreatingProject ? (
