@@ -85,6 +85,44 @@ export class RelapseQuery extends QueryModel<New, Existing> {
 
         return { success: "Count retrieved successfully.", count: result[0].count };
     }
+
+    /**
+     * Update a relapse and synchronize the associated entry's timestamp.
+     * When updating the relapse created_at, also updates the linked entry's created_at.
+     */
+    async update(id: number, data: Partial<New>): Promise<{ success: string; updatedEntity: Existing } | { error: string }> {
+        // Update the relapse
+        const updateResult = await super.update(id, data);
+
+        if ("error" in updateResult) {
+            return updateResult;
+        }
+
+        // If created_at was updated, sync the associated entry's timestamp
+        if (data.created_at) {
+            const entry = await lib.db
+                .select()
+                .from(EntryQueries.table)
+                .where(lib.and(
+                    lib.eq(EntryQueries.table.relapse_id, id),
+                    lib.isNull(EntryQueries.table.deleted_at),
+                ))
+                .limit(1);
+
+            if (!lib.resultEmpty(entry)) {
+                const entryUpdate = await EntryQueries.update(entry[0].id, {
+                    created_at: data.created_at
+                });
+
+                if ("error" in entryUpdate) {
+                    return { error: `Relapse updated but failed to sync entry: ${entryUpdate.error}` };
+                }
+            }
+        }
+
+        return updateResult;
+    }
+
     /**
      * Soft-deletes a relapse and its associated entry.
      * 

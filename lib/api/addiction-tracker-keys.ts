@@ -47,9 +47,14 @@ export interface EntryCreateInput {
 
 export interface EntryUpdateInput {
     content: string
+    created_at?: Date  // Optional: update entry timestamp (synced with relapse if applicable)
 }
 
 export interface RelapseCreateInput {
     addictionId: number
     comment?: string
+}
+
+export interface RelapseUpdateInput {
+    created_at: Date
 }

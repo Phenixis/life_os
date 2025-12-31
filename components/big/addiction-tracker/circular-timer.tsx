@@ -16,7 +16,7 @@ type TimeElapsed = {
 
 function calculateTimeElapsed(lastRelapse: Date): TimeElapsed {
     const now = new Date();
-    const diff = now.getTime() - lastRelapse.getTime();
+    const diff = Math.max(0, now.getTime() - lastRelapse.getTime());
 
     const totalSeconds = Math.floor(diff / 1000);
     const totalMinutes = Math.floor(totalSeconds / 60);

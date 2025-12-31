@@ -8,6 +8,7 @@ import type {
     EntryCreateInput,
     EntryUpdateInput,
     RelapseCreateInput,
+    RelapseUpdateInput,
 } from "./addiction-tracker-keys"
 
 const BASE_URL = "/api/addiction-tracker"
@@ -192,6 +193,21 @@ export const relapseApi = {
             apiKey,
             {
                 method: "POST",
+                body: JSON.stringify(data),
+            }
+        )
+        return response.relapse
+    },
+
+    /**
+     * Update a relapse
+     */
+    updateRelapse: async (id: number, data: RelapseUpdateInput, apiKey: string): Promise<Relapse> => {
+        const response = await fetchWithAuth<{ relapse: Relapse }>(
+            `${BASE_URL}/relapse/${id}`,
+            apiKey,
+            {
+                method: "PUT",
                 body: JSON.stringify(data),
             }
         )

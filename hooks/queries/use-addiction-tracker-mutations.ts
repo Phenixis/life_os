@@ -12,6 +12,7 @@ import {
     EntryCreateInput,
     EntryUpdateInput,
     RelapseCreateInput,
+    RelapseUpdateInput,
 } from "@/lib/api/addiction-tracker-keys"
 import { toast } from "sonner"
 
@@ -227,6 +228,9 @@ export function useCreateEntry() {
             const previousEntries = queryClient.getQueryData<Entry[]>(
                 addictionTrackerKeys.entriesList(newEntry.addictionId)
             )
+            const previousInfiniteEntries = queryClient.getQueryData(
+                [...addictionTrackerKeys.entriesList(newEntry.addictionId), 'infinite']
+            )
 
             // Optimistically add the new entry
             const optimisticEntry: Entry = {
@@ -240,12 +244,29 @@ export function useCreateEntry() {
                 deleted_at: null,
             }
 
+            // Update regular query
             queryClient.setQueryData<Entry[]>(
                 addictionTrackerKeys.entriesList(newEntry.addictionId),
                 (old) => [optimisticEntry, ...(old ?? [])]
             )
 
-            return { previousEntries, addictionId: newEntry.addictionId, optimisticId: optimisticEntry.id }
+            // Update infinite query
+            queryClient.setQueryData(
+                [...addictionTrackerKeys.entriesList(newEntry.addictionId), 'infinite'],
+                (old: any) => {
+                    if (!old) return old
+                    return {
+                        ...old,
+                        pages: old.pages.map((page: any, index: number) =>
+                            index === 0
+                                ? { ...page, entries: [optimisticEntry, ...page.entries] }
+                                : page
+                        ),
+                    }
+                }
+            )
+
+            return { previousEntries, previousInfiniteEntries, addictionId: newEntry.addictionId, optimisticId: optimisticEntry.id }
         },
 
         onError: (error, _, context) => {
@@ -255,16 +276,39 @@ export function useCreateEntry() {
                     context.previousEntries
                 )
             }
+            if (context?.previousInfiniteEntries && context?.addictionId) {
+                queryClient.setQueryData(
+                    [...addictionTrackerKeys.entriesList(context.addictionId), 'infinite'],
+                    context.previousInfiniteEntries
+                )
+            }
             toast.error(`Failed to create entry: ${error.message}`)
         },
 
         onSuccess: (createdEntry, newEntry, context) => {
+            // Update regular query
             queryClient.setQueryData<Entry[]>(
                 addictionTrackerKeys.entriesList(newEntry.addictionId),
                 (old) =>
                     old?.map((entry) =>
                         entry.id === context?.optimisticId ? createdEntry : entry
                     ) ?? []
+            )
+            // Update infinite query
+            queryClient.setQueryData(
+                [...addictionTrackerKeys.entriesList(newEntry.addictionId), 'infinite'],
+                (old: any) => {
+                    if (!old) return old
+                    return {
+                        ...old,
+                        pages: old.pages.map((page: any) => ({
+                            ...page,
+                            entries: page.entries.map((entry: Entry) =>
+                                entry.id === context?.optimisticId ? createdEntry : entry
+                            ),
+                        })),
+                    }
+                }
             )
             toast.success("Entry created successfully")
         },
@@ -297,7 +341,11 @@ export function useUpdateEntry() {
             const previousEntries = queryClient.getQueryData<Entry[]>(
                 addictionTrackerKeys.entriesList(addictionId)
             )
+            const previousInfiniteEntries = queryClient.getQueryData(
+                [...addictionTrackerKeys.entriesList(addictionId), 'infinite']
+            )
 
+            // Update regular query
             queryClient.setQueryData<Entry[]>(
                 addictionTrackerKeys.entriesList(addictionId),
                 (old) =>
@@ -308,7 +356,26 @@ export function useUpdateEntry() {
                     ) ?? []
             )
 
-            return { previousEntries, addictionId }
+            // Update infinite query
+            queryClient.setQueryData(
+                [...addictionTrackerKeys.entriesList(addictionId), 'infinite'],
+                (old: any) => {
+                    if (!old) return old
+                    return {
+                        ...old,
+                        pages: old.pages.map((page: any) => ({
+                            ...page,
+                            entries: page.entries.map((entry: Entry) =>
+                                entry.id === id
+                                    ? { ...entry, ...data, updated_at: new Date() }
+                                    : entry
+                            ),
+                        })),
+                    }
+                }
+            )
+
+            return { previousEntries, previousInfiniteEntries, addictionId }
         },
 
         onError: (error, _, context) => {
@@ -316,6 +383,12 @@ export function useUpdateEntry() {
                 queryClient.setQueryData(
                     addictionTrackerKeys.entriesList(context.addictionId),
                     context.previousEntries
+                )
+            }
+            if (context?.previousInfiniteEntries && context?.addictionId) {
+                queryClient.setQueryData(
+                    [...addictionTrackerKeys.entriesList(context.addictionId), 'infinite'],
+                    context.previousInfiniteEntries
                 )
             }
             toast.error(`Failed to update entry: ${error.message}`)
@@ -353,13 +426,32 @@ export function useDeleteEntry() {
             const previousEntries = queryClient.getQueryData<Entry[]>(
                 addictionTrackerKeys.entriesList(addictionId)
             )
+            const previousInfiniteEntries = queryClient.getQueryData(
+                [...addictionTrackerKeys.entriesList(addictionId), 'infinite']
+            )
 
+            // Update regular query
             queryClient.setQueryData<Entry[]>(
                 addictionTrackerKeys.entriesList(addictionId),
                 (old) => old?.filter((entry) => entry.id !== id) ?? []
             )
 
-            return { previousEntries, addictionId }
+            // Update infinite query
+            queryClient.setQueryData(
+                [...addictionTrackerKeys.entriesList(addictionId), 'infinite'],
+                (old: any) => {
+                    if (!old) return old
+                    return {
+                        ...old,
+                        pages: old.pages.map((page: any) => ({
+                            ...page,
+                            entries: page.entries.filter((entry: Entry) => entry.id !== id),
+                        })),
+                    }
+                }
+            )
+
+            return { previousEntries, previousInfiniteEntries, addictionId }
         },
 
         onError: (error, _, context) => {
@@ -367,6 +459,12 @@ export function useDeleteEntry() {
                 queryClient.setQueryData(
                     addictionTrackerKeys.entriesList(context.addictionId),
                     context.previousEntries
+                )
+            }
+            if (context?.previousInfiniteEntries && context?.addictionId) {
+                queryClient.setQueryData(
+                    [...addictionTrackerKeys.entriesList(context.addictionId), 'infinite'],
+                    context.previousInfiniteEntries
                 )
             }
             toast.error(`Failed to delete entry: ${error.message}`)
@@ -377,8 +475,16 @@ export function useDeleteEntry() {
         },
 
         onSettled: (_, __, { addictionId }) => {
+            // Invalidate entries queries
             queryClient.invalidateQueries({
                 queryKey: addictionTrackerKeys.entriesList(addictionId),
+            })
+            // Invalidate addiction queries (to update relapse count and last_relapse_at in CircularTimer)
+            queryClient.invalidateQueries({
+                queryKey: addictionTrackerKeys.addictionsList(),
+            })
+            queryClient.invalidateQueries({
+                queryKey: addictionTrackerKeys.addictionDetail(addictionId),
             })
         },
     })
@@ -398,9 +504,78 @@ export function useCreateRelapse() {
         mutationFn: (data: RelapseCreateInput) =>
             relapseApi.createRelapse(data, user?.api_key || ""),
 
+        onMutate: async ({ addictionId }) => {
+            // Cancel outgoing queries
+            await queryClient.cancelQueries({
+                queryKey: addictionTrackerKeys.addictionsList(),
+            })
+            await queryClient.cancelQueries({
+                queryKey: addictionTrackerKeys.addictionDetail(addictionId),
+            })
+
+            // Snapshot current data
+            const previousAddictions = queryClient.getQueryData<AddictionWithStats[]>(
+                addictionTrackerKeys.addictionsList()
+            )
+            const previousAddiction = queryClient.getQueryData<AddictionWithStats>(
+                addictionTrackerKeys.addictionDetail(addictionId)
+            )
+
+            // Optimistically update addiction with new relapse time
+            const now = new Date()
+            
+            queryClient.setQueryData<AddictionWithStats[]>(
+                addictionTrackerKeys.addictionsList(),
+                (old) =>
+                    old?.map((addiction) =>
+                        addiction.id === addictionId
+                            ? {
+                                ...addiction,
+                                last_relapse_at: now,
+                                relapse_count: addiction.relapse_count + 1,
+                            }
+                            : addiction
+                    ) ?? []
+            )
+
+            queryClient.setQueryData<AddictionWithStats>(
+                addictionTrackerKeys.addictionDetail(addictionId),
+                (old) =>
+                    old
+                        ? {
+                            ...old,
+                            last_relapse_at: now,
+                            relapse_count: old.relapse_count + 1,
+                        }
+                        : old
+            )
+
+            return { previousAddictions, previousAddiction, addictionId }
+        },
+
+        onError: (error, _, context) => {
+            // Rollback on error
+            if (context?.previousAddictions) {
+                queryClient.setQueryData(
+                    addictionTrackerKeys.addictionsList(),
+                    context.previousAddictions
+                )
+            }
+            if (context?.previousAddiction && context?.addictionId) {
+                queryClient.setQueryData(
+                    addictionTrackerKeys.addictionDetail(context.addictionId),
+                    context.previousAddiction
+                )
+            }
+            toast.error(`Failed to record relapse: ${error.message}`)
+        },
+
         onSuccess: (_, { addictionId }) => {
             toast.success("Relapse recorded")
-            // Invalidate related queries to refresh data
+        },
+
+        onSettled: (_, __, { addictionId }) => {
+            // Invalidate related queries to ensure data consistency
             queryClient.invalidateQueries({
                 queryKey: addictionTrackerKeys.relapsesList(addictionId),
             })
@@ -414,9 +589,75 @@ export function useCreateRelapse() {
                 queryKey: addictionTrackerKeys.addictionDetail(addictionId),
             })
         },
+    })
+}
 
-        onError: (error) => {
-            toast.error(`Failed to record relapse: ${error.message}`)
+/**
+ * Hook to update an existing relapse
+ */
+export function useUpdateRelapse() {
+    const { user } = useUser()
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationKey: ["updateRelapse"],
+        mutationFn: (data: { id: number; addictionId: number; data: RelapseUpdateInput }) =>
+            relapseApi.updateRelapse(data.id, data.data, user?.api_key || ""),
+
+        onMutate: async ({ id, addictionId, data }) => {
+            // Cancel outgoing queries
+            await queryClient.cancelQueries({
+                queryKey: addictionTrackerKeys.addictionDetail(addictionId),
+            })
+
+            // Snapshot current state
+            const previousAddiction = queryClient.getQueryData<AddictionWithStats>(
+                addictionTrackerKeys.addictionDetail(addictionId)
+            )
+
+            // Optimistically update addiction's last_relapse_at
+            if (previousAddiction) {
+                queryClient.setQueryData<AddictionWithStats>(
+                    addictionTrackerKeys.addictionDetail(addictionId),
+                    {
+                        ...previousAddiction,
+                        last_relapse_at: data.created_at,
+                    }
+                )
+            }
+
+            return { previousAddiction, addictionId }
+        },
+
+        onError: (error, _, context) => {
+            // Rollback on error
+            if (context?.previousAddiction && context?.addictionId) {
+                queryClient.setQueryData(
+                    addictionTrackerKeys.addictionDetail(context.addictionId),
+                    context.previousAddiction
+                )
+            }
+            toast.error(`Failed to update relapse: ${error.message}`)
+        },
+
+        onSuccess: () => {
+            toast.success("Relapse time updated")
+        },
+
+        onSettled: (_, __, { addictionId }) => {
+            // Invalidate queries to refetch fresh data
+            queryClient.invalidateQueries({
+                queryKey: addictionTrackerKeys.relapsesList(addictionId),
+            })
+            queryClient.invalidateQueries({
+                queryKey: addictionTrackerKeys.entriesList(addictionId),
+            })
+            queryClient.invalidateQueries({
+                queryKey: addictionTrackerKeys.addictionsList(),
+            })
+            queryClient.invalidateQueries({
+                queryKey: addictionTrackerKeys.addictionDetail(addictionId),
+            })
         },
     })
 }

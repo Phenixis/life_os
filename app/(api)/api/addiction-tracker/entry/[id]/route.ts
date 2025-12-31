@@ -66,7 +66,7 @@ export async function PUT(
         }
 
         const body = await request.json()
-        const { content } = body
+        const { content, created_at } = body
 
         // Validate content
         if (content === undefined) {
@@ -106,7 +106,13 @@ export async function PUT(
             )
         }
 
-        const result = await EntryQueries.update(entryId, { content })
+        // Build update data
+        const updateData: { content: string; created_at?: Date } = { content }
+        if (created_at) {
+            updateData.created_at = new Date(created_at)
+        }
+
+        const result = await EntryQueries.update(entryId, updateData)
 
         if ("error" in result) {
             return NextResponse.json(

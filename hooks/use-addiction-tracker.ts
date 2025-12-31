@@ -19,6 +19,7 @@ export {
     useUpdateEntry,
     useDeleteEntry,
     useCreateRelapse,
+    useUpdateRelapse,
 } from "./queries/use-addiction-tracker-mutations"
 
 // Re-export types
@@ -31,4 +32,5 @@ export type {
     EntryCreateInput,
     EntryUpdateInput,
     RelapseCreateInput,
+    RelapseUpdateInput,
 } from "@/lib/api/addiction-tracker-keys"

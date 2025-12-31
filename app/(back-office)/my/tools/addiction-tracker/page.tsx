@@ -2,6 +2,7 @@
 
 import { AddictionCreator } from "@/components/big/addiction-tracker/addiction-creator";
 import { CircularTimer } from "@/components/big/addiction-tracker/circular-timer";
+import { EntriesList } from "@/components/big/addiction-tracker/entries-list";
 import { JournalEntryForm } from "@/components/big/addiction-tracker/journal-entry-form";
 import { RelapseRecorder } from "@/components/big/addiction-tracker/relapse-recorder";
 import { Button } from "@/components/ui/button";
@@ -10,156 +11,13 @@ import { HorizontalList } from "@/components/ui/horizontal-list";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Loader2, Pencil, Plus, Trash2, X, Check } from "lucide-react";
+import { useState, useEffect } from "react";
 import {
     useAddictionsQuery,
-    useInfiniteEntriesQuery,
     useUpdateAddiction,
     useDeleteAddiction,
-    useUpdateEntry,
-    useDeleteEntry,
-    type Entry,
 } from "@/hooks/use-addiction-tracker";
-
-function EntryDisplay({
-    entry,
-    addictionId,
-}: {
-    entry: Entry;
-    addictionId: number;
-}) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [editedContent, setEditedContent] = useState(entry.content);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-    const updateEntry = useUpdateEntry();
-    const deleteEntry = useDeleteEntry();
-
-    const handleSave = () => {
-        if (!editedContent.trim()) return;
-        updateEntry.mutate(
-            { id: entry.id, addictionId, data: { content: editedContent } },
-            {
-                onSuccess: () => setIsEditing(false),
-            }
-        );
-    };
-
-    const handleDelete = () => {
-        deleteEntry.mutate(
-            { id: entry.id, addictionId },
-            {
-                onSuccess: () => setIsDeleteDialogOpen(false),
-            }
-        );
-    };
-
-    const entryDate = new Date(entry.created_at);
-
-    return (
-        <div className="relative group/entry pl-8 pb-6 first:pt-6 pt-1 last:pb-0">
-            {/* Timeline line */}
-            <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 last:hidden" />
-
-            {/* Timeline dot */}
-            <div className={cn(
-                "absolute left-px w-4 h-4 rounded-full border-2 border-background top-3 group-first/entry:top-8",
-                entry.relapse_id ? "bg-red-500" : "bg-primary"
-            )} />
-
-            {/* Content */}
-            <div className="flex flex-col justify-between items-end lg:flex-row lg:items-start gap-4 bg-gray-100 dark:bg-gray-900 rounded-md p-2">
-                <div className="min-h-16 flex flex-col justify-between flex-1 w-full">
-                    <h4 className="font-medium mb-1 text-sm text-gray-500 dark:text-gray-400">
-                        {entryDate.toLocaleDateString()} {entryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        {entry.relapse_id && (
-                            <span className="ml-2 text-red-500 dark:text-red-400 text-xs font-semibold">
-                                RELAPSE
-                            </span>
-                        )}
-                    </h4>
-                    {isEditing ? (
-                        <div className="flex gap-2 items-start">
-                            <Input
-                                value={editedContent}
-                                onChange={(e) => setEditedContent(e.target.value)}
-                                className="flex-1 text-sm"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSave();
-                                    if (e.key === "Escape") {
-                                        setIsEditing(false);
-                                        setEditedContent(entry.content);
-                                    }
-                                }}
-                                disabled={updateEntry.isPending}
-                            />
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={handleSave}
-                                disabled={updateEntry.isPending}
-                            >
-                                {updateEntry.isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Check className="h-4 w-4 text-green-600" />
-                                )}
-                            </Button>
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={() => {
-                                    setIsEditing(false);
-                                    setEditedContent(entry.content);
-                                }}
-                                disabled={updateEntry.isPending}
-                            >
-                                <X className="h-4 w-4 text-red-600" />
-                            </Button>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {entry.content}
-                        </p>
-                    )}
-                </div>
-                {!isEditing && (
-                    <div className="lg:opacity-0 lg:group-hover/entry:opacity-100 flex lg:flex-col lg:items-end">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsEditing(true)}
-                        >
-                            Edit
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                        >
-                            Delete
-                        </Button>
-                    </div>
-                )}
-            </div>
-
-            <ConfirmationDialog
-                open={isDeleteDialogOpen}
-                onOpenChange={setIsDeleteDialogOpen}
-                title="Delete Entry"
-                description="Are you sure you want to delete this entry? This action cannot be undone."
-                confirmText="Delete"
-                variant="destructive"
-                onConfirm={handleDelete}
-            />
-        </div>
-    );
-}
 
 export default function AddictionTrackerPage() {
     const [selectedAddictionId, setSelectedAddictionId] = useState<number | null>(null);
@@ -175,51 +33,6 @@ export default function AddictionTrackerPage() {
 
     // Get current addiction from fetched data
     const currentAddiction = addictions.find(a => a.id === selectedAddictionId) ?? null;
-
-    // Fetch entries for selected addiction with infinite scrolling
-    const { 
-        entries, 
-        isLoading: isLoadingEntries, 
-        hasNextPage,
-        fetchNextPage,
-        isFetchingNextPage,
-    } = useInfiniteEntriesQuery(selectedAddictionId ?? undefined, {
-        enabled: !!selectedAddictionId,
-        limit: 20,
-    });
-
-    // Intersection observer for infinite scrolling
-    const observerRef = useRef<IntersectionObserver | null>(null);
-    const loadMoreRef = useRef<HTMLDivElement | null>(null);
-
-    const handleObserver = useCallback(
-        (entries: IntersectionObserverEntry[]) => {
-            const [target] = entries;
-            if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
-                fetchNextPage();
-            }
-        },
-        [hasNextPage, isFetchingNextPage, fetchNextPage]
-    );
-
-    useEffect(() => {
-        const element = loadMoreRef.current;
-        if (!element) return;
-
-        observerRef.current = new IntersectionObserver(handleObserver, {
-            root: null,
-            rootMargin: "100px",
-            threshold: 0.1,
-        });
-
-        observerRef.current.observe(element);
-
-        return () => {
-            if (observerRef.current) {
-                observerRef.current.disconnect();
-            }
-        };
-    }, [handleObserver]);
 
     // Mutations
     const updateAddiction = useUpdateAddiction();
@@ -242,11 +55,9 @@ export default function AddictionTrackerPage() {
 
     const handleSaveTitle = () => {
         if (!currentAddiction || !editedTitle.trim()) return;
+        setIsEditingTitle(false)
         updateAddiction.mutate(
-            { id: currentAddiction.id, data: { title: editedTitle, description: editedDescription.trim() || null } },
-            {
-                onSuccess: () => setIsEditingTitle(false),
-            }
+            { id: currentAddiction.id, data: { title: editedTitle, description: editedDescription.trim() || null } }
         );
     };
 
@@ -260,11 +71,6 @@ export default function AddictionTrackerPage() {
             },
         });
     };
-
-    // Sort entries by date (newest first)
-    const sortedEntries = [...entries].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
 
     return (
         <section className="page max-h-screen overflow-hidden flex flex-col pb-20!">
@@ -309,8 +115,6 @@ export default function AddictionTrackerPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* Desktop view with sidebar */}
                 <div className="flex flex-1 min-h-0">
                     <aside className="hidden lg:flex flex-1 max-w-60 flex-col gap-2 border-r overflow-auto scrollbar-hide px-2 py-4">
                         {/* Create addiction button */}
@@ -338,8 +142,8 @@ export default function AddictionTrackerPage() {
                                 <p
                                     key={addiction.id}
                                     className={cn(
-                                        "w-full bg-gray-100 rounded-md p-2 dark:bg-gray-700 text-center transition-colors cursor-pointer",
-                                        selectedAddictionId === addiction.id ? "bg-gray-200 dark:bg-gray-800" : "hover:bg-gray-300 dark:hover:bg-gray-600"
+                                        "w-full bg-gray-200 rounded-md p-2 dark:bg-gray-800 text-center transition-colors cursor-pointer",
+                                        selectedAddictionId === addiction.id ? "bg-gray-400 dark:bg-gray-600" : "hover:bg-gray-300 dark:hover:bg-gray-600"
                                     )}
                                     onClick={() => {
                                         if (selectedAddictionId !== addiction.id) {
@@ -368,100 +172,102 @@ export default function AddictionTrackerPage() {
                         )}
                         {currentAddiction ? (
                             <div className="px-2 py-4">
-                                <div className={cn("flex items-center justify-center gap-3 mb-4 max-w-2xl mx-auto w-full", isEditingTitle ? "flex-col" : "")}>
-                                    {isEditingTitle ? (
-                                        <>
-                                            <div className="flex items-center gap-3 w-full">
-                                                <Input
-                                                    value={editedTitle}
-                                                    onChange={(e) => setEditedTitle(e.target.value)}
-                                                    className="flex-1 text-center text-2xl font-bold"
-                                                    autoFocus
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter") {
-                                                            handleSaveTitle();
-                                                        } else if (e.key === "Escape") {
+                                <div className="group/addiction-header">
+                                    <div className={cn("flex items-center justify-center gap-3 mb-4 max-w-2xl mx-auto w-full", isEditingTitle ? "flex-col" : "")}>
+                                        {isEditingTitle ? (
+                                            <>
+                                                <div className="flex items-center gap-3 w-full">
+                                                    <Input
+                                                        value={editedTitle}
+                                                        onChange={(e) => setEditedTitle(e.target.value)}
+                                                        className="flex-1 text-center text-2xl font-bold"
+                                                        autoFocus
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter") {
+                                                                handleSaveTitle();
+                                                            } else if (e.key === "Escape") {
+                                                                setIsEditingTitle(false);
+                                                                setEditedTitle(currentAddiction.title);
+                                                                setEditedDescription(currentAddiction.description || "");
+                                                            }
+                                                        }}
+                                                        disabled={updateAddiction.isPending}
+                                                    />
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8"
+                                                        onClick={handleSaveTitle}
+                                                        tooltip="Save changes"
+                                                        disabled={updateAddiction.isPending}
+                                                    >
+                                                        {updateAddiction.isPending ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8"
+                                                        onClick={() => {
                                                             setIsEditingTitle(false);
                                                             setEditedTitle(currentAddiction.title);
                                                             setEditedDescription(currentAddiction.description || "");
-                                                        }
-                                                    }}
+                                                        }}
+                                                        tooltip="Cancel and discard changes"
+                                                        disabled={updateAddiction.isPending}
+                                                    >
+                                                        <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8"
+                                                        onClick={() => setIsDeleteDialogOpen(true)}
+                                                        tooltip="Delete Addiction"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                                    </Button>
+                                                </div>
+                                                <Textarea
+                                                    value={editedDescription}
+                                                    onChange={(e) => setEditedDescription(e.target.value)}
+                                                    placeholder="Description (optional)"
+                                                    className="w-full text-center resize-none"
+                                                    rows={2}
                                                     disabled={updateAddiction.isPending}
                                                 />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <h2 className="text-2xl font-bold text-center">
+                                                    {currentAddiction.title}
+                                                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-4">
+                                                        {currentAddiction.relapse_count} relapses
+                                                    </span>
+                                                </h2>
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    className="h-8 w-8"
-                                                    onClick={handleSaveTitle}
-                                                    tooltip="Save changes"
-                                                    disabled={updateAddiction.isPending}
-                                                >
-                                                    {updateAddiction.isPending ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                    )}
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="h-8 w-8"
+                                                    className="h-8 w-8 lg:group-hover/addiction-header:opacity-100 lg:opacity-0 transition-opacity"
                                                     onClick={() => {
-                                                        setIsEditingTitle(false);
                                                         setEditedTitle(currentAddiction.title);
-                                                        setEditedDescription(currentAddiction.description || "");
+                                                        setIsEditingTitle(true);
                                                     }}
-                                                    tooltip="Cancel and discard changes"
-                                                    disabled={updateAddiction.isPending}
                                                 >
-                                                    <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                                    <Pencil className="h-4 w-4" />
                                                 </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="h-8 w-8"
-                                                    onClick={() => setIsDeleteDialogOpen(true)}
-                                                    tooltip="Delete Addiction"
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                </Button>
-                                            </div>
-                                            <Textarea
-                                                value={editedDescription}
-                                                onChange={(e) => setEditedDescription(e.target.value)}
-                                                placeholder="Description (optional)"
-                                                className="w-full text-center resize-none"
-                                                rows={2}
-                                                disabled={updateAddiction.isPending}
-                                            />
-                                        </>
-                                    ) : (
-                                        <>
-                                            <h2 className="text-2xl font-bold text-center">
-                                                {currentAddiction.title}
-                                                <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-4">
-                                                    {currentAddiction.relapse_count} relapses
-                                                </span>
-                                            </h2>
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8"
-                                                onClick={() => {
-                                                    setEditedTitle(currentAddiction.title);
-                                                    setIsEditingTitle(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        </>
+                                            </>
+                                        )}
+                                    </div>
+                                    {currentAddiction.description && (
+                                        <p className="text-gray-400 dark:text-gray-500 text-center">
+                                            {currentAddiction.description}
+                                        </p>
                                     )}
                                 </div>
-                                {currentAddiction.description && (
-                                    <p className="text-gray-400 dark:text-gray-500 text-center">
-                                        {currentAddiction.description}
-                                    </p>
-                                )}
                                 <div className="flex flex-col items-start justify-center lg:flex-row lg:justify-between gap-6">
                                     <div className="lg:sticky lg:top-4">
                                         <CircularTimer
@@ -495,35 +301,7 @@ export default function AddictionTrackerPage() {
                                                 // Entries will auto-refresh via React Query
                                             }}
                                         />
-                                        <div className="first:pt-6">
-                                            {isLoadingEntries ? (
-                                                <div className="flex items-center justify-center py-8">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                                                </div>
-                                            ) : sortedEntries.length > 0 ? (
-                                                <>
-                                                    {sortedEntries.map((entry) => (
-                                                        <EntryDisplay
-                                                            key={entry.id}
-                                                            entry={entry}
-                                                            addictionId={currentAddiction.id}
-                                                        />
-                                                    ))}
-                                                    {/* Intersection observer target */}
-                                                    <div ref={loadMoreRef} className="h-4" />
-                                                    {/* Loading more indicator */}
-                                                    {isFetchingNextPage && (
-                                                        <div className="flex items-center justify-center py-4">
-                                                            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                                                        </div>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                                                    No journal entries yet. Start writing!
-                                                </p>
-                                            )}
-                                        </div>
+                                        <EntriesList addictionId={currentAddiction.id} />
                                     </div>
                                 </div>
                             </div>
