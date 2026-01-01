@@ -165,7 +165,7 @@ export function MovieCard({ movie }: MovieCardProps) {
 
     return (
         <>
-            <Card className="@container/card group overflow-hidden lg:hover:shadow-md transition-all duration-200 border-0 bg-card/50">
+            <Card className="@container/card group overflow-hidden lg:hover:shadow-md transition-all duration-200 border bg-card/50">
                 <CardContent className="">
                     <div className={cn("flex", !isEditing && 'gap-4')}>
                         {/* Poster */}

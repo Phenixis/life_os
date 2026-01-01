@@ -187,7 +187,7 @@ export default function Calendar({
   return (
     <div
       className={cn(
-        'sticky top-0 flex flex-col justify-start items-start border-l border-gray-100 dark:border-gray-800 p-2 pb-4 md:pb-0 md:items-center md:w-full md:h-screen md:max-w-75 transition-opacity duration-300',
+        'sticky top-0 flex flex-col justify-start items-start border-l border-gray-100 dark:border-gray-800 p-2 pb-4 md:pb-0 md:items-center md:w-full h-screen max-h-[80dvh] overflow-y-auto md:max-w-75 transition-opacity duration-300',
         className
       )}
       style={{
