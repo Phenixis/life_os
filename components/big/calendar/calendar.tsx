@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useNumberOfTasks } from '@/hooks/use-number-of-tasks';
 import { useDailyMoods } from '@/hooks/use-daily-moods';
+import { usePrefetchWeekData } from '@/hooks/use-prefetch-week-data';
 import { CalendarView } from '@/components/big/calendar/calendar-view';
 import { DateDisplay } from '@/components/big/calendar/date-display';
 import { DailyRecap } from '@/components/big/calendar/daily-recap';
@@ -25,6 +26,7 @@ export default function Calendar({
   const [month, setMonth] = useState<Date>(
     date ? new Date(date.getFullYear(), date.getMonth(), 1) : new Date(now.getFullYear(), now.getMonth(), 1)
   );
+  const [isDailyDataLoaded, setIsDailyDataLoaded] = useState(false);
 
   const monthStart = useMemo(() => new Date(month.getFullYear(), month.getMonth(), 1), [month]);
   const monthEnd = useMemo(() => new Date(month.getFullYear(), month.getMonth() + 1, 0), [month]);
@@ -65,6 +67,23 @@ export default function Calendar({
       date.setHours(0, 0, 0, 0);
     }
   }, [date]);
+
+  // Track when initial data for the selected date is loaded
+  // This triggers prefetching for the rest of the week
+  useEffect(() => {
+    // Reset loading state when date changes
+    setIsDailyDataLoaded(false);
+    
+    // Set as loaded after a short delay to ensure queries have started
+    const timeoutId = setTimeout(() => {
+      setIsDailyDataLoaded(true);
+    }, 200);
+    
+    return () => clearTimeout(timeoutId);
+  }, [date]);
+
+  // Prefetch data for all other days in the week after current date's data is loaded
+  usePrefetchWeekData(date, isDailyDataLoaded);
 
   // Get the mood for the currently selected date
   const getCurrentDateMood = useCallback(() => {
