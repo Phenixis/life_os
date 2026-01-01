@@ -140,7 +140,7 @@ export function DateTimePicker({
                     onChange={(e) => onTimeChange(e.target.value)}
                     min={getEffectiveMinTime()}
                     max={getEffectiveMaxTime()}
-                    className="w-28 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                    className="w-30 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                 />
             </div>
         </div>

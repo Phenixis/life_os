@@ -53,14 +53,14 @@ export const quickActionConfigs: QuickActionConfig[] = [
         alternativeNames: ["mood", "daily mood", "enter mood"],
     },
     {
-        name: "Record Relapse",
-        modalKey: "relapseRecorder",
-        alternativeNames: ["relapse", "addiction", "record relapse"],
-    },
-    {
         name: "Create Addiction",
         modalKey: "addictionCreator",
         alternativeNames: ["addiction", "create addiction", "new addiction", "add addiction"],
+    },
+    {
+        name: "Record Relapse",
+        modalKey: "relapseRecorder",
+        alternativeNames: ["relapse", "addiction", "record relapse"],
     },
     {
         name: "Log Journal Entry",

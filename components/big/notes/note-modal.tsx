@@ -482,7 +482,7 @@ export default function NoteModal() {
             }}>
                 <DialogContent
                     aria-describedby={undefined}
-                    maxHeight="max-h-155"
+                    maxHeight="max-h-165"
                 >
                     <form id="note-form" onSubmit={handleSubmit} className="flex flex-col gap-4 justify-between">
                         <main className="space-y-4">
@@ -526,6 +526,7 @@ export default function NoteModal() {
                                         }}
                                         preview={isMobile ? 'edit' : 'live'}
                                         className="text-black! dark:text-white!"
+                                        overflow={false}
                                     />
                                     {
                                         devEnv() && (
@@ -533,8 +534,8 @@ export default function NoteModal() {
                                             <div className="rounded-b-md border-t-0 border flex justify-between items-center">
                                                 <Tooltip tooltip="Extract text from image" className="w-full">
                                                     <div className="w-full px-4 py-2 flex flex-col items-center justify-center lg:hover:bg-secondary/50 cursor-pointer transition-colors">
-                                                        <Camera className="size-4 md:size-6 shrink-0" />
-                                                        <p className="text-xs md:sr-only">
+                                                        <Camera className="size-6 shrink-0" />
+                                                        <p className="sr-only">
                                                             Extract text from image
                                                         </p>
                                                     </div>
@@ -542,8 +543,8 @@ export default function NoteModal() {
                                                 <div className="border-r h-8" />
                                                 <Tooltip tooltip="Extract text from audio recording" className="w-full">
                                                     <div className="w-full px-4 py-2 flex flex-col items-center justify-center lg:hover:bg-secondary/50 cursor-pointer transition-colors">
-                                                        <Mic className="size-4 md:size-6 shrink-0" />
-                                                        <p className="text-xs md:sr-only">
+                                                        <Mic className="size-6 shrink-0" />
+                                                        <p className="sr-only">
                                                             Extract text from audio recording
                                                         </p>
                                                     </div>

@@ -389,7 +389,7 @@ export default function DailyMoodModal() {
         }}>
             <DialogContent
                 className="md:max-w-[425px] lg:max-w-[425px]"
-                maxHeight="h-fit"
+                maxHeight="h-fit max-h-150"
                 showCloseButton={false}
             >
                 <DialogHeader>
@@ -487,6 +487,14 @@ export default function DailyMoodModal() {
                             Delete Mood
                         </Button>
                     )}
+                    <div className="flex-1" />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCloseAttempt}
+                    >
+                        Cancel
+                    </Button>
                     <Button
                         type="button"
                         onClick={handleMoodSubmit}

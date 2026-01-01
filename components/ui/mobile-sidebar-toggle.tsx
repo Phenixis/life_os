@@ -5,6 +5,8 @@ import {PanelLeft} from "lucide-react"
 import {cn} from "@/lib/utils"
 import {useSidebar} from "@/components/ui/sidebar"
 import {useIsMobile} from "@/hooks/use-mobile"
+import {Button} from "@/components/ui/button"
+import {useSwipeToOpen} from "@/hooks/use-swipe-to-open"
 
 interface MobileSidebarToggleProps {
     className?: string
@@ -16,40 +18,42 @@ interface MobileSidebarToggleProps {
  * When sidebar is open: shows chevron left (attached to sidebar edge)
  */
 export function MobileSidebarToggle({className}: MobileSidebarToggleProps) {
-    const {open, openMobile, toggleSidebar} = useSidebar()
+    const {open, openMobile, toggleSidebar, setOpenMobile} = useSidebar()
     const isMobile = useIsMobile()
+
+    const isOpen = isMobile ? openMobile : open
+
+    // Swipe gesture detection for opening sidebar
+    useSwipeToOpen({
+        isOpen: openMobile,
+        onOpen: () => setOpenMobile(true),
+        isEnabled: isMobile,
+    })
 
     // Don't render on desktop
     if (!isMobile) {
         return null
     }
 
-    const isOpen = isMobile ? openMobile : open
-
     const handleButtonClick = () => {
         toggleSidebar()
     }
 
     return (
-        <button
+        <Button
             onClick={handleButtonClick}
+            size="sm"
+            variant="outline"
             className={cn(
-                "fixed z-30 h-8 w-8 rounded-full",
-                "bg-primary text-primary-foreground",
-                "shadow-lg",
-                "flex items-center justify-center",
-                "hover:bg-primary/90 active:bg-primary/80",
-                "transition-all duration-300 ease-in-out",
-                "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                "fixed z-30 shadow-md bg-background/95 backdrop-blur",
                 isOpen
                     ? "hidden"
-                    : "bottom-4 left-4",
+                    : "bottom-20 left-4",
                 className
             )}
             aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
-            type="button"
         >
             <PanelLeft className="size-4"/>
-        </button>
+        </Button>
     )
 }

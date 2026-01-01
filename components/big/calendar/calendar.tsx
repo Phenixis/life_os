@@ -26,6 +26,7 @@ export default function Calendar({
   const [month, setMonth] = useState<Date>(
     date ? new Date(date.getFullYear(), date.getMonth(), 1) : new Date(now.getFullYear(), now.getMonth(), 1)
   );
+  const [scrollOpacity, setScrollOpacity] = useState(1);
   const [isDailyDataLoaded, setIsDailyDataLoaded] = useState(false);
 
   const monthStart = useMemo(() => new Date(month.getFullYear(), month.getMonth(), 1), [month]);
@@ -101,6 +102,38 @@ export default function Calendar({
   // Prefetch data for all other days in the week after current date's data is loaded
   usePrefetchWeekData(date, isDailyDataLoaded);
 
+  // Handle scroll-based fade effect on mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      // Only apply on mobile/tablet screens
+      if (window.innerWidth >= 768) {
+        setScrollOpacity(1);
+        return;
+      }
+
+      const scrollY = window.scrollY;
+      // Start fading at 100px, fully faded by 300px
+      const fadeStart = 100;
+      const fadeEnd = 300;
+      const fadeRange = fadeEnd - fadeStart;
+
+      if (scrollY <= fadeStart) {
+        setScrollOpacity(1);
+      } else if (scrollY >= fadeEnd) {
+        setScrollOpacity(0);
+      } else {
+        const progress = (scrollY - fadeStart) / fadeRange;
+        // Ease out the fade for smoother transition
+        const easedProgress = 1 - Math.pow(1 - progress, 2);
+        setScrollOpacity(1 - easedProgress);
+      }
+    };
+
+    handleScroll(); // Initial call
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Get the mood for the currently selected date
   const getCurrentDateMood = useCallback(() => {
     if (!date || !dailyMoods || dailyMoods.length === 0) return null;
@@ -154,11 +187,20 @@ export default function Calendar({
   return (
     <div
       className={cn(
-        'sticky top-0 -z-10 flex flex-col justify-start items-start border-l border-gray-100 dark:border-gray-800 pb-4 md:pb-0 md:items-center md:w-full md:h-screen md:max-w-75 md:p-2',
+        'sticky top-0 flex flex-col justify-start items-start border-l border-gray-100 dark:border-gray-800 p-2 pb-4 md:pb-0 md:items-center md:w-full md:h-screen md:max-w-75 transition-opacity duration-300',
         className
       )}
+      style={{
+        opacity: scrollOpacity
+      }}
     >
-      <div className="w-full flex flex-col items-center justify-center">
+      <div 
+        className="w-full flex flex-col items-center justify-center relative"
+        style={{
+          maskImage: scrollOpacity < 0.9 ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0.3) 100%)' : 'none',
+          WebkitMaskImage: scrollOpacity < 0.9 ? 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0.3) 100%)' : 'none'
+        }}
+      >
         <CalendarView
           date={date}
           onDateSelect={setDate}

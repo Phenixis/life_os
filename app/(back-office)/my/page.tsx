@@ -6,7 +6,7 @@ export default async function DashboardPage() {
 
     return (
         <div className="flex flex-col md:flex-row md:justify-between w-full h-full">
-            <div className="bg-background flex flex-col order-2 md:order-0 md:max-h-screen w-full h-full lg:w-1/4">
+            <div className="bg-background flex flex-col order-2 md:order-0 md:max-h-screen w-full h-full lg:w-1/4 z-10">
                 <TasksCard
                     className="w-full h-full my-2 lg:m-4"
                     limit={5}
