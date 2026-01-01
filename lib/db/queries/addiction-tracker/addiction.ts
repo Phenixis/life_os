@@ -119,49 +119,80 @@ export class AddictionQuery extends QueryModel<New, Existing> {
         })[] };
     }
 
+    /**
+     * Soft-deletes an addiction and all its associated data.
+     * This method bypasses all individual validation logic to force-delete the entire addiction tree.
+     * 
+     * Deletion order (to avoid foreign key issues):
+     * 1. Soft-delete all entries (directly, without triggering relapse deletion)
+     * 2. Soft-delete all relapses (directly, without validation)
+     * 3. Soft-delete the addiction itself
+     */
     async delete(id: number): Promise<{ success: string; } | { error: string; }> {
-        const entries = await EntryQueries.getEntriesForAddiction(id);
+        const now = new Date();
+        
+        // Step 1: Soft-delete all entries for this addiction directly
+        // We update the database directly to avoid triggering Entry.delete() which would
+        // try to delete relapses and hit the "last relapse" validation
+        await lib.db
+            .update(lib.Schema.AddictionTracker.Entry.table)
+            .set({ deleted_at: now })
+            .where(lib.and(
+                lib.eq(lib.Schema.AddictionTracker.Entry.table.addiction_id, id),
+                lib.isNull(lib.Schema.AddictionTracker.Entry.table.deleted_at)
+            ));
 
-        if ("error" in entries) {
-            return { error: entries.error };
-        }
+        // Step 2: Soft-delete all relapses for this addiction directly
+        // We bypass the RelapseQueries.delete() method to avoid the "last relapse" validation
+        // since we're deleting the entire addiction anyway
+        await lib.db
+            .update(lib.Schema.AddictionTracker.Relapse.table)
+            .set({ deleted_at: now })
+            .where(lib.and(
+                lib.eq(lib.Schema.AddictionTracker.Relapse.table.addiction_id, id),
+                lib.isNull(lib.Schema.AddictionTracker.Relapse.table.deleted_at)
+            ));
 
-        for (const entry of entries.entities) {
-            const entryDeletion = await EntryQueries.delete(entry.id);
-            if ("error" in entryDeletion) {
-                return { error: entryDeletion.error };
-            }
-        }
-
+        // Step 3: Soft-delete the addiction itself
         const result = await super.delete(id);
 
         if ("error" in result) {
-            return { error: "The entries and relapses have been deleted, but there has been an error deleting the addiction: " + result.error };
+            return { error: "The entries and relapses have been deleted, but there was an error deleting the addiction: " + result.error };
         }
 
-        return { success: "Addiction and all associated entries deleted successfully." };
+        return { success: "Addiction and all associated data deleted successfully." };
     }
 
+    /**
+     * Hard-deletes an addiction and all its associated data from the database.
+     * This method bypasses all individual validation logic to force-delete the entire addiction tree.
+     * 
+     * Deletion order (to respect foreign key constraints):
+     * 1. Hard-delete all entries (they reference relapses)
+     * 2. Hard-delete all relapses (they reference the addiction)
+     * 3. Hard-delete the addiction itself
+     */
     async hardDelete(id: number): Promise<{ success: string; } | { error: string; }> {
-        const entries = await EntryQueries.getEntriesForAddiction(id);
+        // Step 1: Hard-delete all entries for this addiction directly
+        // Entries must be deleted first because they have foreign keys to relapses
+        await lib.db
+            .delete(lib.Schema.AddictionTracker.Entry.table)
+            .where(lib.eq(lib.Schema.AddictionTracker.Entry.table.addiction_id, id));
 
-        if ("error" in entries) {
-            return { error: entries.error };
-        }
+        // Step 2: Hard-delete all relapses for this addiction directly
+        // We bypass the RelapseQueries.hardDelete() method to avoid the "last relapse" validation
+        // since we're deleting the entire addiction anyway
+        await lib.db
+            .delete(lib.Schema.AddictionTracker.Relapse.table)
+            .where(lib.eq(lib.Schema.AddictionTracker.Relapse.table.addiction_id, id));
 
-        for (const entry of entries.entities) {
-            const entryHardDeletion = await EntryQueries.hardDelete(entry.id);
-            if ("error" in entryHardDeletion) {
-                return { error: entryHardDeletion.error };
-            }
-        }
-
+        // Step 3: Hard-delete the addiction itself
         const result = await super.hardDelete(id);
 
         if ("error" in result) {
-            return { error: "The entries and relapses have been deleted, but there has been an error deleting the addiction: " + result.error };
+            return { error: "The entries and relapses have been deleted, but there was an error deleting the addiction: " + result.error };
         }
 
-        return { success: "Addiction and all associated entries hard deleted successfully." };
+        return { success: "Addiction and all associated data permanently deleted." };
     }
 }
