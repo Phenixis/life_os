@@ -111,7 +111,7 @@ export async function setSession(session?: SessionData) {
 			value: encryptedSession,
 			expires: expiresInOneDay,
 			httpOnly: true,
-			secure: true,
+			secure: process.env.NODE_ENV === "production",
 			sameSite: "lax",
 			path: "/",
 		})

@@ -34,7 +34,7 @@ export function JournalEntryForm({ addictionId, onSuccess }: JournalEntryFormPro
     return (
         <form
             onSubmit={handleSubmit}
-            className="w-full pb-4 border-b bg-background dark:bg-black z-10 sticky -top-4 lg:top-0 pt-4"
+            className="w-full pb-4 border-b bg-background dark:bg-black z-10 sticky top-0 mt-2 pt-2"
         >
             <header className="flex items-center justify-between">
                 <h3 className="text-lg font-medium mb-2 text-center lg:text-left">Journal</h3>

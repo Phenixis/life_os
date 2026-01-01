@@ -19,6 +19,7 @@ import { isToolsCategorie, tools } from "@/lib/tools-data"
 import { toast } from "sonner"
 import { settingsItems } from "@/components/big/settings/settings-sidebar"
 import { useModalsState } from "@/contexts/modal-commands-context"
+import { primaryNavItems, quickActionConfigs } from "@/lib/navigation-data"
 
 interface MenuItem {
     name: string
@@ -28,8 +29,11 @@ interface MenuItem {
 
 const items: Record<string, MenuItem[]> = {
     "Suggestions": [
-        { name: "Dashboard", href: "/my", alternativeNames: ["home"] },
-        { name: "Notes", href: "/my/notes", alternativeNames: ["note"] },
+        ...primaryNavItems.map(item => ({
+            name: item.name,
+            href: item.href,
+            alternativeNames: item.alternativeNames,
+        })),
         { name: "Projects", href: "/my/projects", alternativeNames: ["project"] },
         // { name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"] },
     ],
@@ -72,12 +76,16 @@ export default function Menu({
     const { someModalOpen } = useModalsState()
     const router = useRouter()
     const { toggleDarkMode } = useDarkMode()
-    const taskModal = useTaskModal()
-    const noteModal = useNoteModal()
-    const dailyMoodModal = useDailyMoodModal()
-    const relapseRecorderModal = useRelapseRecorderModal()
-    const addictionCreatorModal = useAddictionCreatorModal()
-    const entryLoggerModal = useEntryLoggerModal()
+    
+    // Modal hooks
+    const modals = {
+        task: useTaskModal(),
+        note: useNoteModal(),
+        dailyMood: useDailyMoodModal(),
+        relapseRecorder: useRelapseRecorderModal(),
+        addictionCreator: useAddictionCreatorModal(),
+        entryLogger: useEntryLoggerModal(),
+    }
 
     useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -130,42 +138,15 @@ export default function Menu({
                             Toggle Dark Mode
                             <CommandShortcut>Ctrl/⌘ + M</CommandShortcut>
                         </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => taskModal.openModal())}
-                            keywords={["new task", "add task"]}
-                        >
-                            Create a task
-                        </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => noteModal.openModal())}
-                            keywords={["new note", "add note"]}
-                        >
-                            Create a note
-                        </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => dailyMoodModal.openModal())}
-                            keywords={["mood", "daily mood"]}
-                        >
-                            Enter my mood
-                        </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => relapseRecorderModal.openModal())}
-                            keywords={["relapse", "addiction", "record relapse"]}
-                        >
-                            Record a relapse
-                        </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => addictionCreatorModal.openModal())}
-                            keywords={["addiction", "create addiction", "new addiction", "add addiction"]}
-                        >
-                            Create an addiction
-                        </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => entryLoggerModal.openModal())}
-                            keywords={["journal", "entry", "log entry", "addiction journal"]}
-                        >
-                            Log a journal entry
-                        </CommandItem>
+                        {quickActionConfigs.map((config) => (
+                            <CommandItem
+                                key={config.modalKey}
+                                onSelect={() => runCommand(() => modals[config.modalKey].openModal())}
+                                keywords={config.alternativeNames}
+                            >
+                                {config.name}
+                            </CommandItem>
+                        ))}
                         <CommandItem
                             onSelect={() => {
                                 toast.loading("Logging out...", {

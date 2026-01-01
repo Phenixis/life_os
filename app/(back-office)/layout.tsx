@@ -1,4 +1,5 @@
 import Header from "@/components/big/header"
+import MobileBottomNav from "@/components/big/mobile-bottom-nav"
 import { UserProvider } from "@/hooks/use-user"
 import { getUser } from "@/lib/db/queries/user/user"
 import { getDarkModeCookie } from "@/lib/cookies"
@@ -19,8 +20,11 @@ export default async function BackOfficeLayout({
       <UserProvider userPromise={userPromise}>
         <ModalCommandsProvider>
           <main className="relative w-full h-full"  >
-            <Header darkModeCookie={darkModeCookie} />
-            <div className="w-full h-full">{children}</div>
+            <div className="hidden lg:block">
+              <Header darkModeCookie={darkModeCookie} />
+            </div>
+            <div className="w-full h-full pb-16 lg:pb-0">{children}</div>
+            <MobileBottomNav darkModeCookie={darkModeCookie} />
           </main>
           <ModalManager />
         </ModalCommandsProvider>

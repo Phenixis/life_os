@@ -296,9 +296,6 @@ export default function AddictionTrackerPage() {
                                     <div className="flex-1 h-full w-full">
                                         <JournalEntryForm
                                             addictionId={currentAddiction.id}
-                                            onSuccess={() => {
-                                                // Entries will auto-refresh via React Query
-                                            }}
                                         />
                                         <EntriesList addictionId={currentAddiction.id} />
                                     </div>
