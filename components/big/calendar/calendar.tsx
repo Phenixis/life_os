@@ -94,7 +94,7 @@ export default function Calendar({
     // Set as loaded after a short delay to ensure queries have started
     const timeoutId = setTimeout(() => {
       setIsDailyDataLoaded(true);
-    }, 200);
+    }, 500);
     
     return () => clearTimeout(timeoutId);
   }, [date]);

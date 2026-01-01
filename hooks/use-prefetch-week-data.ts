@@ -98,7 +98,7 @@ export function usePrefetchWeekData(selectedDate: Date | undefined, enabled: boo
                 // Prefetch SWR data (workouts, notes)
                 prefetchSWRData(dayStart, dayEnd, user.api_key)
             })
-        }, 300) // Small delay to ensure current date loads first
+        }, 500) // Small delay to ensure current date loads first
         
         return () => clearTimeout(timeoutId)
     }, [selectedDate, enabled, user?.api_key, queryClient])
