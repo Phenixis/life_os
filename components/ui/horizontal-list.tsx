@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
+import { Skeleton } from "./skeleton";
 
 export function HorizontalList({
     itemsName,
@@ -83,6 +84,21 @@ export function HorizontalList({
                 >
                     {name}
                 </div>
+            ))}
+        </div>
+    )
+}
+
+export function HorizontalListSkeleton({ className, itemCount = 5 }: { className?: string, itemCount?: number }) {
+    return (
+        <div
+            className={cn("py-4 px-2 flex gap-2 w-full overflow-x-auto overflow-y-hidden scrollbar-hide sticky top-0 bg-background z-10", className)}
+        >
+            {Array.from({ length: itemCount }).map((_, index) => (
+                <Skeleton
+                    key={`horizontal-list-skeleton-${index}`}
+                    className="h-8 w-20 rounded-md shrink-0"
+                />
             ))}
         </div>
     )

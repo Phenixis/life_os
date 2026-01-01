@@ -7,7 +7,7 @@ import { JournalEntryForm } from "@/components/big/addiction-tracker/journal-ent
 import { RelapseRecorder } from "@/components/big/addiction-tracker/relapse-recorder";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { HorizontalList } from "@/components/ui/horizontal-list";
+import { HorizontalList, HorizontalListSkeleton } from "@/components/ui/horizontal-list";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -96,9 +96,7 @@ export default function AddictionTrackerPage() {
                         </button>
                         <div className="flex-1 overflow-hidden">
                             {isLoadingAddictions ? (
-                                <div className="flex items-center justify-center py-4">
-                                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                                </div>
+                                <HorizontalListSkeleton className="border-b" itemCount={4} />
                             ) : (
                                 <HorizontalList
                                     itemsName={addictions.map(a => a.title)}

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { HorizontalList } from "@/components/ui/horizontal-list"
+import { HorizontalList, HorizontalListSkeleton } from "@/components/ui/horizontal-list"
 import { useEntryLoggerModal } from "@/contexts/modal-commands-context"
 import { useState, useEffect, useRef } from "react"
 import { useAddictionsQuery, useCreateEntry } from "@/hooks/use-addiction-tracker"
@@ -121,9 +121,7 @@ export default function EntryLoggerModal() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Horizontal list for addiction selection */}
                         {isLoadingAddictions ? (
-                            <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                            </div>
+                            <HorizontalListSkeleton className="border rounded-md" itemCount={4} />
                         ) : addictions.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 No addictions found. Create one first in the Addiction Tracker.

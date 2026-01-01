@@ -3,7 +3,7 @@
 import { ProjectsTasksAndNotesFilterBar } from "@/components/big/projects/projects-tasks-and-notes";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { HorizontalList } from "@/components/ui/horizontal-list";
+import { HorizontalList, HorizontalListSkeleton } from "@/components/ui/horizontal-list";
 import { useProjects } from "@/hooks/use-projects";
 import { useUser } from "@/hooks/use-user";
 import { Project } from "@/lib/db/schema";
@@ -236,9 +236,7 @@ export default function ProjectsPage() {
             </header>
             <div className="border rounded-md flex-1 min-h-0 overflow-auto scrollbar-hide">
                 {isLoading ? (
-                    <div className="py-4 px-2 w-full text-sm text-center text-muted-foreground border-b">
-                        Loading projects...
-                    </div>
+                    <HorizontalListSkeleton className="border-b" itemCount={6} />
                 ) : (
                     <HorizontalList
                         itemsName={["+", ...(projects || []).sort((a, b) => {
