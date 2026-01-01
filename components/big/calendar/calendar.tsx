@@ -154,7 +154,7 @@ export default function Calendar({
   return (
     <div
       className={cn(
-        'flex flex-row md:flex-col justify-start items-start md:items-center border-l border-gray-100 dark:border-gray-800 md:w-full md:h-screen md:max-w-75 md:p-2',
+        'sticky top-0 -z-10 flex flex-col justify-start items-start border-l border-gray-100 dark:border-gray-800 pb-4 md:pb-0 md:items-center md:w-full md:h-screen md:max-w-75 md:p-2',
         className
       )}
     >
@@ -182,7 +182,7 @@ export default function Calendar({
             disabled={isDateInFuture}
           >
             <RotateCcw className="h-4 w-4" />
-            <span className="lg:hidden">Record Relapse</span>
+            <span className="sr-only">Record Relapse</span>
           </Button>
           <Button
             onClick={handleCreateTask}
@@ -192,7 +192,7 @@ export default function Calendar({
             tooltip="Create a task"
           >
             <SquarePlus className="h-4 w-4" />
-            <span className="lg:hidden">Create Task</span>
+            <span className="sr-only">Create Task</span>
           </Button>
         </div>
       </div>

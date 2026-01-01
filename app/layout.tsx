@@ -103,10 +103,11 @@ export default async function RootLayout(
                 <TooltipProvider>
                     {
                         process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? (
-                            <div className="fixed -top-4 hover:top-0 left-0 w-full z-100 duration-200">
-                                <div className="bg-red-600 text-white text-center text-xs h-8 w-fit px-2 rounded-b-md mx-auto">
+                            <div className="fixed -top-5 hover:top-0 left-0 w-full z-100 duration-200">
+                                <div className="bg-red-600 text-white text-center text-xs h-5 w-fit px-2 rounded-b-md mx-auto">
                                     Aucune donnée ne sera envoyée en prod
-                                    <br />
+                                </div>
+                                <div className="bg-red-600 text-white text-center text-xs h-5 w-fit px-2 rounded-b-md mx-auto">
                                     Instance de DEV
                                 </div>
                             </div>

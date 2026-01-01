@@ -165,15 +165,15 @@ export function MovieCard({ movie }: MovieCardProps) {
 
     return (
         <>
-            <Card className="group overflow-hidden lg:hover:shadow-md transition-all duration-200 border-0 bg-card/50">
+            <Card className="@container/card group overflow-hidden lg:hover:shadow-md transition-all duration-200 border-0 bg-card/50">
                 <CardContent className="">
                     <div className={cn("flex", !isEditing && 'gap-4')}>
                         {/* Poster */}
                         {/* Poster - slides out when editing */}
                         <div
-                            className={`shrink-0 flex justify-center items-center transition-all duration-300 ease-in-out overflow-hidden
-                                ${isEditing 
-                                    ? '@md/card:w-0 @md/card:opacity-0 w-0 h-0 opacity-0' 
+                            className={`hidden @xs/card:flex shrink-0 justify-center items-center transition-all duration-300 ease-in-out overflow-hidden
+                                ${isEditing
+                                    ? '@md/card:w-0 @md/card:opacity-0 w-0 h-0 opacity-0'
                                     : '@md/card:w-16 w-16 opacity-100'
                                 }
                             `}
@@ -285,8 +285,10 @@ export function MovieCard({ movie }: MovieCardProps) {
                                     </div>
                                     <div className="flex gap-2 pt-1">
                                         <Button size="sm" onClick={handleSave} className="h-8 px-3">
-                                            <Check className="w-3 h-3 mr-1.5" />
-                                            Save
+                                            <Check className="w-3 h-3 @md/card:mr-1.5" />
+                                            <span className="hidden @md/card:inline-block">
+                                                Save
+                                            </span>
                                         </Button>
                                         <Button
                                             size="sm"
@@ -294,8 +296,10 @@ export function MovieCard({ movie }: MovieCardProps) {
                                             onClick={handleCancel}
                                             className="h-8 px-3"
                                         >
-                                            <X className="w-3 h-3 mr-1.5" />
-                                            Cancel
+                                            <X className="w-3 h-3 @md/card:mr-1.5" />
+                                            <span className="hidden @md/card:inline-block">
+                                                Cancel
+                                            </span>
                                         </Button>
                                     </div>
                                 </div>

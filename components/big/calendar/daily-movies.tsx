@@ -43,7 +43,6 @@ export function DailyMovies({ dayStart, dayEnd, onDataStatusChange }: DailyMovie
     return hasData ? (
         <div className="flex flex-col items-start justify-center w-full">
             <div className="w-full flex flex-col gap-2">
-                <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Movies Watched</div>
                 {moviesWatchedToday.map(movie => (
                     <MovieCard key={movie.id} movie={movie} />
                 ))}
