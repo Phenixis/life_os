@@ -7,10 +7,12 @@ export function HorizontalList({
     itemsName,
     onClick,
     activeItemName,
+    className
 }: {
     itemsName: string[];
     onClick: (itemName: string) => void;
     activeItemName: string;
+    className?: string;
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +69,7 @@ export function HorizontalList({
         <div
             ref={containerRef}
             onWheel={handleWheel}
-            className="py-4 px-2 flex gap-2 w-full overflow-x-auto overflow-y-hidden scrollbar-hide sticky top-0 bg-background border-b z-10"
+            className={cn("py-4 px-2 flex gap-2 w-full overflow-x-auto overflow-y-hidden scrollbar-hide sticky top-0 bg-background z-10", className)}
             style={{ scrollBehavior: "smooth" }}
         >
             {itemsName.map((name, index) => (

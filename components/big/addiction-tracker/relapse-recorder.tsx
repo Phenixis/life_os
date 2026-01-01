@@ -49,6 +49,7 @@ export function RelapseRecorder({ addictionId, onSuccess, onCancel }: RelapseRec
                 onDateChange={setDate}
                 onTimeChange={setTime}
                 dateLabel="Relapse Date"
+                disableFuture={true}
             />
             <div className="space-y-1">
                 <label className="text-sm font-medium">Comment (optional)</label>
@@ -63,20 +64,20 @@ export function RelapseRecorder({ addictionId, onSuccess, onCancel }: RelapseRec
             <div className="flex gap-2">
                 <Button
                     size="sm"
-                    className="flex-1"
-                    onClick={handleSubmit}
-                    disabled={createRelapse.isPending}
-                >
-                    {createRelapse.isPending ? "Recording..." : "Record"}
-                </Button>
-                <Button
-                    size="sm"
                     variant="outline"
                     className="flex-1"
                     onClick={handleCancel}
                     disabled={createRelapse.isPending}
                 >
                     Cancel
+                </Button>
+                <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleSubmit}
+                    disabled={createRelapse.isPending}
+                >
+                    {createRelapse.isPending ? "Recording..." : "Record"}
                 </Button>
             </div>
         </div>

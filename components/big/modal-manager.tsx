@@ -3,6 +3,9 @@
 import TaskModal from "@/components/big/tasks/task-modal"
 import NoteModal from "@/components/big/notes/note-modal"
 import DailyMoodModal from "@/components/big/daily-mood/daily-mood-modal"
+import RelapseRecorderModal from "@/components/big/addiction-tracker/relapse-recorder-modal"
+import AddictionCreatorModal from "@/components/big/addiction-tracker/addiction-creator-modal"
+import EntryLoggerModal from "@/components/big/addiction-tracker/entry-logger-modal"
 
 export default function ModalManager() {
     return (
@@ -10,6 +13,9 @@ export default function ModalManager() {
             <TaskModal/>
             <NoteModal/>
             <DailyMoodModal/>
+            <RelapseRecorderModal/>
+            <AddictionCreatorModal/>
+            <EntryLoggerModal/>
         </>
     )
 }

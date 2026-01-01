@@ -30,6 +30,24 @@ interface ModalCommandsContextType {
     date?: Date;
   };
 
+  relapseRecorderModal: {
+    isOpen: boolean;
+    openModal: () => void;
+    closeModal: () => void;
+  };
+
+  addictionCreatorModal: {
+    isOpen: boolean;
+    openModal: () => void;
+    closeModal: () => void;
+  };
+
+  entryLoggerModal: {
+    isOpen: boolean;
+    openModal: () => void;
+    closeModal: () => void;
+  };
+
   someModalOpen: () => boolean;
 }
 
@@ -51,7 +69,16 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
   const [dailyMoodModalOpen, setDailyMoodModalOpen] = useState(false);
   const [dailyMoodModalDate, setDailyMoodModalDate] = useState<Date>();
 
-  const modalsOpenState = [taskModalOpen, noteModalOpen, dailyMoodModalOpen];
+  // Relapse recorder modal state
+  const [relapseRecorderModalOpen, setRelapseRecorderModalOpen] = useState(false);
+
+  // Addiction creator modal state
+  const [addictionCreatorModalOpen, setAddictionCreatorModalOpen] = useState(false);
+
+  // Entry logger modal state
+  const [entryLoggerModalOpen, setEntryLoggerModalOpen] = useState(false);
+
+  const modalsOpenState = [taskModalOpen, noteModalOpen, dailyMoodModalOpen, relapseRecorderModalOpen, addictionCreatorModalOpen, entryLoggerModalOpen];
   const someModalOpen = () => modalsOpenState.some(modalState => modalState === true);
 
   const value: ModalCommandsContextType = {
@@ -104,6 +131,39 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
       },
       date: dailyMoodModalDate
     },
+    relapseRecorderModal: {
+      isOpen: relapseRecorderModalOpen,
+      openModal: () => {
+        if (!someModalOpen()) {
+          setRelapseRecorderModalOpen(true);
+        }
+      },
+      closeModal: () => {
+        setRelapseRecorderModalOpen(false);
+      }
+    },
+    addictionCreatorModal: {
+      isOpen: addictionCreatorModalOpen,
+      openModal: () => {
+        if (!someModalOpen()) {
+          setAddictionCreatorModalOpen(true);
+        }
+      },
+      closeModal: () => {
+        setAddictionCreatorModalOpen(false);
+      }
+    },
+    entryLoggerModal: {
+      isOpen: entryLoggerModalOpen,
+      openModal: () => {
+        if (!someModalOpen()) {
+          setEntryLoggerModalOpen(true);
+        }
+      },
+      closeModal: () => {
+        setEntryLoggerModalOpen(false);
+      }
+    },
     someModalOpen: someModalOpen
   };
 
@@ -133,6 +193,30 @@ export const useDailyMoodModal = () => {
     throw new Error('useDailyMoodModal must be used within a ModalCommandsProvider');
   }
   return context.dailyMoodModal;
+};
+
+export const useRelapseRecorderModal = () => {
+  const context = useContext(ModalCommandsContext);
+  if (!context) {
+    throw new Error('useRelapseRecorderModal must be used within a ModalCommandsProvider');
+  }
+  return context.relapseRecorderModal;
+};
+
+export const useAddictionCreatorModal = () => {
+  const context = useContext(ModalCommandsContext);
+  if (!context) {
+    throw new Error('useAddictionCreatorModal must be used within a ModalCommandsProvider');
+  }
+  return context.addictionCreatorModal;
+};
+
+export const useEntryLoggerModal = () => {
+  const context = useContext(ModalCommandsContext);
+  if (!context) {
+    throw new Error('useEntryLoggerModal must be used within a ModalCommandsProvider');
+  }
+  return context.entryLoggerModal;
 };
 
 export const useModalsState = () => {

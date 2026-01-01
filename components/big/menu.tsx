@@ -14,7 +14,7 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "reac
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useDarkMode } from "@/hooks/use-dark-mode"
-import { useDailyMoodModal, useNoteModal, useTaskModal } from "@/contexts/modal-commands-context"
+import { useDailyMoodModal, useNoteModal, useTaskModal, useRelapseRecorderModal, useAddictionCreatorModal, useEntryLoggerModal } from "@/contexts/modal-commands-context"
 import { isToolsCategorie, tools } from "@/lib/tools-data"
 import { toast } from "sonner"
 import { settingsItems } from "@/components/big/settings/settings-sidebar"
@@ -75,6 +75,9 @@ export default function Menu({
     const taskModal = useTaskModal()
     const noteModal = useNoteModal()
     const dailyMoodModal = useDailyMoodModal()
+    const relapseRecorderModal = useRelapseRecorderModal()
+    const addictionCreatorModal = useAddictionCreatorModal()
+    const entryLoggerModal = useEntryLoggerModal()
 
     useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -144,6 +147,24 @@ export default function Menu({
                             keywords={["mood", "daily mood"]}
                         >
                             Enter my mood
+                        </CommandItem>
+                        <CommandItem
+                            onSelect={() => runCommand(() => relapseRecorderModal.openModal())}
+                            keywords={["relapse", "addiction", "record relapse"]}
+                        >
+                            Record a relapse
+                        </CommandItem>
+                        <CommandItem
+                            onSelect={() => runCommand(() => addictionCreatorModal.openModal())}
+                            keywords={["addiction", "create addiction", "new addiction", "add addiction"]}
+                        >
+                            Create an addiction
+                        </CommandItem>
+                        <CommandItem
+                            onSelect={() => runCommand(() => entryLoggerModal.openModal())}
+                            keywords={["journal", "entry", "log entry", "addiction journal"]}
+                        >
+                            Log a journal entry
                         </CommandItem>
                         <CommandItem
                             onSelect={() => {

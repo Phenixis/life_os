@@ -110,6 +110,7 @@ export default function AddictionTrackerPage() {
                                         }
                                     }}
                                     activeItemName={currentAddiction?.title || ""}
+                                    className="border-b"
                                 />
                             )}
                         </div>
