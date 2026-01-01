@@ -1,7 +1,6 @@
 "use client"
 
 import { ProjectsMultipleSelects } from "@/components/big/filtering/projects-multiple-selects";
-import { RadioButtons } from "@/components/big/filtering/radio-buttons";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,7 @@ import { useTasks } from "@/hooks/use-tasks";
 import type { Task } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar, Filter, FolderTree, PlusIcon, Square, SquareMinus } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Calendar, Check, ChevronDown, Filter, FolderTree, Hash, PlusIcon, Square, SquareMinus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import TaskDisplay from "./task-display";
 
@@ -84,6 +83,8 @@ export function TasksCard(
 
     // -------------------- State --------------------
     const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false)
+
+    const [isLimitPopoverOpen, setIsLimitPopoverOpen] = useState<boolean>(false)
 
     const [completed, setCompleted] = useState<boolean | undefined>(initialCompleted)
 
@@ -387,11 +388,108 @@ export function TasksCard(
                                 <SquareMinus className="h-4 w-4" />
                             )}
                         </Button>
-                        <RadioButtons
-                            values={[5, 10, 25, 50]}
-                            currentValue={limit}
-                            onChange={setLimit}
-                            disabled={isPending || isLoading} />
+                        {/* Limit dropdown */}
+                        <Popover modal={false} open={isLimitPopoverOpen} onOpenChange={setIsLimitPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isPending || isLoading}
+                                    tooltip="Number of tasks to display"
+                                    className="h-9 px-2 gap-1 min-w-14"
+                                >
+                                    {limit}
+                                    <ChevronDown className="h-3 w-3" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-1" align="start">
+                                <div className="flex flex-col gap-0.5">
+                                    {[5, 25, 50, 100].map((value) => (
+                                        <Button
+                                            key={value}
+                                            variant={limit === value ? "secondary" : "ghost"}
+                                            size="sm"
+                                            className="justify-start h-8 px-2"
+                                            onClick={() => {
+                                                setLimit(value)
+                                                setIsLimitPopoverOpen(false)
+                                            }}
+                                        >
+                                            {limit === value && <Check className="h-3 w-3 mr-1" />}
+                                            {value} tasks
+                                        </Button>
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                        {/* Order by & direction combined */}
+                        <Popover modal={false}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isPending || isLoading}
+                                    tooltip="Sort options"
+                                    className="h-9 px-2 gap-1"
+                                >
+                                    <ArrowUpDown className="h-4 w-4" />
+                                    {orderingDirection === "asc" ? (
+                                        <ArrowUp className="h-3 w-3" />
+                                    ) : (
+                                        <ArrowDown className="h-3 w-3" />
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-2" align="start">
+                                <div className="flex flex-col gap-2">
+                                    <p className="text-xs text-muted-foreground font-medium px-1">Order by</p>
+                                    <div className="flex flex-col gap-0.5">
+                                        {[
+                                            { value: "due", label: "Due date" },
+                                            { value: "created_at", label: "Created" },
+                                            { value: "updated_at", label: "Updated" },
+                                            { value: "title", label: "Title" },
+                                            { value: "importance", label: "Importance" },
+                                            { value: "duration", label: "Duration" },
+                                        ].map((option) => (
+                                            <Button
+                                                key={option.value}
+                                                variant={orderBy === option.value ? "secondary" : "ghost"}
+                                                size="sm"
+                                                className="justify-start h-8 px-2"
+                                                onClick={() => setOrderBy(option.value as keyof Task.Task.Select)}
+                                            >
+                                                {orderBy === option.value && <Check className="h-3 w-3 mr-1" />}
+                                                {option.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="border-t pt-2 mt-1">
+                                        <p className="text-xs text-muted-foreground font-medium px-1 mb-1">Direction</p>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant={orderingDirection === "asc" ? "secondary" : "ghost"}
+                                                size="sm"
+                                                className="flex-1 h-8 gap-1"
+                                                onClick={() => setOrderingDirection("asc")}
+                                            >
+                                                <ArrowUp className="h-3 w-3" />
+                                                Asc
+                                            </Button>
+                                            <Button
+                                                variant={orderingDirection === "desc" ? "secondary" : "ghost"}
+                                                size="sm"
+                                                className="flex-1 h-8 gap-1"
+                                                onClick={() => setOrderingDirection("desc")}
+                                            >
+                                                <ArrowDown className="h-3 w-3" />
+                                                Desc
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                         <Button
                             variant={groupByProject ? "default" : "outline"}
                             size="sm"
