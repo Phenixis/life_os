@@ -31,6 +31,22 @@ export default function Calendar({
   const monthStart = useMemo(() => new Date(month.getFullYear(), month.getMonth(), 1), [month]);
   const monthEnd = useMemo(() => new Date(month.getFullYear(), month.getMonth() + 1, 0), [month]);
 
+  // Calculate the visible date range including days from previous/next months shown in calendar
+  // Calendar typically shows 6 weeks (42 days) to fill the grid
+  const visibleStart = useMemo(() => {
+    const firstDay = new Date(monthStart);
+    const dayOfWeek = firstDay.getDay();
+    firstDay.setDate(firstDay.getDate() - dayOfWeek);
+    return firstDay;
+  }, [monthStart]);
+
+  const visibleEnd = useMemo(() => {
+    const lastDay = new Date(monthEnd);
+    const dayOfWeek = lastDay.getDay();
+    lastDay.setDate(lastDay.getDate() + (6 - dayOfWeek));
+    return lastDay;
+  }, [monthEnd]);
+
   // Only fetch data when showNumberOfTasks is true
   const {
     data: numberOfTasks = [],
@@ -42,10 +58,10 @@ export default function Calendar({
     enabled: showNumberOfTasks
   });
 
-  // Fetch daily moods data
+  // Fetch daily moods data for all visible dates (including adjacent month days)
   const { data: dailyMoods } = useDailyMoods({
-    startDate: monthStart,
-    endDate: monthEnd,
+    startDate: visibleStart,
+    endDate: visibleEnd,
     enabled: showDailyMood
   });
 
@@ -138,7 +154,7 @@ export default function Calendar({
   return (
     <div
       className={cn(
-        'flex flex-row md:flex-col justify-start items-start md:items-center border-l border-gray-100 dark:border-gray-800 md:w-full md:h-screen md:max-w-[300px] md:p-2',
+        'flex flex-row md:flex-col justify-start items-start md:items-center border-l border-gray-100 dark:border-gray-800 md:w-full md:h-screen md:max-w-75 md:p-2',
         className
       )}
     >

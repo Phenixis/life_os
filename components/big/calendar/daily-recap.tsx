@@ -6,6 +6,7 @@ import { DailyWorkout } from '@/components/big/calendar/daily-workout';
 import { DailyNotes } from '@/components/big/calendar/daily-notes';
 import { DailyAddictionRelapses } from '@/components/big/calendar/daily-addiction-relapses';
 import { DailyAddictionEntries } from '@/components/big/calendar/daily-addiction-entries';
+import { DailyMovies } from '@/components/big/calendar/daily-movies';
 
 interface DailyRecapProps {
   dayStart?: Date;
@@ -25,6 +26,7 @@ interface componentStatus {
   notes: status;
   addictionRelapses: status;
   addictionEntries: status;
+  movies: status;
 }
 
 const initialStatus: componentStatus = {
@@ -32,7 +34,8 @@ const initialStatus: componentStatus = {
   workout: status.Loading,
   notes: status.Loading,
   addictionRelapses: status.Loading,
-  addictionEntries: status.Loading
+  addictionEntries: status.Loading,
+  movies: status.Loading
 };
 
 /**
@@ -86,6 +89,10 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
 
   const handleAddictionEntriesDataChange = useCallback((hasData: boolean) => {
     setComponentStatus(prev => ({ ...prev, addictionEntries: hasData ? status.HasData : status.NoData }));
+  }, []);
+
+  const handleMoviesDataChange = useCallback((hasData: boolean) => {
+    setComponentStatus(prev => ({ ...prev, movies: hasData ? status.HasData : status.NoData }));
   }, []);
 
   return (
@@ -144,6 +151,18 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
               dayStart={dayStart}
               dayEnd={dayEnd}
               onDataStatusChange={handleAddictionEntriesDataChange}
+            />
+          )
+        },
+        {
+          key: 'movies',
+          hasData: componentStatus.movies,
+          component: (
+            <DailyMovies
+              key={`movies-${dateKey}`}
+              dayStart={dayStart}
+              dayEnd={dayEnd}
+              onDataStatusChange={handleMoviesDataChange}
             />
           )
         }
