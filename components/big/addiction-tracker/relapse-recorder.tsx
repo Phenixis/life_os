@@ -8,13 +8,14 @@ import { useCreateRelapse } from "@/hooks/use-addiction-tracker";
 
 interface RelapseRecorderProps {
     addictionId: number;
+    initialDate?: Date;
     onSuccess?: () => void;
     onCancel?: () => void;
 }
 
-export function RelapseRecorder({ addictionId, onSuccess, onCancel }: RelapseRecorderProps) {
-    const [date, setDate] = useState(new Date());
-    const [time, setTime] = useState(new Date().toTimeString().slice(0, 5));
+export function RelapseRecorder({ addictionId, initialDate, onSuccess, onCancel }: RelapseRecorderProps) {
+    const [date, setDate] = useState(initialDate || new Date());
+    const [time, setTime] = useState((initialDate || new Date()).toTimeString().slice(0, 5));
     const [comment, setComment] = useState("");
 
     const createRelapse = useCreateRelapse();

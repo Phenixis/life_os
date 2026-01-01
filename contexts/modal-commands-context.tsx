@@ -32,8 +32,9 @@ interface ModalCommandsContextType {
 
   relapseRecorderModal: {
     isOpen: boolean;
-    openModal: () => void;
+    openModal: (date?: Date) => void;
     closeModal: () => void;
+    date?: Date;
   };
 
   addictionCreatorModal: {
@@ -71,6 +72,7 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
 
   // Relapse recorder modal state
   const [relapseRecorderModalOpen, setRelapseRecorderModalOpen] = useState(false);
+  const [relapseRecorderModalDate, setRelapseRecorderModalDate] = useState<Date>();
 
   // Addiction creator modal state
   const [addictionCreatorModalOpen, setAddictionCreatorModalOpen] = useState(false);
@@ -133,14 +135,16 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
     },
     relapseRecorderModal: {
       isOpen: relapseRecorderModalOpen,
-      openModal: () => {
+      openModal: (date?: Date) => {
         if (!someModalOpen()) {
+          setRelapseRecorderModalDate(date);
           setRelapseRecorderModalOpen(true);
         }
       },
       closeModal: () => {
         setRelapseRecorderModalOpen(false);
-      }
+      },
+      date: relapseRecorderModalDate
     },
     addictionCreatorModal: {
       isOpen: addictionCreatorModalOpen,

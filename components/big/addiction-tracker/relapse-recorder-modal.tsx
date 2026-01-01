@@ -24,7 +24,7 @@ import { useEffect, useRef, useState } from "react"
 import { RelapseRecorder } from "./relapse-recorder"
 
 export default function RelapseRecorderModal() {
-    const { isOpen, closeModal } = useRelapseRecorderModal()
+    const { isOpen, closeModal, date } = useRelapseRecorderModal()
     const [selectedAddictionId, setSelectedAddictionId] = useState<number | null>(null)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
     const closeDialogRef = useRef<(() => void)>(() => { })
@@ -94,6 +94,7 @@ export default function RelapseRecorderModal() {
                                 {currentAddiction && (
                                     <RelapseRecorder
                                         addictionId={currentAddiction.id}
+                                        initialDate={date}
                                         onSuccess={handleClose}
                                         onCancel={handleClose}
                                     />
