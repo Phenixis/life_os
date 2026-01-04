@@ -364,7 +364,11 @@ export default function ProjectsPage() {
                                     }'s Details
                                 </h2>
                                 {selectedProject?.completed && (
-                                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 w-fit">
+                                    <span 
+                                        className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 w-fit"
+                                        role="status"
+                                        aria-label="This project is marked as completed"
+                                    >
                                         Completed
                                     </span>
                                 )}

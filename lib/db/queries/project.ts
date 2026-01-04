@@ -190,52 +190,6 @@ export async function updateProject(userId: string, id: number, title?: string, 
     return result[0]
 }
 
-export async function completeProject(userId: string, title: string) {
-    const result = await lib.db
-        .update(table)
-        .set({
-            completed: true,
-            updated_at: lib.sql`CURRENT_TIMESTAMP`,
-        })
-        .where(lib.and(
-            lib.eq(table.title, title),
-            lib.eq(table.user_id, userId),
-        ))
-        .returning({title: table.title})
-
-    // Revalidate all pages that might show projects
-    lib.revalidatePath("/my", 'layout')
-
-    if (!result) {
-        return null
-    }
-
-    return result[0].title
-}
-
-export async function uncompleteProject(userId: string, title: string) {
-    const result = await lib.db
-        .update(table)
-        .set({
-            completed: false,
-            updated_at: lib.sql`CURRENT_TIMESTAMP`,
-        })
-        .where(lib.and(
-            lib.eq(table.title, title),
-            lib.eq(table.user_id, userId),
-        ))
-        .returning({title: table.title})
-
-    // Revalidate all pages that might show projects
-    lib.revalidatePath("/my", 'layout')
-
-    if (!result) {
-        return null
-    }
-
-    return result[0].title
-}
-
 // ## Merge
 
 export async function mergeProjects(userId: string, sourceProjectId: number, targetProjectId: number) {
