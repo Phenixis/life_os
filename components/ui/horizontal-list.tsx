@@ -18,6 +18,7 @@ export function HorizontalList({
     completedItems?: string[];
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const completedSet = new Set(completedItems);
 
     useEffect(() => {
         const element = containerRef.current;
@@ -76,7 +77,7 @@ export function HorizontalList({
             style={{ scrollBehavior: "smooth" }}
         >
             {itemsName.map((name, index) => {
-                const isCompleted = completedItems.includes(name);
+                const isCompleted = completedSet.has(name);
                 return (
                     <div
                         key={`horizontal-list-item-${index}`}
