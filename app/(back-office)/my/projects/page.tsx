@@ -282,10 +282,15 @@ export default function ProjectsPage() {
                         itemsName={["+", ...(projects || []).sort((a, b) => {
                             if (a.id === -1) return -1;
                             if (b.id === -1) return 1;
+                            // Sort by completion status first (uncompleted first), then alphabetically
+                            if (a.completed !== b.completed) {
+                                return a.completed ? 1 : -1;
+                            }
                             return a.title.localeCompare(b.title);
                         }).map(p => p.title)]}
                         onClick={handleItemClick}
                         activeItemName={isCreatingProject ? "+" : (selectedProject?.title || "")}
+                        completedItems={(projects || []).filter(p => p.completed).map(p => p.title)}
                     />
                 )}
                 <article className="p-4">
