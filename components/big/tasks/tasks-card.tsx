@@ -536,30 +536,26 @@ export function TasksCard(
                             .map(([projectId, {
                                 name,
                                 tasks
-                            }]) => {
-                                console.log("Project name:", name, "Tasks:", tasks);
-
-                                return (
-                                    <div key={projectId} className="mb-2 ">
-                                        <h3 className="font-medium text-sm rounded-md">{name}</h3>
-                                        <div className="border-l ml-1 pl-1">
-                                            {tasks.map(
-                                                (
-                                                    task: Task.Task.TaskWithRelations,
-                                                ) => (
-                                                    <TaskDisplay
-                                                        key={task.id}
-                                                        task={task}
-                                                        orderedBy={orderBy}
-                                                        currentLimit={limit}
-                                                        currentDueBefore={dueBeforeDate}
-                                                    />
-                                                ),
-                                            )}
-                                        </div>
+                            }]) => (
+                                <div key={projectId} className="mb-2 ">
+                                    <h3 className="font-medium text-sm rounded-md">{name}</h3>
+                                    <div className="border-l ml-1 pl-1">
+                                        {tasks.map(
+                                            (
+                                                task: Task.Task.TaskWithRelations,
+                                            ) => (
+                                                <TaskDisplay
+                                                    key={task.id}
+                                                    task={task}
+                                                    orderedBy={orderBy}
+                                                    currentLimit={limit}
+                                                    currentDueBefore={dueBeforeDate}
+                                                />
+                                            ),
+                                        )}
                                     </div>
-                                )
-                            })
+                                </div>
+                            ))
                     ) : (
                         // Not grouped
                         tasks
