@@ -7,7 +7,7 @@ import { HorizontalList, HorizontalListSkeleton } from "@/components/ui/horizont
 import { useProjects } from "@/hooks/use-projects";
 import { useUser } from "@/hooks/use-user";
 import { Project } from "@/lib/db/schema";
-import { Pen, Trash, Check, X } from "lucide-react";
+import { Pen, Trash, Check, X, CheckCircle } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ export default function ProjectsPage() {
     const [isSubmittingNew, setIsSubmittingNew] = useState(false);
     const [showMergeDialog, setShowMergeDialog] = useState(false);
     const [conflictingProject, setConflictingProject] = useState<Project.Select | null>(null);
+    const [isTogglingCompletion, setIsTogglingCompletion] = useState(false);
 
     const { projects, isLoading, mutate } = useProjects();
     const { user } = useUser();
@@ -228,6 +229,45 @@ export default function ProjectsPage() {
         }
     };
 
+    const handleToggleCompletion = async () => {
+        if (!selectedProject || !user) return;
+
+        setIsTogglingCompletion(true);
+        try {
+            const response = await fetch("/api/project", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${user.api_key}`,
+                },
+                body: JSON.stringify({
+                    id: selectedProject.id,
+                    completed: !selectedProject.completed,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json();
+                throw new Error("Failed to update project: " + errorBody.error);
+            }
+
+            toast.success(`Project marked as ${!selectedProject.completed ? "completed" : "not completed"}`);
+
+            // Update the selected project locally
+            setSelectedProject({
+                ...selectedProject,
+                completed: !selectedProject.completed,
+            });
+
+            await mutate();
+        } catch (error) {
+            console.log(error);
+            toast.error(error instanceof Error ? error.message : String(error));
+        } finally {
+            setIsTogglingCompletion(false);
+        }
+    };
+
     return (
         <section className="page max-h-screen overflow-hidden flex flex-col pb-20!">
             <header className="flex items-center gap-6 shrink-0">
@@ -242,10 +282,15 @@ export default function ProjectsPage() {
                         itemsName={["+", ...(projects || []).sort((a, b) => {
                             if (a.id === -1) return -1;
                             if (b.id === -1) return 1;
+                            // Sort by completion status first (uncompleted first), then alphabetically
+                            if (a.completed !== b.completed) {
+                                return a.completed ? 1 : -1;
+                            }
                             return a.title.localeCompare(b.title);
                         }).map(p => p.title)]}
                         onClick={handleItemClick}
                         activeItemName={isCreatingProject ? "+" : (selectedProject?.title || "")}
+                        completedItems={(projects || []).filter(p => p.completed).map(p => p.title)}
                     />
                 )}
                 <article className="p-4">
@@ -323,6 +368,15 @@ export default function ProjectsPage() {
                                             "Project"
                                     }'s Details
                                 </h2>
+                                {selectedProject?.completed && (
+                                    <span 
+                                        className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 w-fit"
+                                        role="status"
+                                        aria-label="This project is marked as completed"
+                                    >
+                                        Completed
+                                    </span>
+                                )}
                                 <p className="opacity-50">
                                     {
                                         selectedProject ?
@@ -388,6 +442,16 @@ export default function ProjectsPage() {
                                         onClick={handleStartEdit}
                                     >
                                         <Pen className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        disabled={selectedProject === null || selectedProject.id === -1}
+                                        variant={selectedProject?.completed ? "default" : "outline"}
+                                        size="icon"
+                                        loading={isTogglingCompletion}
+                                        onClick={handleToggleCompletion}
+                                        tooltip={selectedProject?.completed ? "Mark as not completed" : "Mark as completed"}
+                                    >
+                                        <CheckCircle className="w-4 h-4" />
                                     </Button>
                                     <Button
                                         disabled={selectedProject === null || selectedProject.id === -1}

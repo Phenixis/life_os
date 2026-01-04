@@ -114,7 +114,7 @@ export function TasksCard(
     const isSavedFiltersBeenUsed = useRef(false);
 
     // -------------------- Data Fetching --------------------
-    const { projects, isLoading: projectsLoading } = useProjects()
+    const { projects, isLoading: projectsLoading } = useProjects({ includeCompleted: false })
 
     const { tasks, isLoading } = useTasks({
         completed,

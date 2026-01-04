@@ -97,18 +97,26 @@ export async function getProjectByTitle(userId: string, title: string): Promise<
 interface GetProjectsOptions {
     limit?: number
     includeNoProject?: boolean
+    includeCompleted?: boolean
 }
 
 export async function getProjects(userId: string, options: GetProjectsOptions = {}): Promise<Existing[]> {
-    const { limit = 50, includeNoProject = true } = options
+    const { limit = 50, includeNoProject = true, includeCompleted = true } = options
+
+    const conditions = [
+        lib.isNull(table.deleted_at),
+        lib.eq(table.user_id, userId),
+    ]
+
+    // Exclude completed projects if requested
+    if (!includeCompleted) {
+        conditions.push(lib.eq(table.completed, false))
+    }
 
     const projects = await lib.db
         .select()
         .from(table)
-        .where(lib.and(
-            lib.isNull(table.deleted_at),
-            lib.eq(table.user_id, userId),
-        ))
+        .where(lib.and(...conditions))
         .orderBy(lib.asc(table.title))
         .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as Existing[]
 
@@ -130,7 +138,7 @@ export async function getProjects(userId: string, options: GetProjectsOptions = 
 
 // ## Update
 
-export async function updateProject(userId: string, id: number, title?: string, description?: string) {
+export async function updateProject(userId: string, id: number, title?: string, description?: string, completed?: boolean) {
     const updateData: any = {
         updated_at: lib.sql`CURRENT_TIMESTAMP`,
     }
@@ -159,6 +167,10 @@ export async function updateProject(userId: string, id: number, title?: string, 
         updateData.description = description
     }
     
+    if (completed !== undefined) {
+        updateData.completed = completed
+    }
+    
     const result = await lib.db
         .update(table)
         .set(updateData)
@@ -176,52 +188,6 @@ export async function updateProject(userId: string, id: number, title?: string, 
     }
 
     return result[0]
-}
-
-export async function completeProject(userId: string, title: string) {
-    const result = await lib.db
-        .update(table)
-        .set({
-            completed: true,
-            updated_at: lib.sql`CURRENT_TIMESTAMP`,
-        })
-        .where(lib.and(
-            lib.eq(table.title, title),
-            lib.eq(table.user_id, userId),
-        ))
-        .returning({title: table.title})
-
-    // Revalidate all pages that might show projects
-    lib.revalidatePath("/my", 'layout')
-
-    if (!result) {
-        return null
-    }
-
-    return result[0].title
-}
-
-export async function uncompleteProject(userId: string, title: string) {
-    const result = await lib.db
-        .update(table)
-        .set({
-            completed: false,
-            updated_at: lib.sql`CURRENT_TIMESTAMP`,
-        })
-        .where(lib.and(
-            lib.eq(table.title, title),
-            lib.eq(table.user_id, userId),
-        ))
-        .returning({title: table.title})
-
-    // Revalidate all pages that might show projects
-    lib.revalidatePath("/my", 'layout')
-
-    if (!result) {
-        return null
-    }
-
-    return result[0].title
 }
 
 // ## Merge

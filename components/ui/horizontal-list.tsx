@@ -8,14 +8,17 @@ export function HorizontalList({
     itemsName,
     onClick,
     activeItemName,
-    className
+    className,
+    completedItems = []
 }: {
     itemsName: string[];
     onClick: (itemName: string) => void;
     activeItemName: string;
     className?: string;
+    completedItems?: string[];
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const completedSet = new Set(completedItems);
 
     useEffect(() => {
         const element = containerRef.current;
@@ -73,18 +76,22 @@ export function HorizontalList({
             className={cn("py-4 px-2 flex gap-2 w-full overflow-x-auto overflow-y-hidden scrollbar-hide sticky top-0 bg-background z-10", className)}
             style={{ scrollBehavior: "smooth" }}
         >
-            {itemsName.map((name, index) => (
-                <div
-                    key={`horizontal-list-item-${index}`}
-                    className={cn(
-                        "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border shrink-0",
-                        name === activeItemName && "border-border bg-primary/10"
-                    )}
-                    onClick={() => onClick(name)}
-                >
-                    {name}
-                </div>
-            ))}
+            {itemsName.map((name, index) => {
+                const isCompleted = completedSet.has(name);
+                return (
+                    <div
+                        key={`horizontal-list-item-${index}`}
+                        className={cn(
+                            "text-sm cursor-pointer flex items-center px-2 py-1 rounded-md border shrink-0",
+                            name === activeItemName && "border-border bg-primary/10",
+                            isCompleted && "opacity-60 line-through"
+                        )}
+                        onClick={() => onClick(name)}
+                    >
+                        {name}
+                    </div>
+                );
+            })}
         </div>
     )
 }

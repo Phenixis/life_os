@@ -10,6 +10,8 @@ interface UseProjectsParams {
     limit?: number
     /** Include the synthetic "No project" option (default: true) */
     includeNoProject?: boolean
+    /** Include completed projects (default: true) */
+    includeCompleted?: boolean
 }
 
 export function useProjects(params: UseProjectsParams = {}) {
@@ -17,6 +19,7 @@ export function useProjects(params: UseProjectsParams = {}) {
         projectId,
         limit,
         includeNoProject,
+        includeCompleted,
     } = params
 
     const {data, isLoading, isError, mutate} = useFilteredData<Project.Select[]>({
@@ -25,6 +28,7 @@ export function useProjects(params: UseProjectsParams = {}) {
             projectId,
             limit,
             includeNoProject,
+            includeCompleted,
         },
     })
 
