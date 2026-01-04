@@ -13,10 +13,11 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get('limit');
     const limit = limitParam ? Number.parseInt(limitParam) : undefined;
     const includeNoProject = searchParams.get('includeNoProject') !== "false"; // Default true
+    const includeCompleted = searchParams.get('includeCompleted') !== "false"; // Default true
 
     const projects = projectId
         ? await ProjectQueries.getProjectById(verification.userId, projectId)
-        : await ProjectQueries.getProjects(verification.userId, { limit, includeNoProject });
+        : await ProjectQueries.getProjects(verification.userId, { limit, includeNoProject, includeCompleted });
 
     return NextResponse.json(projects);
 }
@@ -51,7 +52,7 @@ export async function PATCH(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { id, title, description, merge, targetProjectId } = body;
+        const { id, title, description, merge, targetProjectId, completed } = body;
 
         // Validation
         if (!id) {
@@ -67,7 +68,7 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ message: 'Projects merged successfully', merged: true }, { status: 200 });
         }
 
-        const success = await ProjectQueries.updateProject(verification.userId, id, title, description);
+        const success = await ProjectQueries.updateProject(verification.userId, id, title, description, completed);
         if (!success) {
             return NextResponse.json({ error: 'Project not found or not owned by user' }, { status: 404 });
         }

@@ -92,7 +92,7 @@ export function NotesCard({
   const isSavedFiltersBeenUsed = useRef(false);
 
   // -------------------- Data Fetching --------------------
-  const { projects, isLoading: projectsLoading } = useProjects();
+  const { projects, isLoading: projectsLoading } = useProjects({ includeCompleted: false });
 
   const { data: notesData, isLoading } = useNotes({
     title,
