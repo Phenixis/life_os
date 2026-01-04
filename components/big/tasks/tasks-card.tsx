@@ -531,30 +531,35 @@ export function TasksCard(
                     groupByProject ? (
                         // Grouped by project
                         Object.entries(groupedTodos)
+                            .filter(([, { tasks }]) => tasks.length > 0)
                             .sort(([, a], [, b]) => (a.name || "").localeCompare(b.name))
                             .map(([projectId, {
                                 name,
                                 tasks
-                            }]) => (
-                                <div key={projectId} className="mb-2 ">
-                                    <h3 className="font-medium text-sm rounded-md">{tasks.length > 0 ? tasks[0].project?.title : name}</h3>
-                                    <div className="border-l ml-1 pl-1">
-                                        {tasks.map(
-                                            (
-                                                task: Task.Task.TaskWithRelations,
-                                            ) => (
-                                                <TaskDisplay
-                                                    key={task.id}
-                                                    task={task}
-                                                    orderedBy={orderBy}
-                                                    currentLimit={limit}
-                                                    currentDueBefore={dueBeforeDate}
-                                                />
-                                            ),
-                                        )}
+                            }]) => {
+                                console.log("Project name:", name, "Tasks:", tasks);
+
+                                return (
+                                    <div key={projectId} className="mb-2 ">
+                                        <h3 className="font-medium text-sm rounded-md">{name}</h3>
+                                        <div className="border-l ml-1 pl-1">
+                                            {tasks.map(
+                                                (
+                                                    task: Task.Task.TaskWithRelations,
+                                                ) => (
+                                                    <TaskDisplay
+                                                        key={task.id}
+                                                        task={task}
+                                                        orderedBy={orderBy}
+                                                        currentLimit={limit}
+                                                        currentDueBefore={dueBeforeDate}
+                                                    />
+                                                ),
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                )
+                            })
                     ) : (
                         // Not grouped
                         tasks
