@@ -1,6 +1,7 @@
 "use client"
 
 import DarkModeButton from "@/components/big/darkMode/dark-mode-button"
+import { settingsItems } from "@/components/big/settings/settings-sidebar"
 import { Button } from "@/components/ui/button"
 import {
     Sheet,
@@ -20,11 +21,9 @@ import { DarkModeCookie } from "@/lib/flags"
 import { quickActionConfigs } from "@/lib/navigation-data"
 import { isToolsCategorie, tools } from "@/lib/tools-data"
 import { cn } from "@/lib/utils"
-import { Home, FileText, Plus, Wrench, Menu as MenuIcon, Settings as SettingsIcon, LogOut, PanelsTopLeft, LucideIcon } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useState, ReactNode } from "react"
-import { settingsItems } from "@/components/big/settings/settings-sidebar"
+import { FileText, Home, Loader2, LogOut, LucideIcon, Menu as MenuIcon, PanelsTopLeft, Plus, Settings as SettingsIcon, Wrench } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { ReactNode, useState, useTransition } from "react"
 
 interface MobileBottomNavProps {
     darkModeCookie: DarkModeCookie
@@ -32,8 +31,18 @@ interface MobileBottomNavProps {
 
 export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps) {
     const pathname = usePathname()
+    const router = useRouter()
     const [quickActionsOpen, setQuickActionsOpen] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
+    const [isPending, startTransition] = useTransition()
+    const [loadingPath, setLoadingPath] = useState<string | null>(null)
+
+    const handleNavigation = (path: string) => {
+        setLoadingPath(path)
+        startTransition(() => {
+            router.push(path)
+        })
+    }
 
     // Modal hooks
     const modals = {
@@ -63,55 +72,55 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
             isReactNode: boolean
         }>
     }> = [
-        {
-            title: "Main",
-            items: [
-                { name: "Home", href: "/my", IconComponent: Home, isReactNode: false },
-                { name: "Notes", href: "/my/notes", IconComponent: FileText, isReactNode: false },
-                { name: "Projects", href: "/my/projects", IconComponent: PanelsTopLeft, isReactNode: false },
-                { name: "Tools", href: "/my/tools", IconComponent: Wrench, isReactNode: false },
-            ]
-        },
-        {
-            title: "Tools",
-            items: tools.flatMap(tool => {
-                if (isToolsCategorie(tool)) {
-                    return tool.tools.map((t) => ({
-                        name: t.name,
-                        href: t.href,
-                        IconComponent: t.icon,
+            {
+                title: "Main",
+                items: [
+                    { name: "Home", href: "/my", IconComponent: Home, isReactNode: false },
+                    { name: "Notes", href: "/my/notes", IconComponent: FileText, isReactNode: false },
+                    { name: "Projects", href: "/my/projects", IconComponent: PanelsTopLeft, isReactNode: false },
+                    { name: "Tools", href: "/my/tools", IconComponent: Wrench, isReactNode: false },
+                ]
+            },
+            {
+                title: "Tools",
+                items: tools.flatMap(tool => {
+                    if (isToolsCategorie(tool)) {
+                        return tool.tools.map((t) => ({
+                            name: t.name,
+                            href: t.href,
+                            IconComponent: t.icon,
+                            isReactNode: true,
+                        }))
+                    }
+                    return {
+                        name: tool.name,
+                        href: tool.href,
+                        IconComponent: tool.icon,
+                        isReactNode: true,
+                    }
+                })
+            },
+            {
+                title: "Settings",
+                items: [
+                    { name: "Settings", href: "/my/settings", IconComponent: SettingsIcon, isReactNode: false },
+                    ...settingsItems.map(item => ({
+                        name: item.name,
+                        href: item.href,
+                        IconComponent: item.icon,
                         isReactNode: true,
                     }))
-                }
-                return {
-                    name: tool.name,
-                    href: tool.href,
-                    IconComponent: tool.icon,
-                    isReactNode: true,
-                }
-            })
-        },
-        {
-            title: "Settings",
-            items: [
-                { name: "Settings", href: "/my/settings", IconComponent: SettingsIcon, isReactNode: false },
-                ...settingsItems.map(item => ({
-                    name: item.name,
-                    href: item.href,
-                    IconComponent: item.icon,
-                    isReactNode: true,
-                }))
-            ]
-        }
-    ]
+                ]
+            }
+        ]
 
     return (
         <>
             <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe lg:hidden">
                 <div className="flex items-center justify-around h-16 px-2">
                     {/* Home */}
-                    <Link
-                        href="/my"
+                    <button
+                        onClick={() => handleNavigation("/my")}
                         className={cn(
                             "flex flex-col items-center justify-center gap-1 flex-1 h-full rounded-lg transition-colors",
                             pathname === "/my"
@@ -119,13 +128,17 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                         )}
                     >
-                        <Home size={22} />
+                        {isPending && loadingPath === "/my" ? (
+                            <Loader2 size={22} className="animate-spin" />
+                        ) : (
+                            <Home size={22} />
+                        )}
                         <span className="text-xs font-medium">Home</span>
-                    </Link>
+                    </button>
 
                     {/* Notes */}
-                    <Link
-                        href="/my/notes"
+                    <button
+                        onClick={() => handleNavigation("/my/notes")}
                         className={cn(
                             "flex flex-col items-center justify-center gap-1 flex-1 h-full rounded-lg transition-colors",
                             pathname.startsWith("/my/notes")
@@ -133,9 +146,13 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                         )}
                     >
-                        <FileText size={22} />
+                        {isPending && loadingPath === "/my/notes" ? (
+                            <Loader2 size={22} className="animate-spin" />
+                        ) : (
+                            <FileText size={22} />
+                        )}
                         <span className="text-xs font-medium">Notes</span>
-                    </Link>
+                    </button>
 
                     {/* Center Plus Button - Bigger */}
                     <button
@@ -146,8 +163,8 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                     </button>
 
                     {/* Tools */}
-                    <Link
-                        href="/my/tools"
+                    <button
+                        onClick={() => handleNavigation("/my/tools")}
                         className={cn(
                             "flex flex-col items-center justify-center gap-1 flex-1 h-full rounded-lg transition-colors",
                             pathname.startsWith("/my/tools")
@@ -155,9 +172,13 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                         )}
                     >
-                        <Wrench size={22} />
+                        {isPending && loadingPath === "/my/tools" ? (
+                            <Loader2 size={22} className="animate-spin" />
+                        ) : (
+                            <Wrench size={22} />
+                        )}
                         <span className="text-xs font-medium">Tools</span>
-                    </Link>
+                    </button>
 
                     {/* Menu */}
                     <button
@@ -210,28 +231,35 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                                 <div className="grid gap-1">
                                     {section.items.map((item) => {
                                         const Icon = item.IconComponent
+                                        if (section.title === "Main") {
+                                            console.log(item.name, Icon, typeof Icon)
+                                        }
                                         return (
-                                            <Link
+                                            <Button
                                                 key={item.href}
-                                                href={item.href}
-                                                onClick={() => setMenuOpen(false)}
+                                                variant="ghost"
+                                                className="w-full justify-start h-11 text-base"
+                                                onClick={() => {
+                                                    setMenuOpen(false)
+                                                    handleNavigation(item.href)
+                                                }}
                                             >
-                                                <Button
-                                                    variant="ghost"
-                                                    className="w-full justify-start h-11 text-base"
-                                                >
-                                                    {Icon && (
-                                                        item.isReactNode ? (
-                                                            <span className="mr-2">{Icon as ReactNode}</span>
-                                                        ) : (
-                                                            typeof Icon === 'function' && <Icon size={18} className="mr-2" />
-                                                        )
-                                                    )}
-                                                    <span className="truncate">
-                                                        {item.name}
-                                                    </span>
-                                                </Button>
-                                            </Link>
+                                                {isPending && loadingPath === item.href ? (
+                                                    <Loader2 size={18} className="mr-2 animate-spin" />
+                                                ) : Icon ? (
+                                                    item.isReactNode ? (
+                                                        <span className="mr-2">{Icon as ReactNode}</span>
+                                                    ) : (
+                                                        (() => {
+                                                            const IconComponent = Icon as LucideIcon
+                                                            return <IconComponent size={18} className="mr-2" />
+                                                        })()
+                                                    )
+                                                ) : null}
+                                                <span className="truncate">
+                                                    {item.name}
+                                                </span>
+                                            </Button>
                                         )
                                     })}
                                 </div>
