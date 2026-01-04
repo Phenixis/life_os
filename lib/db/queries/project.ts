@@ -11,6 +11,10 @@ type Existing = lib.Schema.Project.Select
 // ## Create
 
 export async function createProject(userId: string, title: string, description?: string) {
+    if (typeof title === 'string' && title.trim() === '') {
+        throw new Error("Title cannot be empty")
+    }
+
     // Check if a project with the same title already exists
     const existingProject = await lib.db
         .select()

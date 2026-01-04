@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const completedParam = searchParams.get('completed');
   const orderByParam = searchParams.get('orderBy');
-  const orderBy = orderByParam && orderByParam in ({} as Task.Task.Select) 
-    ? orderByParam as keyof Task.Task.Select 
+  const orderBy = orderByParam && orderByParam in ({} as Task.Task.Select)
+    ? orderByParam as keyof Task.Task.Select
     : null;
   const limitParam = searchParams.get('limit');
   const orderingDirection = searchParams.get('orderingDirection') as 'asc' | 'desc' | undefined;
@@ -34,17 +34,17 @@ export async function GET(request: NextRequest) {
     const tasks =
       completed === true
         ? await TaskQueries.Task.getCompletedTasks(
-            verification.userId,
-            orderBy || undefined,
-            orderingDirection,
-            limit,
-            projectIds,
-            excludedProjectIds,
-            dueBefore,
-            dueAfter
-          )
+          verification.userId,
+          orderBy || undefined,
+          orderingDirection,
+          limit,
+          projectIds,
+          excludedProjectIds,
+          dueBefore,
+          dueAfter
+        )
         : completed === false
-        ? await TaskQueries.Task.getUncompletedTasks(
+          ? await TaskQueries.Task.getUncompletedTasks(
             verification.userId,
             orderBy || undefined,
             orderingDirection,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
             dueBefore,
             dueAfter
           )
-        : await TaskQueries.Task.getTasks(
+          : await TaskQueries.Task.getTasks(
             verification.userId,
             orderBy || undefined,
             orderingDirection,
@@ -96,7 +96,11 @@ export async function POST(request: NextRequest) {
       if (foundProject) {
         projectId = foundProject.id;
       } else {
-        projectId = await ProjectQueries.createProject(verification.userId, project.title);
+        try {
+          projectId = await ProjectQueries.createProject(verification.userId, project.title)
+        } catch (error) {
+          console.error("Error creating project while creating note:", error)
+        }
       }
     }
 
@@ -135,12 +139,16 @@ export async function PUT(request: NextRequest) {
     let dueDate = initialDueDate;
 
     let projectId = project.id >= 0 ? project.id : undefined;
-    if (projectId === undefined) {
+    if (projectId === undefined && project.title != '') {
       const foundProject = await ProjectQueries.getProjectByTitle(verification.userId, project.title);
       if (foundProject) {
         projectId = foundProject.id;
       } else {
-        projectId = await ProjectQueries.createProject(verification.userId, project.title);
+        try {
+          projectId = await ProjectQueries.createProject(verification.userId, project.title)
+        } catch (error) {
+          console.error("Error creating project while creating note:", error)
+        }
       }
     }
 
