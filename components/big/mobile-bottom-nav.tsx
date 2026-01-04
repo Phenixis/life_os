@@ -231,9 +231,6 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                                 <div className="grid gap-1">
                                     {section.items.map((item) => {
                                         const Icon = item.IconComponent
-                                        if (section.title === "Main") {
-                                            console.log(item.name, Icon, typeof Icon)
-                                        }
                                         return (
                                             <Button
                                                 key={item.href}
