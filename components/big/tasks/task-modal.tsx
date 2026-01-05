@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTaskModal } from "@/contexts/modal-commands-context"
 import { useCreateTask, useUpdateTask } from '@/hooks/queries/use-task-mutations'
 import { useImportanceAndDuration } from "@/hooks/use-importance-and-duration"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import Help from "../help"
@@ -63,6 +64,9 @@ export default function TaskModal() {
 
     const { importanceData, durationData } = useImportanceAndDuration()
 
+    // Use localStorage hook for reading filters
+    const [taskFilters] = useLocalStorage<Partial<tasksFilters>>('tasks_filters', {})
+
     // Mutation hooks
     const createTaskMutation = useCreateTask()
     const updateTaskMutation = useUpdateTask()
@@ -99,8 +103,7 @@ export default function TaskModal() {
     useEffect(() => {
         if (isOpen) {
             if (mode === "create") {
-                const raw = window.localStorage.getItem("tasks_filters")
-                const projectFromSearchParams = (JSON.parse(raw || "{}") as tasksFilters | null)?.selectedProjects
+                const projectFromSearchParams = taskFilters?.selectedProjects
 
                 setProject(projectFromSearchParams && projectFromSearchParams.length === 1 ? projectFromSearchParams[0] : {
                     title: "",
@@ -110,7 +113,7 @@ export default function TaskModal() {
         } else {
             resetForm()
         }
-    }, [isOpen])
+    }, [isOpen, taskFilters, mode, resetForm])
 
 
     // Reset form state when dialog opens

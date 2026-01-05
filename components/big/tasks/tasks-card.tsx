@@ -9,6 +9,7 @@ import { useTaskModal } from "@/contexts/modal-commands-context";
 import { useNumberOfTasks } from "@/hooks/use-number-of-tasks";
 import { useProjects } from "@/hooks/use-projects";
 import { useTasks } from "@/hooks/use-tasks";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { Task } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -86,22 +87,6 @@ export function TasksCard(
 
     const [isLimitPopoverOpen, setIsLimitPopoverOpen] = useState<boolean>(false)
 
-    const [completed, setCompleted] = useState<boolean | undefined>(initialCompleted)
-
-    const [limit, setLimit] = useState<number>(initialLimit)
-
-    const [orderBy, setOrderBy] = useState<keyof Task.Task.Select>(initialOrderBy)
-
-    const [orderingDirection, setOrderingDirection] = useState<"asc" | "desc">(initialOrderingDirection)
-
-    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>([])
-
-    const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>([])
-
-    const [dueBeforeDate, setDueBeforeDate] = useState<Date | undefined>(undefined)
-
-    const [groupByProject, setGroupByProject] = useState<boolean>(false)
-
     const [tasksCompleted, setTasksCompleted] = useState(0)
 
     const [tasksUncompleted, setTasksUncompleted] = useState(0)
@@ -110,8 +95,32 @@ export function TasksCard(
 
     const [progression, setProgression] = useState(0)
 
-    // Add a ref to track if this is the first render
-    const isSavedFiltersBeenUsed = useRef(false);
+    // Use localStorage hook for persisting filters
+    const [savedFilters, setSavedFilters] = useLocalStorage<Partial<tasksFilters>>('tasks_filters', {
+        completed: initialCompleted,
+        limit: initialLimit,
+        orderBy: initialOrderBy,
+        orderingDirection: initialOrderingDirection,
+        selectedProjects: [],
+        removedProjects: [],
+        dueBeforeDate: undefined,
+        groupByProject: false
+    });
+
+    const [completed, setCompleted] = useState<boolean | undefined>(savedFilters.completed ?? initialCompleted)
+    const [limit, setLimit] = useState<number>(savedFilters.limit ?? initialLimit)
+    const [orderBy, setOrderBy] = useState<keyof Task.Task.Select>(savedFilters.orderBy ?? initialOrderBy)
+    const [orderingDirection, setOrderingDirection] = useState<"asc" | "desc">(savedFilters.orderingDirection ?? initialOrderingDirection)
+    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>(savedFilters.selectedProjects ?? [])
+    const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>(savedFilters.removedProjects ?? [])
+    const [dueBeforeDate, setDueBeforeDate] = useState<Date | undefined>(() => {
+        if (savedFilters.dueBeforeDate && typeof savedFilters.dueBeforeDate === 'string') {
+            const d = new Date(savedFilters.dueBeforeDate)
+            return !isNaN(d.getTime()) ? d : undefined
+        }
+        return undefined
+    })
+    const [groupByProject, setGroupByProject] = useState<boolean>(savedFilters.groupByProject ?? false)
 
     // -------------------- Data Fetching --------------------
     const { projects, isLoading: projectsLoading } = useProjects({ includeCompleted: false })
@@ -164,13 +173,9 @@ export function TasksCard(
         }
     }, [dueBeforeDate, numberOfTasks, tomorrow])
 
-    // Update localStorage when filters change
+    // Auto-save filters to localStorage whenever they change
     useEffect(() => {
-        if (!isSavedFiltersBeenUsed.current) {
-            return;
-        }
-
-        const serialized = JSON.stringify({
+        setSavedFilters({
             completed,
             limit,
             orderBy,
@@ -179,55 +184,8 @@ export function TasksCard(
             removedProjects,
             dueBeforeDate: dueBeforeDate?.toISOString(),
             groupByProject
-        } as tasksFilters)
-
-        window.localStorage.setItem("tasks_filters", serialized)
-    }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject]);
-
-    useEffect(() => {
-        const raw = window.localStorage.getItem("tasks_filters")
-        if (raw) {
-            try {
-                const savedFilters = JSON.parse(raw) as Partial<tasksFilters>
-
-                if (typeof savedFilters.completed === "boolean") {
-                    setCompleted(savedFilters.completed)
-                }
-                if (typeof savedFilters.limit === "number" && Number.isFinite(savedFilters.limit)) {
-                    setLimit(savedFilters.limit)
-                }
-                if (typeof savedFilters.orderBy === "string") {
-                    if (savedFilters.orderBy as string === "score") {
-                        setOrderBy("due")
-                    }
-                    setOrderBy(savedFilters.orderBy as keyof Task.Task.Select)
-                }
-                if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") {
-                    setOrderingDirection(savedFilters.orderingDirection)
-                }
-                if (Array.isArray(savedFilters.selectedProjects)) {
-                    setSelectedProjects(savedFilters.selectedProjects)
-                }
-                if (Array.isArray(savedFilters.removedProjects)) {
-                    setRemovedProjects(savedFilters.removedProjects)
-                }
-                if (typeof savedFilters.dueBeforeDate === "string") {
-                    const d = new Date(savedFilters.dueBeforeDate)
-                    if (!isNaN(d.getTime())) {
-                        setDueBeforeDate(d)
-                    }
-                }
-                if (typeof savedFilters.groupByProject === "boolean") {
-                    setGroupByProject(savedFilters.groupByProject)
-                }
-            } catch (e) {
-                // ignore malformed JSON
-                console.error("Error parsing saved filters:", e)
-            }
-        }
-
-        isSavedFiltersBeenUsed.current = true;
-    }, [])
+        });
+    }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject, setSavedFilters])
 
     // -------------------- Callbacks --------------------
 

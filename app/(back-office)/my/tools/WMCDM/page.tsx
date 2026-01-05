@@ -6,6 +6,7 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Textarea} from "@/components/ui/textarea";
+import {Checkbox} from "@/components/ui/checkbox";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Copy, Edit, FolderOpen, Info, Plus, Save, Trash, Trophy} from "lucide-react";
@@ -40,6 +41,7 @@ import {
     removeMatrix,
     saveMatrix
 } from "@/lib/auth/wmcdm-actions";
+import {useLocalStorage} from "@/hooks/use-local-storage";
 
 // Types definition for our WMCDM components
 type Option = {
@@ -90,7 +92,8 @@ export default function Page() {
     const isSubmittingOption = useRef(false);
 
     // State for the decision matrix - simplified to just criteria and options
-    const [matrix, setMatrix] = useState<DecisionMatrix>({
+    // Using useLocalStorage to persist the matrix automatically
+    const [matrix, setMatrix] = useLocalStorage<DecisionMatrix>("wmcdm-matrix", {
         name: "",
         criteria: [],
         options: []
@@ -123,35 +126,14 @@ export default function Page() {
     const [editingCriterion, setEditingCriterion] = useState<Criterion | null>(null);
     const [showCriterionDialog, setShowCriterionDialog] = useState(false);
 
+    // State for dialog controls
+    const [showAddCriterionDialog, setShowAddCriterionDialog] = useState(false);
+    const [showAddOptionDialog, setShowAddOptionDialog] = useState(false);
+    const [keepAddingCriteria, setKeepAddingCriteria] = useState(false);
+    const [keepAddingOptions, setKeepAddingOptions] = useState(false);
+
     // State for save status notifications
-    const [localSaveStatus, setLocalSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
     const [onlineSaveStatus, setOnlineSaveStatus] = useState<'saved' | 'saving' | 'not-saved'>('not-saved');
-
-    // Utility function to load matrix from local storage
-    const loadFromLocalStorage = useCallback((): DecisionMatrix | null => {
-        try {
-            const stored = localStorage.getItem("wmcdm-matrix");
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                // Basic validation to ensure structure
-                if (parsed && typeof parsed === "object" && Array.isArray(parsed.criteria) && Array.isArray(parsed.options)) {
-                    return parsed as DecisionMatrix;
-                }
-            }
-        } catch (error) {
-            console.error("Failed to load matrix from local storage:", error);
-        }
-        return null;
-    }, []);
-
-    // Load from local storage on component mount (only once)
-    useEffect(() => {
-        const localMatrix = loadFromLocalStorage();
-        if (localMatrix) {
-            setMatrix(localMatrix);
-            setLocalSaveStatus('saved');
-        }
-    }, [loadFromLocalStorage]);
 
     // Load user matrices from database
     const loadUserMatrices = useCallback(async () => {
@@ -213,14 +195,21 @@ export default function Page() {
         setNewCriterionWeight(1);
         setNewCriterionDescription("");
 
+        // Close dialog if not keeping it open
+        if (!keepAddingCriteria) {
+            setShowAddCriterionDialog(false);
+        }
+
         // Focus back on the criterion name input
         setTimeout(() => {
-            criterionNameRef.current?.focus();
+            if (keepAddingCriteria) {
+                criterionNameRef.current?.focus();
+            }
             isSubmittingCriterion.current = false;
         }, 100);
 
         toast.success("Criterion added successfully");
-    }, [newCriterionName, newCriterionWeight, newCriterionDescription]);
+    }, [newCriterionName, newCriterionWeight, newCriterionDescription, keepAddingCriteria]);
 
     // Function to update a criterion
     const updateCriterion = useCallback(() => {
@@ -279,14 +268,21 @@ export default function Page() {
         // Reset the form field
         setNewOptionName("");
 
+        // Close dialog if not keeping it open
+        if (!keepAddingOptions) {
+            setShowAddOptionDialog(false);
+        }
+
         // Focus back on the option name input
         setTimeout(() => {
-            optionNameRef.current?.focus();
+            if (keepAddingOptions) {
+                optionNameRef.current?.focus();
+            }
             isSubmittingOption.current = false;
         }, 100);
 
         toast.success("Option added successfully");
-    }, [newOptionName, matrix.criteria]);
+    }, [newOptionName, matrix.criteria, keepAddingOptions]);
 
     // Handle keyboard shortcuts for criterion dialog
     const handleCriterionKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -558,7 +554,6 @@ export default function Page() {
         setCurrentMatrixId(null);
         setMatrixName("");
         setMatrixDescription("");
-        setLocalSaveStatus('saved'); // Empty matrix is considered saved
         setOnlineSaveStatus('not-saved'); // Reset to not saved online
         toast.success("Matrix reset successfully");
     };
@@ -611,20 +606,11 @@ export default function Page() {
                 with each criterion having a different level of importance (weight).
             </p>
 
-            {/* Save Status Indicators */}
+            {/* Save Status Indicator */}
             <div className="flex gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                    <div className={cn(
-                        "w-2 h-2 rounded-full",
-                        localSaveStatus === 'saved' && "bg-green-500",
-                        localSaveStatus === 'saving' && "bg-yellow-500 animate-pulse",
-                        localSaveStatus === 'unsaved' && "bg-red-500"
-                    )}/>
-                    <span className="text-muted-foreground">
-                            {localSaveStatus === 'saved' && "Saved locally"}
-                        {localSaveStatus === 'saving' && "Saving locally..."}
-                        {localSaveStatus === 'unsaved' && "Not saved locally"}
-                        </span>
+                    <div className="w-2 h-2 rounded-full bg-green-500"/>
+                    <span className="text-muted-foreground">Auto-saved locally</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className={cn(
@@ -642,13 +628,13 @@ export default function Page() {
             </div>
             <div className="flex flex-wrap gap-4 justify-between mb-8">
                 <div className="flex flex-wrap gap-2">
-                    <Dialog>
+                    <Dialog open={showAddCriterionDialog} onOpenChange={setShowAddCriterionDialog}>
                         <DialogTrigger asChild>
                             <Button>
                                 <Plus className="mr-2 h-4 w-4"/> Add Criterion
                             </Button>
                         </DialogTrigger>
-                        <DialogContent maxHeight="max-h-110" onKeyDown={handleCriterionKeyDown}>
+                        <DialogContent maxHeight="max-h-115" onKeyDown={handleCriterionKeyDown}>
                             <div className="h-full flex flex-col gap-4 justify-between">
                                 <main>
                                     <DialogHeader>
@@ -701,19 +687,29 @@ export default function Page() {
                                     </div>
                                 </main>
                                 <DialogFooter>
+                                    <div className="flex items-center gap-2 mr-auto">
+                                        <Checkbox
+                                            id="keep-adding-criteria"
+                                            checked={keepAddingCriteria}
+                                            onCheckedChange={(checked) => setKeepAddingCriteria(checked === true)}
+                                        />
+                                        <Label htmlFor="keep-adding-criteria" className="text-sm font-normal cursor-pointer">
+                                            Keep adding criteria
+                                        </Label>
+                                    </div>
                                     <Button onClick={addCriterion}>Add Criterion</Button>
                                 </DialogFooter>
                             </div>
                         </DialogContent>
                     </Dialog>
 
-                    <Dialog>
+                    <Dialog open={showAddOptionDialog} onOpenChange={setShowAddOptionDialog}>
                         <DialogTrigger asChild>
                             <Button>
                                 <Plus className="mr-2 h-4 w-4"/> Add Option
                             </Button>
                         </DialogTrigger>
-                        <DialogContent onKeyDown={handleOptionKeyDown} maxHeight="max-h-64">
+                        <DialogContent onKeyDown={handleOptionKeyDown} maxHeight="max-h-70">
                             <div className="h-full flex flex-col gap-4 justify-between">
                                 <main>
 
@@ -739,6 +735,16 @@ export default function Page() {
                                     </div>
                                 </main>
                                 <DialogFooter>
+                                    <div className="flex items-center gap-2 mr-auto">
+                                        <Checkbox
+                                            id="keep-adding-options"
+                                            checked={keepAddingOptions}
+                                            onCheckedChange={(checked) => setKeepAddingOptions(checked === true)}
+                                        />
+                                        <Label htmlFor="keep-adding-options" className="text-sm font-normal cursor-pointer">
+                                            Keep adding options
+                                        </Label>
+                                    </div>
                                     <Button onClick={addOption}>Add Option</Button>
                                 </DialogFooter>
                             </div>

@@ -15,6 +15,7 @@ import { RadioButtons } from '@/components/big/filtering/radio-buttons';
 import { ProjectsMultipleSelects } from '@/components/big/filtering/projects-multiple-selects';
 import { useNoteModal } from '@/contexts/modal-commands-context';
 import { simplifiedProject } from '@/components/big/tasks/tasks-card';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 // Constants for URL parameters
 export const NOTE_PARAMS = {
@@ -74,22 +75,24 @@ export function NotesCard({
   // -------------------- State --------------------
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const [limit, setLimit] = useState<number | undefined>(initialLimit);
-
-  const [orderBy, setOrderBy] = useState<keyof Note.Note.Select | undefined>(initialOrderBy);
-
-  const [orderingDirection, setOrderingDirection] = useState<'asc' | 'desc' | undefined>(initialOrderingDirection);
-
-  const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>(initialSelectedProjects);
-
-  const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>([]);
-
-  const [groupByProject, setGroupByProject] = useState<boolean>(false);
-
   const [title, setTitle] = useState<string>('');
 
-  // Add a ref to track if this is the first render
-  const isSavedFiltersBeenUsed = useRef(false);
+  // Use localStorage hook for persisting filters
+  const [savedFilters, setSavedFilters] = useLocalStorage<Partial<notesFilters>>('notes_filters', {
+    limit: initialLimit,
+    orderBy: initialOrderBy,
+    orderingDirection: initialOrderingDirection,
+    selectedProjects: initialSelectedProjects,
+    removedProjects: [],
+    groupByProject: false
+  });
+
+  const [limit, setLimit] = useState<number | undefined>(savedFilters.limit ?? initialLimit);
+  const [orderBy, setOrderBy] = useState<keyof Note.Note.Select | undefined>(savedFilters.orderBy ?? initialOrderBy);
+  const [orderingDirection, setOrderingDirection] = useState<'asc' | 'desc' | undefined>(savedFilters.orderingDirection ?? initialOrderingDirection);
+  const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>(savedFilters.selectedProjects ?? initialSelectedProjects);
+  const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>(savedFilters.removedProjects ?? []);
+  const [groupByProject, setGroupByProject] = useState<boolean>(savedFilters.groupByProject ?? false);
 
   // -------------------- Data Fetching --------------------
   const { projects, isLoading: projectsLoading } = useProjects({ includeCompleted: false });
@@ -104,61 +107,17 @@ export function NotesCard({
   });
 
   // -------------------- Effects --------------------
+  // Auto-save filters to localStorage whenever they change
   useEffect(() => {
-    if (!isSavedFiltersBeenUsed.current) {
-      return;
-    }
-
-    const serialized = JSON.stringify({
+    setSavedFilters({
       limit,
       orderBy,
       orderingDirection,
       selectedProjects,
       removedProjects,
       groupByProject
-    } as notesFilters);
-
-    window.localStorage.setItem('notes_filters', serialized);
-  }, [groupByProject, limit, orderBy, orderingDirection, removedProjects, selectedProjects]);
-
-  useEffect(() => {
-    const raw = window.localStorage.getItem('notes_filters');
-
-    if (raw) {
-      try {
-        const savedFilters = JSON.parse(raw) as Partial<notesFilters>;
-
-        if (typeof savedFilters.limit === 'number') {
-          setLimit(savedFilters.limit);
-        }
-
-        if (typeof savedFilters.orderBy === 'string') {
-          setOrderBy(savedFilters.orderBy as keyof Note.Note.Select);
-        }
-
-        if (savedFilters.orderingDirection === 'asc' || savedFilters.orderingDirection === 'desc') {
-          setOrderingDirection(savedFilters.orderingDirection);
-        }
-
-        if (Array.isArray(savedFilters.selectedProjects)) {
-          setSelectedProjects(savedFilters.selectedProjects);
-        }
-
-        if (Array.isArray(savedFilters.removedProjects)) {
-          setRemovedProjects(savedFilters.removedProjects);
-        }
-
-        if (typeof savedFilters.groupByProject === 'boolean') {
-          setGroupByProject(savedFilters.groupByProject);
-        }
-      } catch (e) {
-        // ignore malformed JSON
-        console.error('Error parsing saved filters:', e);
-      }
-    }
-
-    isSavedFiltersBeenUsed.current = true;
-  }, []);
+    });
+  }, [groupByProject, limit, orderBy, orderingDirection, removedProjects, selectedProjects, setSavedFilters]);
 
   // -------------------- Callbacks --------------------
 

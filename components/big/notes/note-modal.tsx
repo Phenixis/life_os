@@ -22,6 +22,7 @@ import { simplifiedProject } from "@/components/big/tasks/tasks-card";
 import { useProjects } from "@/hooks/use-projects";
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import Tooltip from "../tooltip"
 import { devEnv } from "@/lib/utils"
@@ -31,6 +32,17 @@ const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
 
 // Auto-title generation constants
 const MAX_AUTO_TITLE_LENGTH = 27
+
+// Type for draft data stored in localStorage
+type NoteDraftData = {
+    title: string
+    content: string
+    projectTitle: string
+    projectId: number
+    mode: "create" | "edit"
+    noteId?: number
+    timestamp: number
+}
 
 export default function NoteModal() {
     const user = useUser().user;
@@ -46,6 +58,12 @@ export default function NoteModal() {
     const mode = (note !== undefined && note !== null) ? "edit" : "create"
     const { mutate } = useSWRConfig()
     const { projects: allProjects } = useProjects({})
+
+    // Use localStorage hook for auto-saving draft
+    const [noteDraft, setNoteDraft, removeNoteDraft] = useLocalStorage<NoteDraftData | null>(
+        NOTE_MODAL_STORAGE_KEY,
+        null
+    )
 
     // State - use external control if provided
     const [formChanged, setFormChanged] = useState(false)
@@ -168,32 +186,21 @@ export default function NoteModal() {
             setLastSavedContent(safeContent)
             setLastSavedProjectId(note.project_id || -1)
         } else if (mode === "create") {
-            // Try to load from local storage first
+            // Try to load from localStorage hook first
             let loadedFromLocalStorage = false
-            if (typeof window !== 'undefined') {
-                const savedData = window.localStorage.getItem(NOTE_MODAL_STORAGE_KEY)
-                if (savedData) {
-                    try {
-                        const parsed = JSON.parse(savedData)
-                        // Only restore if it's recent (within last 24 hours) and was create mode
-                        if (parsed.mode === "create" && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-                            setInputNoteTitle(parsed.title || "")
-                            setNoteTitle(parsed.title || "")
-                            setInputNoteContent(parsed.content || "")
-                            setNoteContent(parsed.content || "")
-                            if (parsed.projectTitle || (parsed.projectId != null && parsed.projectId !== -1)) {
-                                setProject({ title: parsed.projectTitle || "", id: parsed.projectId || -1 })
-                            } else {
-                                setProject({ title: "", id: -1 })
-                            }
-                            // If there's a saved title, consider it dirty
-                            setIsTitleDirty(!!parsed.title)
-                            loadedFromLocalStorage = true
-                        }
-                    } catch (e) {
-                        console.error("Failed to parse local storage data:", e)
-                    }
+            if (noteDraft && noteDraft.mode === "create" && Date.now() - noteDraft.timestamp < 24 * 60 * 60 * 1000) {
+                setInputNoteTitle(noteDraft.title || "")
+                setNoteTitle(noteDraft.title || "")
+                setInputNoteContent(noteDraft.content || "")
+                setNoteContent(noteDraft.content || "")
+                if (noteDraft.projectTitle || (noteDraft.projectId != null && noteDraft.projectId !== -1)) {
+                    setProject({ title: noteDraft.projectTitle || "", id: noteDraft.projectId || -1 })
+                } else {
+                    setProject({ title: "", id: -1 })
                 }
+                // If there's a saved title, consider it dirty
+                setIsTitleDirty(!!noteDraft.title)
+                loadedFromLocalStorage = true
             }
 
             // If not loaded from local storage, use database draft
@@ -223,16 +230,14 @@ export default function NoteModal() {
         }
     }, [mode, updateUserDraftNoteDebounced])
 
-    // Save to local storage whenever content changes
+    // Save to local storage whenever content changes using the hook
     useEffect(() => {
-        if (typeof window === 'undefined') return
-
         // Save to local storage for create mode or when editing (if content has changed)
         // Note: We only restore from local storage for create mode, not edit mode.
         // For edit mode, the authoritative source is always the database.
         // Use inputNoteTitle/inputNoteContent (not debounced versions) for immediate updates
         if (isOpen && (mode === "create" || formChanged)) {
-            const draftData = {
+            const draftData: NoteDraftData = {
                 title: inputNoteTitle,
                 content: inputNoteContent,
                 projectTitle: project.title,
@@ -241,9 +246,9 @@ export default function NoteModal() {
                 noteId: note?.id,
                 timestamp: Date.now()
             }
-            window.localStorage.setItem(NOTE_MODAL_STORAGE_KEY, JSON.stringify(draftData))
+            setNoteDraft(draftData)
         }
-    }, [inputNoteTitle, inputNoteContent, project, mode, note?.id, isOpen, formChanged])
+    }, [inputNoteTitle, inputNoteContent, project, mode, note?.id, isOpen, formChanged, setNoteDraft])
 
     useEffect(() => {
         // Use lastSaved values if they exist (when keepEditing was used), otherwise use original note
@@ -297,10 +302,8 @@ export default function NoteModal() {
         setShowAdvancedOptions(false)
         setIsTitleDirty(false)
 
-        // Clear local storage
-        if (typeof window !== 'undefined') {
-            window.localStorage.removeItem(NOTE_MODAL_STORAGE_KEY)
-        }
+        // Clear local storage using hook
+        removeNoteDraft()
 
         updateUserDraftNote({
             userId: user?.id || "-1",
@@ -335,10 +338,32 @@ export default function NoteModal() {
     const handleConfirmDiscard = () => {
         // Close confirmation dialog
         setShowConfirmDialog(false)
-        // Execute the stored close function
+        // Execute the stored close function which clears everything
         setTimeout(() => {
             closeDialogRef.current()
         }, 100)
+    }
+
+    // Handle saving locally and closing
+    const handleSaveLocallyAndClose = async () => {
+        // Close confirmation dialog
+        setShowConfirmDialog(false)
+        
+        // Ensure draft is saved to database before closing
+        if (mode === "create") {
+            await updateUserDraftNote({
+                userId: user?.id || "-1",
+                note_title: noteTitle,
+                note_content: noteContent,
+                note_project_title: project.title,
+            }).catch((error: unknown) => {
+                console.error("Error saving draft note:", error)
+            })
+        }
+        
+        // Just close the modal without resetting (draft remains in localStorage)
+        closeModal()
+        toast.success("Draft saved locally")
     }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -402,10 +427,8 @@ export default function NoteModal() {
 
             toast.success(`Note ${mode === "edit" ? "updated" : "created"} successfully`)
 
-            // Clear local storage after successful save
-            if (typeof window !== 'undefined') {
-                window.localStorage.removeItem(NOTE_MODAL_STORAGE_KEY)
-            }
+            // Clear local storage after successful save using hook
+            removeNoteDraft()
 
             if (!keepEditing) {
                 close()
@@ -620,14 +643,25 @@ export default function NoteModal() {
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                        <AlertDialogTitle>Save your changes?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            You have unsaved changes. Are you sure you want to close without saving?
+                            You have unsaved changes. What would you like to do?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                        <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+                        <Button 
+                            variant="outline" 
+                            onClick={handleSaveLocallyAndClose}
+                        >
+                            Save Locally
+                        </Button>
+                        <AlertDialogAction 
+                            onClick={handleConfirmDiscard}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Discard
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
