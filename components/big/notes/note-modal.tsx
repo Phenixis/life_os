@@ -1,31 +1,30 @@
 "use client"
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import SearchProjectsInput from "@/components/big/projects/search-projects-input"
+import { simplifiedProject } from "@/components/big/tasks/tasks-card"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { Camera, ChevronDown, Eye, EyeOff, Mic } from "lucide-react"
-import { useUser } from "@/hooks/use-user"
-import { Note } from "@/lib/db/schema"
-import { useEffect, useRef, useState } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, } from "@/components/ui/collapsible"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import MDEditor from '@uiw/react-md-editor'
-import { useSWRConfig } from "swr"
-import { toast } from "sonner"
-import { decryptNote, encryptNote } from "@/lib/utils/crypt"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, } from "@/components/ui/collapsible"
-import { useDebouncedCallback } from "use-debounce"
-import SearchProjectsInput from "@/components/big/projects/search-projects-input"
-import { NotesAndData, NoteWithProject } from "@/lib/db/queries/note"
-import { updateUserDraftNote } from "@/lib/db/queries/user/user"
-import { useNoteModal } from "@/contexts/modal-commands-context";
-import { simplifiedProject } from "@/components/big/tasks/tasks-card";
-import { useProjects } from "@/hooks/use-projects";
-import { useIsMobile } from "@/hooks/use-mobile"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useNoteModal } from "@/contexts/modal-commands-context"
 import { useLocalStorage } from "@/hooks/use-local-storage"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import Tooltip from "../tooltip"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { useProjects } from "@/hooks/use-projects"
+import { useUser } from "@/hooks/use-user"
+import { updateUserDraftNote } from "@/lib/db/queries/user/user"
+import { Note } from "@/lib/db/schema"
 import { devEnv } from "@/lib/utils"
+import { decryptNote, encryptNote } from "@/lib/utils/crypt"
+import MDEditor from '@uiw/react-md-editor'
+import { Camera, ChevronDown, Eye, EyeOff, Mic } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
+import { useSWRConfig } from "swr"
+import { useDebouncedCallback } from "use-debounce"
+import Tooltip from "../tooltip"
 
 // Local storage key for note modal content
 const NOTE_MODAL_STORAGE_KEY = 'note_modal_draft'
@@ -100,7 +99,7 @@ export default function NoteModal() {
     useEffect(() => {
         if (typeof document === 'undefined') return
         const el = document.documentElement
-        const read = () => (el.getAttribute('data-color-mode') === 'dark' ? 'dark' : 'light')
+        const read = () => (el.dataset.colorMode === 'dark' ? 'dark' : 'light')
         setColorMode(read())
         const obs = new MutationObserver((mutations) => {
             for (const m of mutations) {
@@ -148,7 +147,7 @@ export default function NoteModal() {
     useEffect(() => {
         if (!isTitleDirty && inputNoteContent) {
             // Remove basic markdown syntax for a cleaner title
-            const cleanContent = inputNoteContent.replace(/[#*_~`]/g, '').trim()
+            const cleanContent = inputNoteContent.replaceAll(/[#*_~`]/g, '').trim()
             let autoTitle = cleanContent.substring(0, MAX_AUTO_TITLE_LENGTH)
             if (cleanContent.length > MAX_AUTO_TITLE_LENGTH) {
                 autoTitle += '...'
@@ -254,7 +253,7 @@ export default function NoteModal() {
         // Use lastSaved values if they exist (when keepEditing was used), otherwise use original note
         const compareTitle = lastSavedTitle || (note?.title || "")
         const compareContent = lastSavedContent || (mode === "edit" && passwordValue && decryptedContent !== null ? decryptedContent : (note?.content || ""))
-        const compareProjectId = lastSavedProjectId !== -1 ? lastSavedProjectId : (note?.project_id || -1)
+        const compareProjectId = lastSavedProjectId === -1 ? (note?.project_id || -1) : lastSavedProjectId
 
         // For project comparison, check both ID and title
         const originalProjectTitle = note?.project_title || ""
@@ -348,7 +347,7 @@ export default function NoteModal() {
     const handleSaveLocallyAndClose = async () => {
         // Close confirmation dialog
         setShowConfirmDialog(false)
-        
+
         // Ensure draft is saved to database before closing
         if (mode === "create") {
             await updateUserDraftNote({
@@ -360,7 +359,7 @@ export default function NoteModal() {
                 console.error("Error saving draft note:", error)
             })
         }
-        
+
         // Just close the modal without resetting (draft remains in localStorage)
         closeModal()
         toast.success("Draft saved locally")
@@ -430,13 +429,13 @@ export default function NoteModal() {
             // Clear local storage after successful save using hook
             removeNoteDraft()
 
-            if (!keepEditing) {
-                close()
-            } else {
+            if (keepEditing) {
                 // If keepEditing is true, update the lastSaved values so form change detection works correctly
                 setLastSavedTitle(noteTitle)
                 setLastSavedContent(noteContent)
                 setLastSavedProjectId(project.id)
+            } else {
+                close()
             }
 
             mutate((key) => typeof key === "string" && (key === "/api/note" || key.startsWith("/api/note?")))
@@ -479,8 +478,6 @@ export default function NoteModal() {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (isOpen && formChanged) {
                 e.preventDefault()
-                // Chrome requires returnValue to be set
-                e.returnValue = ''
             }
         }
 
@@ -650,13 +647,13 @@ export default function NoteModal() {
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex-col sm:flex-row gap-2">
                         <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={handleSaveLocallyAndClose}
                         >
                             Save Locally
                         </Button>
-                        <AlertDialogAction 
+                        <AlertDialogAction
                             onClick={handleConfirmDiscard}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >

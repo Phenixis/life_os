@@ -10,7 +10,7 @@ interface DailyMoviesProps {
     onDataStatusChange?: (hasData: boolean) => void;
 }
 
-export function DailyMovies({ dayStart, dayEnd, onDataStatusChange }: DailyMoviesProps) {
+export function DailyMovies({ dayStart, dayEnd, onDataStatusChange }: Readonly<DailyMoviesProps>) {
     // Skip fetching movies for future dates (can't have watched movies in the future)
     const isDateInFuture = useMemo(() => {
         if (!dayStart) return false;

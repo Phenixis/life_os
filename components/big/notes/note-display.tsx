@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 import ShareNoteButton from './share-note-button';
 
-export default function NoteDisplay({ note, className }: { note?: Note.Note.Select; className?: string }) {
+export default function NoteDisplay({ note, className }: Readonly<{ note?: Note.Note.Select; className?: string }>) {
   const user = useUser().user;
   const noteModal = useNoteModal();
   const { mutate } = useSWRConfig();
@@ -54,7 +54,7 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const el = document.documentElement;
-    const read = () => (el.getAttribute('data-color-mode') === 'dark' ? 'dark' : 'light');
+    const read = () => (el.dataset.colorMode === 'dark' ? 'dark' : 'light');
     setColorMode(read());
     const obs = new MutationObserver(mutations => {
       for (const m of mutations) {
@@ -70,7 +70,7 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
   const projectTitle = note?.project_id ? allProjects.find(p => p.id === note.project_id)?.title : undefined;
 
   const handleDecrypt = () => {
-    if (note && note.salt && note.iv && password && !decryptedContent) {
+    if (note?.salt && note.iv && password && !decryptedContent) {
       decryptNote(note.content, password, note.salt, note.iv)
         .then(setDecryptedContent)
         .catch((e: unknown) => {
@@ -148,12 +148,11 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
     <>
       <Card className={cn(`h-fit group/Note`, className)}>
         <CardHeader
-          className={`flex flex-row justify-between items-center space-y-0 px-2 pt-2 pb-2 md:px-4 md:pt-2 md:pb-2 xl:px-2 xl:pt-2 ${
-            note === undefined ? 'h-12 w-full bg-accent animate-pulse rounded-md' : 'cursor-pointer'
-          }`}
+          className={`flex flex-row justify-between items-center space-y-0 px-2 pt-2 pb-2 md:px-4 md:pt-2 md:pb-2 xl:px-2 xl:pt-2 ${note === undefined ? 'h-12 w-full bg-accent animate-pulse rounded-md' : 'cursor-pointer'
+            }`}
           onClick={() => {
             setIsOpen(note ? !isOpen : false);
-            if (note && note.salt && note.iv && decryptedContent && !isOpen) {
+            if (note?.salt && note.iv && decryptedContent && !isOpen) {
               cancelDecrypt();
             }
           }}
@@ -164,28 +163,27 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                 {note.salt && note.iv ? <Lock className="size-3 cursor-pointer" /> : null}
                 {note.title}
               </CardTitle>
-                <div className="flex w-full justify-between items-center">
-                  {projectTitle ? (
-                    <p className="text-xs lg:text-sm text-gray-500">{projectTitle}</p>
-                  ) : (
-                    <span />
-                  )}
-                  {note.created_at && (
-                    <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
-                      {new Date(note.created_at).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  )}
-                </div>
+              <div className="flex w-full justify-between items-center">
+                {projectTitle ? (
+                  <p className="text-xs lg:text-sm text-gray-500">{projectTitle}</p>
+                ) : (
+                  <span />
+                )}
+                {note.created_at && (
+                  <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                    {new Date(note.created_at).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
+                )}
+              </div>
             </div>
           )}
           <div
-            className={`${!note && 'hidden'} flex flex-row items-center duration-200 ${
-              isOpen ? 'opacity-100' : 'lg:opacity-0'
-            } ${note && 'lg:group-hover/Note:opacity-100'}`}
+            className={`${!note && 'hidden'} flex flex-row items-center duration-200 ${isOpen ? 'opacity-100' : 'lg:opacity-0'
+              } ${note && 'lg:group-hover/Note:opacity-100'}`}
           >
             {note && isOpen ? (
               <ChevronUp className={`w-4 h-4`} onClick={() => setIsOpen(note ? !isOpen : false)} />
@@ -196,9 +194,27 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
         </CardHeader>
         {note && isOpen && (
           <>
-            <CardContent className="xl:pb-2 text-xs lg:text-sm break-words">
-              {note.salt && note.iv ? (
-                !decryptedContent ? (
+            <CardContent className="xl:pb-2 text-xs lg:text-sm wrap-break-word">
+              {(() => {
+                const isEncrypted = note.salt && note.iv;
+                
+                if (!isEncrypted) {
+                  return (
+                    <div data-color-mode={colorMode} key={colorMode} className="max-w-full max-h-72 overflow-auto">
+                      <MDEditor.Markdown source={note.content} />
+                    </div>
+                  );
+                }
+                
+                if (decryptedContent !== null) {
+                  return (
+                    <div data-color-mode={colorMode} key={colorMode} className="max-w-full max-h-96">
+                      <MDEditor.Markdown source={decryptedContent ?? ''} />
+                    </div>
+                  );
+                }
+                
+                return (
                   <>
                     <Label required>Enter the password to decrypt the note</Label>
                     <Input
@@ -213,16 +229,8 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
                     />
                     {decryptError && <p className="text-red-500 text-sm">Incorrect password.</p>}
                   </>
-                ) : (
-                  <div data-color-mode={colorMode} key={colorMode} className="max-w-full max-h-96">
-                    <MDEditor.Markdown source={decryptedContent || ''} />
-                  </div>
-                )
-              ) : (
-                <div data-color-mode={colorMode} key={colorMode} className="max-w-full max-h-72 overflow-auto">
-                  <MDEditor.Markdown source={note.content} />
-                </div>
-              )}
+                );
+              })()}
             </CardContent>
             <CardFooter className="flex flex-row justify-between space-x-2">
               <Link href={`/my/notes?note_id=${note.id}`} className="flex items-center hover:underline cursor-pointer">
