@@ -1,21 +1,7 @@
 'use client';
 
-import { Note } from '@/lib/db/schema';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState, Fragment, useEffect } from 'react';
-import {
-  ChevronDown,
-  ChevronUp,
-  ClipboardCheck,
-  ClipboardPlus,
-  ExternalLink,
-  Lock,
-  PenIcon,
-  Trash
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { useSWRConfig } from 'swr';
-import { useUser } from '@/hooks/use-user';
 import {
   Dialog,
   DialogContent,
@@ -24,16 +10,29 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { decryptNote } from '@/lib/utils/crypt';
-import MDEditor from '@uiw/react-md-editor';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { NotesAndData } from '@/lib/db/queries/note';
-import { cn } from '@/lib/utils';
 import { useNoteModal } from '@/contexts/modal-commands-context';
 import { useProjects } from '@/hooks/use-projects';
+import { useUser } from '@/hooks/use-user';
+import { NotesAndData } from '@/lib/db/queries/note';
+import { Note } from '@/lib/db/schema';
+import { cn } from '@/lib/utils';
+import { decryptNote } from '@/lib/utils/crypt';
+import MDEditor from '@uiw/react-md-editor';
+import {
+  ChevronDown,
+  ChevronUp,
+  ClipboardCheck,
+  ClipboardPlus,
+  Lock,
+  PenIcon,
+  Trash
+} from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { useSWRConfig } from 'swr';
 import ShareNoteButton from './share-note-button';
 
 export default function NoteDisplay({ note, className }: { note?: Note.Note.Select; className?: string }) {
