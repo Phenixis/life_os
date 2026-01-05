@@ -40,7 +40,7 @@ export default function NoteDisplay({ note, className }: { note?: Note.Note.Sele
   const user = useUser().user;
   const noteModal = useNoteModal();
   const { mutate } = useSWRConfig();
-  const { projects: allProjects } = useProjects({});
+  const { projects: allProjects } = useProjects({ includeCompleted: false });
 
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);

@@ -91,10 +91,11 @@ export default function Calendar({
     // Reset loading state when date changes
     setIsDailyDataLoaded(false);
     
-    // Set as loaded after a short delay to ensure queries have started
+    // Set as loaded after a longer delay to ensure current date's data loads first
+    // before triggering prefetch for the rest of the week
     const timeoutId = setTimeout(() => {
       setIsDailyDataLoaded(true);
-    }, 500);
+    }, 2000);
     
     return () => clearTimeout(timeoutId);
   }, [date]);

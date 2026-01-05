@@ -57,7 +57,7 @@ export default function NoteModal() {
     } = useNoteModal()
     const mode = (note !== undefined && note !== null) ? "edit" : "create"
     const { mutate } = useSWRConfig()
-    const { projects: allProjects } = useProjects({})
+    const { projects: allProjects } = useProjects({ includeCompleted: false })
 
     // Use localStorage hook for auto-saving draft
     const [noteDraft, setNoteDraft, removeNoteDraft] = useLocalStorage<NoteDraftData | null>(

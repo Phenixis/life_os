@@ -86,7 +86,8 @@ export function usePrefetchWeekData(selectedDate: Date | undefined, enabled: boo
             ).getTime()
         })
         
-        // Prefetch with a small delay to prioritize the current date's data
+        // Prefetch with a longer delay to prioritize the current date's data
+        // and avoid overwhelming the server on initial page load
         const timeoutId = setTimeout(() => {
             otherDates.forEach(date => {
                 const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0)
@@ -98,7 +99,7 @@ export function usePrefetchWeekData(selectedDate: Date | undefined, enabled: boo
                 // Prefetch SWR data (workouts, notes)
                 prefetchSWRData(dayStart, dayEnd, user.api_key)
             })
-        }, 500) // Small delay to ensure current date loads first
+        }, 3000) // Longer delay to let initial data load and reduce API call spam on page load
         
         return () => clearTimeout(timeoutId)
     }, [selectedDate, enabled, user?.api_key, queryClient])
