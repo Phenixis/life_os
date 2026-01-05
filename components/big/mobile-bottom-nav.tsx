@@ -20,7 +20,6 @@ import {
 import { DarkModeCookie } from "@/lib/flags"
 import { quickActionConfigs } from "@/lib/navigation-data"
 import { isToolsCategorie, tools } from "@/lib/tools-data"
-import { cn } from "@/lib/utils"
 import { FileText, Home, Loader2, LogOut, LucideIcon, Menu as MenuIcon, PanelsTopLeft, Plus, Settings as SettingsIcon, Wrench } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useState, useTransition } from "react"
@@ -55,6 +54,7 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
     }
 
     const quickActions = quickActionConfigs.map((config) => ({
+        icon: config.icon,
         name: config.name,
         action: () => {
             setQuickActionsOpen(false)
@@ -119,14 +119,11 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
             <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe lg:hidden">
                 <div className="flex items-center justify-around h-16 px-2">
                     {/* Home */}
-                    <button
+                    <Button
                         onClick={() => handleNavigation("/my")}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-1 flex-1 h-full rounded-lg transition-colors",
-                            pathname === "/my"
-                                ? "text-blue-600 dark:text-blue-400"
-                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                        )}
+                        variant={pathname === "/my" ? "default" : "ghost"}
+                        size='sm'
+                        className="flex flex-col items-center justify-center gap-1 h-full rounded-lg transition-colors"
                     >
                         {isPending && loadingPath === "/my" ? (
                             <Loader2 size={22} className="animate-spin" />
@@ -134,17 +131,14 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                             <Home size={22} />
                         )}
                         <span className="text-xs font-medium">Home</span>
-                    </button>
+                    </Button>
 
                     {/* Notes */}
-                    <button
+                    <Button
                         onClick={() => handleNavigation("/my/notes")}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-1 flex-1 h-full rounded-lg transition-colors",
-                            pathname.startsWith("/my/notes")
-                                ? "text-blue-600 dark:text-blue-400"
-                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                        )}
+                        variant={pathname.startsWith("/my/notes") ? "default" : "ghost"}
+                        size='sm'
+                        className="flex flex-col items-center justify-center gap-1 h-full rounded-lg transition-colors"
                     >
                         {isPending && loadingPath === "/my/notes" ? (
                             <Loader2 size={22} className="animate-spin" />
@@ -152,25 +146,22 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                             <FileText size={22} />
                         )}
                         <span className="text-xs font-medium">Notes</span>
-                    </button>
+                    </Button>
 
                     {/* Center Plus Button - Bigger */}
-                    <button
+                    <Button
                         onClick={() => setQuickActionsOpen(true)}
-                        className="flex items-center justify-center -mt-4 w-16 h-16 rounded-full bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-lg"
+                        className="flex items-center justify-center -mt-4 w-16 h-16 rounded-full bg-black lg:hover:bg-gray-800 transition-colors shadow-lg"
                     >
                         <Plus size={28} className="text-white" strokeWidth={2.5} />
-                    </button>
+                    </Button>
 
                     {/* Tools */}
-                    <button
+                    <Button
                         onClick={() => handleNavigation("/my/tools")}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-1 flex-1 h-full rounded-lg transition-colors",
-                            pathname.startsWith("/my/tools")
-                                ? "text-blue-600 dark:text-blue-400"
-                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                        )}
+                        variant={pathname.startsWith("/my/tools") ? "default" : "ghost"}
+                        size='sm'
+                        className="flex flex-col items-center justify-center gap-1 h-full rounded-lg transition-colors"
                     >
                         {isPending && loadingPath === "/my/tools" ? (
                             <Loader2 size={22} className="animate-spin" />
@@ -178,16 +169,18 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                             <Wrench size={22} />
                         )}
                         <span className="text-xs font-medium">Tools</span>
-                    </button>
+                    </Button>
 
                     {/* Menu */}
-                    <button
+                    <Button
                         onClick={() => setMenuOpen(true)}
-                        className="flex flex-col items-center justify-center gap-1 flex-1 h-full rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                        variant="ghost"
+                        size='sm'
+                        className="flex flex-col items-center justify-center gap-1 h-full rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                     >
                         <MenuIcon size={22} />
                         <span className="text-xs font-medium">Menu</span>
-                    </button>
+                    </Button>
                 </div>
             </nav>
 
@@ -197,21 +190,25 @@ export default function MobileBottomNav({ darkModeCookie }: MobileBottomNavProps
                     <SheetHeader>
                         <SheetTitle>Quick Actions</SheetTitle>
                     </SheetHeader>
-                    <div className="grid gap-2 py-4">
+                    <div className="grid grid-cols-3 gap-2 py-4">
                         {quickActions.map((action) => (
                             <Button
                                 key={action.name}
                                 onClick={action.action}
                                 variant="outline"
-                                className="w-full justify-start h-12 text-base"
+                                className="w-full text-sm flex flex-col items-center h-24"
                             >
-                                <Plus size={20} className="mr-2" />
-                                {action.name}
+                                {
+                                    action.icon !== undefined ?
+                                        <action.icon size={20} className="mb-2" /> :
+                                        <Plus size={20} className="mb-2" />
+                                }
+                                <span className="block w-full text-wrap text-center">
+                                    {action.name}
+                                </span>
                             </Button>
                         ))}
-                        <div className="pt-2 border-t border-gray-200 dark:border-gray-800">
-                            <DarkModeButton initialCookie={darkModeCookie} />
-                        </div>
+                        <DarkModeButton initialCookie={darkModeCookie} className="text-sm flex flex-col items-center h-24" />
                     </div>
                 </SheetContent>
             </Sheet>

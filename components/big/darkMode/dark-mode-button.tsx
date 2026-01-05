@@ -14,6 +14,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { useAutoDarkModeTimer } from "@/hooks/use-auto-dark-mode-timer"
+import { cn } from "@/lib/utils"
 
 interface DarkModeButtonProps {
     initialCookie: DarkModeCookie
@@ -62,10 +63,10 @@ export default function DarkModeButton({
         <>
             <Button
                 variant={variant}
-                className={className}
+                className={cn("gap-2", className)}
                 onClick={handleToggle}
             >
-                {cookie.dark_mode ? <Moon size={20} className="mr-2" /> : <Sun size={20} className="mr-2" />}
+                {cookie.dark_mode ? <Moon size={20} /> : <Sun size={20} />}
                 <span>Dark Mode</span>
             </Button>
 

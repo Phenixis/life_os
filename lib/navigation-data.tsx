@@ -1,4 +1,4 @@
-import { Home, FileText, Wrench, type LucideIcon } from "lucide-react"
+import { Home, FileText, Wrench, type LucideIcon, SquarePlus, SmilePlus, Rotate3D, RotateCcw, ScrollText } from "lucide-react"
 
 export interface NavItem {
     name: string
@@ -8,6 +8,7 @@ export interface NavItem {
 }
 
 export interface QuickActionConfig {
+    icon?: LucideIcon
     name: string
     modalKey: "task" | "note" | "dailyMood" | "relapseRecorder" | "addictionCreator" | "entryLogger"
     alternativeNames?: string[]
@@ -38,31 +39,36 @@ export const primaryNavItems: NavItem[] = [
 // Quick actions available in both menu and mobile nav
 export const quickActionConfigs: QuickActionConfig[] = [
     {
+        icon: SquarePlus,
         name: "Create Task",
         modalKey: "task",
         alternativeNames: ["new task", "add task"],
     },
     {
+        icon: FileText,
         name: "Create Note",
         modalKey: "note",
         alternativeNames: ["new note", "add note"],
     },
     {
+        icon: SmilePlus,
         name: "Log Mood",
         modalKey: "dailyMood",
         alternativeNames: ["mood", "daily mood", "enter mood"],
     },
     {
-        name: "Create Addiction",
+        name: "Add Addiction",
         modalKey: "addictionCreator",
         alternativeNames: ["addiction", "create addiction", "new addiction", "add addiction"],
     },
     {
+        icon: RotateCcw,
         name: "Record Relapse",
         modalKey: "relapseRecorder",
         alternativeNames: ["relapse", "addiction", "record relapse"],
     },
     {
+        icon: ScrollText,
         name: "Log Journal Entry",
         modalKey: "entryLogger",
         alternativeNames: ["journal", "entry", "log entry", "addiction journal"],
