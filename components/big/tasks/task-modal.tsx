@@ -103,9 +103,9 @@ export default function TaskModal() {
     useEffect(() => {
         if (isOpen) {
             if (mode === "create") {
-                const projectFromSearchParams = taskFilters?.selectedProjects
+                const selectedProjectsFromLocalStorage = taskFilters?.groupByProject ? taskFilters?.selectedProjects : []
 
-                setProject(projectFromSearchParams && projectFromSearchParams.length === 1 ? projectFromSearchParams[0] : {
+                setProject(selectedProjectsFromLocalStorage?.length === 1 ? selectedProjectsFromLocalStorage[0] : {
                     title: "",
                     id: -1
                 })
