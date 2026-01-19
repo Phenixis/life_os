@@ -12,7 +12,7 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Carousel,
@@ -198,31 +198,43 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
   const isTemplateStart = Array.isArray(data);
   const mode = isPastWorkoutEdit ? 'edit-past' : isSavedWorkoutEdit ? 'edit-saved' : 'create';
 
-  // Initialize state based on mode
-  const initialExercises = isPastWorkoutEdit
-    ? data.exercices.map(ex => ({
+  // Initialize state based on mode - use useMemo to recompute when data changes
+  const initialExercises = useMemo(() => {
+    if (isPastWorkoutEdit) {
+      return data.exercices.map(ex => ({
         ...ex,
         sets: ex.sets.map((s, idx) => ({ ...s, id: idx }))
-      }))
-    : isSavedWorkoutEdit
-    ? data.exercices.map(ex => ({
+      }));
+    } else if (isSavedWorkoutEdit) {
+      return data.exercices.map(ex => ({
         ...ex,
         sets: ex.sets.map((s, idx) => ({ ...s, id: idx }))
-      }))
-    : isTemplateStart
-    ? data
-    : defaultExercice;
+      }));
+    } else if (isTemplateStart) {
+      return data;
+    } else {
+      return defaultExercice;
+    }
+  }, [data, isPastWorkoutEdit, isSavedWorkoutEdit, isTemplateStart]);
 
-  const [exercices, setExercices] = useState<Exercice[]>(initialExercises);
-  const [workoutName, setWorkoutName] = useState(
-    isPastWorkoutEdit ? data.title : isSavedWorkoutEdit ? data.title : 'My Workout'
-  );
-  const [workoutDate, setWorkoutDate] = useState<Date>(() => {
+  const initialWorkoutName = useMemo(() => {
+    return isPastWorkoutEdit ? data.title : isSavedWorkoutEdit ? data.title : 'My Workout';
+  }, [data, isPastWorkoutEdit, isSavedWorkoutEdit]);
+
+  const initialWorkoutDate = useMemo(() => {
     const date = isPastWorkoutEdit ? new Date(data.date) : new Date();
     date.setHours(0, 0, 0, 0);
     return date;
-  });
-  const [difficulty, setDifficulty] = useState<1 | 2 | 3 | 4 | 5>(isPastWorkoutEdit ? data.difficulty : 3);
+  }, [data, isPastWorkoutEdit]);
+
+  const initialDifficulty = useMemo(() => {
+    return isPastWorkoutEdit ? data.difficulty : 3;
+  }, [data, isPastWorkoutEdit]);
+
+  const [exercices, setExercices] = useState<Exercice[]>(initialExercises);
+  const [workoutName, setWorkoutName] = useState(initialWorkoutName);
+  const [workoutDate, setWorkoutDate] = useState<Date>(initialWorkoutDate);
+  const [difficulty, setDifficulty] = useState<1 | 2 | 3 | 4 | 5>(initialDifficulty);
   const [isSaving, setIsSaving] = useState(false);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>(undefined);
@@ -274,16 +286,12 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
     if (!showDialog) {
       // Reset to initial state when dialog closes
       setExercices(initialExercises);
-      setWorkoutName(isPastWorkoutEdit ? data.title : isSavedWorkoutEdit ? data.title : 'My Workout');
-      setWorkoutDate(() => {
-        const date = isPastWorkoutEdit ? new Date(data.date) : new Date();
-        date.setHours(0, 0, 0, 0);
-        return date;
-      });
-      setDifficulty(isPastWorkoutEdit ? data.difficulty : 3);
+      setWorkoutName(initialWorkoutName);
+      setWorkoutDate(initialWorkoutDate);
+      setDifficulty(initialDifficulty);
       setCurrentExerciseIndex(0);
     }
-  }, [showDialog]);
+  }, [showDialog, initialExercises, initialWorkoutName, initialWorkoutDate, initialDifficulty]);
 
   const addExerciseBefore = (index: number) => {
     const newExercices = [...exercices];
@@ -366,13 +374,9 @@ export function WorkoutModal({ data, className, triggerButton }: WorkoutModalPro
   const resetForm = () => {
     // Reset all form values to their initial values
     setExercices(initialExercises);
-    setWorkoutName(isPastWorkoutEdit ? data.title : isSavedWorkoutEdit ? data.title : 'My Workout');
-    setWorkoutDate(() => {
-      const date = isPastWorkoutEdit ? new Date(data.date) : new Date();
-      date.setHours(0, 0, 0, 0);
-      return date;
-    });
-    setDifficulty(isPastWorkoutEdit ? data.difficulty : 3);
+    setWorkoutName(initialWorkoutName);
+    setWorkoutDate(initialWorkoutDate);
+    setDifficulty(initialDifficulty);
     setCurrentExerciseIndex(0);
 
     // If carousel api is available, scroll back to first slide
