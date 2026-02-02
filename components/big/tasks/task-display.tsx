@@ -1,6 +1,13 @@
 import Tooltip from '@/components/big/tooltip';
 import { Button } from '@/components/ui/button';
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger
+} from '@/components/ui/context-menu';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -10,13 +17,21 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTaskModal } from '@/contexts/modal-commands-context';
-import { useDeleteTask, useToggleTask } from '@/hooks/queries/use-task-mutations';
+import { useDeleteTask, useToggleTask, useUpdateTask } from '@/hooks/queries/use-task-mutations';
 import { useUser } from '@/hooks/use-user';
 import type { Task } from '@/lib/db/schema';
 import { cn } from '@/lib/utils';
 import { ChevronsDownUp, ChevronsUpDown, PenIcon, TrashIcon } from 'lucide-react';
-import type React from 'react';
+import React from 'react';
 import { startTransition, useOptimistic, useRef, useState } from 'react';
+
+// Quick action type definition
+type QuickAction = {
+  label: string;
+  action: (task: Task.Task.TaskWithRelations) => void;
+  shouldShow?: (task: Task.Task.TaskWithRelations) => boolean;
+  separator?: boolean;
+};
 
 export default function TaskDisplay({
   task,
@@ -39,6 +54,7 @@ export default function TaskDisplay({
   // Mutation hooks
   const toggleTaskMutation = useToggleTask();
   const deleteTaskMutation = useDeleteTask();
+  const updateTaskMutation = useUpdateTask();
 
   const [isToggled, setIsToggled] = useState(task ? task.completed_at !== null : false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,6 +73,77 @@ export default function TaskDisplay({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDependencyDialogOpen, setIsDependencyDialogOpen] = useState(false);
   const [dependencyToDelete, setDependencyToDelete] = useState<number | null>(null);
+
+  // Context menu action handlers
+  const handleUpdateDueToday = () => {
+    if (!task) return;
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Set to end of day
+    updateTaskMutation.mutate({
+      id: task.id,
+      data: {
+        title: task.title,
+        importance: task.importance ?? 0,
+        dueDate: today.toISOString(),
+        duration: task.duration ?? 0,
+        project: task.project_id 
+          ? { id: task.project_id, title: task.project?.title ?? '' }
+          : { id: -1, title: '' },
+        state: task.state ?? 'to do'
+      }
+    });
+  };
+
+  const handleMarkComplete = () => {
+    if (!task || task.completed_at) return;
+    toggle();
+  };
+
+  const handleMarkIncomplete = () => {
+    if (!task || !task.completed_at) return;
+    toggle();
+  };
+
+  const handleEdit = () => {
+    if (!task) return;
+    setIsCollapsibleOpen(false);
+    setIsHovering(false);
+    taskModal.setTask(task);
+    taskModal.openModal();
+  };
+
+  const handleDelete = () => {
+    deleteTask();
+  };
+
+  // Quick actions list - easily maintainable
+  const quickActions: QuickAction[] = [
+    {
+      label: 'Update due date to today',
+      action: handleUpdateDueToday,
+      shouldShow: (t) => !t.completed_at && daysBeforeDue < 0, // Only for late tasks
+    },
+    {
+      label: 'Mark as completed',
+      action: handleMarkComplete,
+      shouldShow: (t) => !t.completed_at,
+    },
+    {
+      label: 'Mark as incomplete',
+      action: handleMarkIncomplete,
+      shouldShow: (t) => !!t.completed_at,
+    },
+    {
+      label: 'Edit',
+      action: handleEdit,
+      separator: true,
+    },
+    {
+      label: 'Delete',
+      action: handleDelete,
+    },
+  ];
+
 
   // Modify the toggle function to check for prerequisite tasks
   async function toggle() {
@@ -147,19 +234,21 @@ export default function TaskDisplay({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        `flex flex-col group/task p-1 duration-300 text-xs xl:text-sm rounded mb-1 ${daysBeforeDue < 0
-          ? 'bg-red-500/10 dark:bg-red-500/15 lg:hover:bg-red-500/25'
-          : daysBeforeDue <= 3
-            ? 'bg-orange-500/10 dark:bg-orange-500/15 lg:hover:bg-orange-500/25'
-            : 'lg:hover:bg-primary/10'
-        } ${isDeleting ? 'opacity-50' : ''}`,
-        className
-      )}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          ref={containerRef}
+          className={cn(
+            `flex flex-col group/task p-1 duration-300 text-xs xl:text-sm rounded mb-1 ${daysBeforeDue < 0
+              ? 'bg-red-500/10 dark:bg-red-500/15 lg:hover:bg-red-500/25'
+              : daysBeforeDue <= 3
+                ? 'bg-orange-500/10 dark:bg-orange-500/15 lg:hover:bg-orange-500/25'
+                : 'lg:hover:bg-primary/10'
+            } ${isDeleting ? 'opacity-50' : ''}`,
+            className
+          )}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
     >
       {skeleton ? (
         <>
@@ -371,5 +460,22 @@ export default function TaskDisplay({
         </DialogContent>
       </Dialog>
     </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-64">
+        {skeleton && task && quickActions.map((action, index) => {
+          const shouldShow = action.shouldShow ? action.shouldShow(task) : true;
+          if (!shouldShow) return null;
+          
+          return (
+            <React.Fragment key={index}>
+              {action.separator && index > 0 && <ContextMenuSeparator />}
+              <ContextMenuItem onClick={() => action.action(task)}>
+                {action.label}
+              </ContextMenuItem>
+            </React.Fragment>
+          );
+        })}
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
