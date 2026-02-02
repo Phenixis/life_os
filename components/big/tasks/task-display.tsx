@@ -26,6 +26,13 @@ import React from 'react';
 import { startTransition, useOptimistic, useRef, useState } from 'react';
 
 // Quick action type definition
+/**
+ * Represents a quick action in the task context menu
+ * @property label - The display text for the menu item
+ * @property action - The function to execute when the action is selected
+ * @property shouldShow - Optional condition to determine if the action should be visible
+ * @property separator - If true, adds a visual separator before this action
+ */
 type QuickAction = {
   label: string;
   action: (task: Task.Task.TaskWithRelations) => void;
@@ -462,13 +469,13 @@ export default function TaskDisplay({
     </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-64">
-        {skeleton && task && quickActions.map((action, index) => {
+        {!skeleton && task && quickActions.map((action, index) => {
           const shouldShow = action.shouldShow ? action.shouldShow(task) : true;
           if (!shouldShow) return null;
           
           return (
             <React.Fragment key={index}>
-              {action.separator && index > 0 && <ContextMenuSeparator />}
+              {action.separator && <ContextMenuSeparator />}
               <ContextMenuItem onClick={() => action.action(task)}>
                 {action.label}
               </ContextMenuItem>
