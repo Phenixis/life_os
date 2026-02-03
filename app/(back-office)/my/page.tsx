@@ -11,9 +11,9 @@ export default async function DashboardPage() {
                     className="w-full h-full my-2 lg:m-4"
                     limit={5}
                 />
-                <NotesCard className="w-full my-2 lg:m-4" limit={5}/>
+                {/* <NotesCard className="w-full my-2 lg:m-4" limit={5}/> */}
             </div>
-            <Calendar className="order-1 md:order-0"/>
+            {/* <Calendar className="order-1 md:order-0"/> */}
         </div>
     )
 }
