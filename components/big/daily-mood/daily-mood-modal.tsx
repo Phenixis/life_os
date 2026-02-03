@@ -81,17 +81,17 @@ export default function DailyMoodModal() {
     const getMoodIcon = (mood: number | null) => {
         switch (mood) {
             case 0:
-                return <Angry className="min-w-[24px] max-w-[24px] min-h-[24px] text-red-700" />
+                return <Angry className="min-w-6 max-w-6 min-h-6 text-red-700" />
             case 1:
-                return <Frown className="min-w-[24px] max-w-[24px] min-h-[24px] text-blue-400" />
+                return <Frown className="min-w-6 max-w-6 min-h-6 text-blue-400" />
             case 2:
-                return <Meh className="min-w-[24px] max-w-[24px] min-h-[24px] text-amber-300" />
+                return <Meh className="min-w-6 max-w-6 min-h-6 text-amber-300" />
             case 3:
-                return <Smile className="min-w-[24px] max-w-[24px] min-h-[24px] text-green-400" />
+                return <Smile className="min-w-6 max-w-6 min-h-6 text-green-400" />
             case 4:
-                return <Laugh className="min-w-[24px] max-w-[24px] min-h-[24px] text-green-800" />
+                return <Laugh className="min-w-6 max-w-6 min-h-6 text-green-800" />
             default:
-                return <SmilePlus className="min-w-[24px] max-w-[24px] min-h-[24px]" />
+                return <SmilePlus className="min-w-6 max-w-6 min-h-6" />
         }
     }
 
