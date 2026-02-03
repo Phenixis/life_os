@@ -9,16 +9,17 @@ import {
     CommandList,
     CommandShortcut,
 } from "@/components/ui/command"
-import {MenuIcon} from "lucide-react"
-import {useCallback, useEffect, useState} from "react"
-import {Button} from "@/components/ui/button"
-import {useRouter} from "next/navigation"
-import {useDarkMode} from "@/hooks/use-dark-mode"
-import {useDailyMoodModal, useNoteModal, useTaskModal} from "@/contexts/modal-commands-context"
-import {isToolsCategorie, tools} from "@/lib/tools-data"
-import {toast} from "sonner"
-import {settingsItems} from "@/components/big/settings/settings-sidebar"
-import {useModalsState} from "@/contexts/modal-commands-context"
+import { MenuIcon } from "lucide-react"
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { useDarkMode } from "@/hooks/use-dark-mode"
+import { useDailyMoodModal, useNoteModal, useTaskModal, useRelapseRecorderModal, useAddictionCreatorModal, useEntryLoggerModal } from "@/contexts/modal-commands-context"
+import { isToolsCategorie, tools } from "@/lib/tools-data"
+import { toast } from "sonner"
+import { settingsItems } from "@/components/big/settings/settings-sidebar"
+import { useModalsState } from "@/contexts/modal-commands-context"
+import { primaryNavItems, quickActionConfigs } from "@/lib/navigation-data"
 
 interface MenuItem {
     name: string
@@ -28,9 +29,13 @@ interface MenuItem {
 
 const items: Record<string, MenuItem[]> = {
     "Suggestions": [
-        {name: "Dashboard", href: "/my", alternativeNames: ["home"]},
-        {name: "Notes", href: "/my/notes", alternativeNames: ["note"]},
-        {name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"]},
+        ...primaryNavItems.map(item => ({
+            name: item.name,
+            href: item.href,
+            alternativeNames: item.alternativeNames,
+        })),
+        { name: "Projects", href: "/my/projects", alternativeNames: ["project"] },
+        // { name: "Tasks", href: "/my/tasks", alternativeNames: ["task", "todo"] },
     ],
     "Tools": tools.flatMap(tool => {
         if (isToolsCategorie(tool)) {
@@ -61,43 +66,54 @@ const items: Record<string, MenuItem[]> = {
     ],
 }
 
-export default function Menu() {
+export default function Menu({
+    isOpen,
+    setIsOpen
+}: {
+    isOpen: boolean
+    setIsOpen: (state: boolean) => void
+}) {
     const { someModalOpen } = useModalsState()
     const router = useRouter()
-    const [open, setOpen] = useState(false)
-
-    const {toggleDarkMode} = useDarkMode()
-    const taskModal = useTaskModal()
-    const noteModal = useNoteModal()
-    const dailyMoodModal = useDailyMoodModal()
+    const { toggleDarkMode } = useDarkMode()
+    
+    // Modal hooks
+    const modals = {
+        task: useTaskModal(),
+        note: useNoteModal(),
+        dailyMood: useDailyMoodModal(),
+        relapseRecorder: useRelapseRecorderModal(),
+        addictionCreator: useAddictionCreatorModal(),
+        entryLogger: useEntryLoggerModal(),
+    }
 
     useEffect(() => {
         const down = (e: KeyboardEvent) => {
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault()
                 if (!someModalOpen()) {
-                    setOpen((open) => !open)
+                    setIsOpen(!isOpen)
                 }
             }
         }
         document.addEventListener("keydown", down)
         return () => document.removeEventListener("keydown", down)
-    }, [someModalOpen])
+    }, [someModalOpen, setIsOpen])
 
     const runCommand = useCallback((command: () => unknown) => {
-        setOpen(false)
+        setIsOpen(false)
         command()
-    }, [])
+    }, [setIsOpen])
 
     return (
         <>
-            <Button onClick={() => setOpen(true)} variant="outline" size="icon"
-                    className="whitespace-nowrap transition-transform duration-300" tooltip="Open menu (Ctrl/⌘+K)">
-                <MenuIcon size={24}/>
+            <Button onClick={() => setIsOpen(true)} variant="outline" size="icon"
+                className="whitespace-nowrap transition-transform duration-300" tooltip="Open menu (Ctrl/⌘+K)">
+                <MenuIcon size={24} />
             </Button>
-            <CommandDialog open={open} onOpenChange={setOpen} showCloseButton={false}>
-                <CommandInput placeholder="Type a command or search..."/>
-                <CommandList>
+            <CommandDialog open={isOpen} onOpenChange={setIsOpen} showCloseButton={false} className="">
+                <CommandInput placeholder="Type a command or search..." />
+                <CommandList className="scrollbar-hide">
                     <CommandEmpty>No results found.</CommandEmpty>
                     {
                         Object.entries(items).map(([groupName, groupItems]) => (
@@ -122,30 +138,21 @@ export default function Menu() {
                             Toggle Dark Mode
                             <CommandShortcut>Ctrl/⌘ + M</CommandShortcut>
                         </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => taskModal.openModal())}
-                            keywords={["new task", "add task"]}
-                        >
-                            Create a task
-                        </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => noteModal.openModal())}
-                            keywords={["new note", "add note"]}
-                        >
-                            Create a note
-                        </CommandItem>
-                        <CommandItem
-                            onSelect={() => runCommand(() => dailyMoodModal.openModal())}
-                            keywords={["mood", "daily mood"]}
-                        >
-                            Enter my mood
-                        </CommandItem>
+                        {quickActionConfigs.map((config) => (
+                            <CommandItem
+                                key={config.modalKey}
+                                onSelect={() => runCommand(() => modals[config.modalKey].openModal())}
+                                keywords={config.alternativeNames}
+                            >
+                                {config.name}
+                            </CommandItem>
+                        ))}
                         <CommandItem
                             onSelect={() => {
                                 toast.loading("Logging out...", {
                                     id: "logout"
                                 })
-                                setOpen(false)
+                                setIsOpen(false)
                                 window.location.href = "/api/auth/logout"
                             }}
                             keywords={["sign out", "logout"]}

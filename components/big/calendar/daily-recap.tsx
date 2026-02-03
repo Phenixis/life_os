@@ -4,6 +4,9 @@ import { useState, useCallback, useRef } from 'react';
 import { DailyTasks } from '@/components/big/calendar/daily-tasks';
 import { DailyWorkout } from '@/components/big/calendar/daily-workout';
 import { DailyNotes } from '@/components/big/calendar/daily-notes';
+import { DailyAddictionRelapses } from '@/components/big/calendar/daily-addiction-relapses';
+import { DailyAddictionEntries } from '@/components/big/calendar/daily-addiction-entries';
+import { DailyMovies } from '@/components/big/calendar/daily-movies';
 
 interface DailyRecapProps {
   dayStart?: Date;
@@ -21,12 +24,18 @@ interface componentStatus {
   tasks: status;
   workout: status;
   notes: status;
+  addictionRelapses: status;
+  addictionEntries: status;
+  movies: status;
 }
 
 const initialStatus: componentStatus = {
   tasks: status.Loading,
   workout: status.Loading,
-  notes: status.Loading
+  notes: status.Loading,
+  addictionRelapses: status.Loading,
+  addictionEntries: status.Loading,
+  movies: status.Loading
 };
 
 /**
@@ -74,6 +83,18 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
     setComponentStatus(prev => ({ ...prev, notes: hasData ? status.HasData : status.NoData }));
   }, []);
 
+  const handleAddictionRelapsesDataChange = useCallback((hasData: boolean) => {
+    setComponentStatus(prev => ({ ...prev, addictionRelapses: hasData ? status.HasData : status.NoData }));
+  }, []);
+
+  const handleAddictionEntriesDataChange = useCallback((hasData: boolean) => {
+    setComponentStatus(prev => ({ ...prev, addictionEntries: hasData ? status.HasData : status.NoData }));
+  }, []);
+
+  const handleMoviesDataChange = useCallback((hasData: boolean) => {
+    setComponentStatus(prev => ({ ...prev, movies: hasData ? status.HasData : status.NoData }));
+  }, []);
+
   return (
     <div className="w-full flex flex-col items-center justify-center gap-4">
       {[
@@ -107,6 +128,42 @@ export function DailyRecap({ dayStart, dayEnd, showNumberOfTasks = true }: Daily
           hasData: componentStatus.notes,
           component: (
             <DailyNotes key={`notes-${dateKey}`} dayStart={dayStart} dayEnd={dayEnd} onDataStatusChange={handleNotesDataChange} />
+          )
+        },
+        {
+          key: 'addictionRelapses',
+          hasData: componentStatus.addictionRelapses,
+          component: (
+            <DailyAddictionRelapses
+              key={`addictionRelapses-${dateKey}`}
+              dayStart={dayStart}
+              dayEnd={dayEnd}
+              onDataStatusChange={handleAddictionRelapsesDataChange}
+            />
+          )
+        },
+        {
+          key: 'addictionEntries',
+          hasData: componentStatus.addictionEntries,
+          component: (
+            <DailyAddictionEntries
+              key={`addictionEntries-${dateKey}`}
+              dayStart={dayStart}
+              dayEnd={dayEnd}
+              onDataStatusChange={handleAddictionEntriesDataChange}
+            />
+          )
+        },
+        {
+          key: 'movies',
+          hasData: componentStatus.movies,
+          component: (
+            <DailyMovies
+              key={`movies-${dateKey}`}
+              dayStart={dayStart}
+              dayEnd={dayEnd}
+              onDataStatusChange={handleMoviesDataChange}
+            />
           )
         }
       ]

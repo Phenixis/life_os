@@ -1,21 +1,21 @@
 "use client"
 
-import {RadioButtons} from "@/components/big/filtering/radio-buttons";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
-import {cn} from "@/lib/utils"
-import type {Task} from "@/lib/db/schema"
-import {useCallback, useEffect, useMemo, useRef, useState, useTransition} from "react"
-import {Button} from "@/components/ui/button"
-import {Calendar, Filter, FolderTree, PlusIcon, Square, SquareMinus} from "lucide-react"
-import TaskDisplay from "./task-display"
-import {useTasks} from "@/hooks/use-tasks"
-import {useProjects} from "@/hooks/use-projects"
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
-import {Calendar as CalendarComponent} from "@/components/ui/calendar"
-import {format} from "date-fns"
-import {useNumberOfTasks} from "@/hooks/use-number-of-tasks"
-import {ProjectsMultipleSelects} from "@/components/big/filtering/projects-multiple-selects";
-import {useTaskModal} from "@/contexts/modal-commands-context";
+import { ProjectsMultipleSelects } from "@/components/big/filtering/projects-multiple-selects";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useTaskModal } from "@/contexts/modal-commands-context";
+import { useNumberOfTasks } from "@/hooks/use-number-of-tasks";
+import { useProjects } from "@/hooks/use-projects";
+import { useTasks } from "@/hooks/use-tasks";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import type { Task } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ArrowDown, ArrowUp, ArrowUpDown, Calendar, Check, ChevronDown, Filter, FolderTree, Hash, PlusIcon, Square, SquareMinus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import TaskDisplay from "./task-display";
 
 // Constants for URL parameters
 export const TASK_PARAMS = {
@@ -59,8 +59,8 @@ export function TasksCard(
         className,
         initialCompleted = false,
         limit: initialLimit = 5,
-        orderBy: initialOrderBy = "score",
-        orderingDirection: initialOrderingDirection = "desc",
+        orderBy: initialOrderBy = "due",
+        orderingDirection: initialOrderingDirection = "asc",
         withProject = true
     }: {
         className?: string
@@ -85,21 +85,7 @@ export function TasksCard(
     // -------------------- State --------------------
     const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false)
 
-    const [completed, setCompleted] = useState<boolean | undefined>(initialCompleted)
-
-    const [limit, setLimit] = useState<number>(initialLimit)
-
-    const [orderBy, setOrderBy] = useState<keyof Task.Task.Select>(initialOrderBy)
-
-    const [orderingDirection, setOrderingDirection] = useState<"asc" | "desc">(initialOrderingDirection)
-
-    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>([])
-
-    const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>([])
-
-    const [dueBeforeDate, setDueBeforeDate] = useState<Date | undefined>(undefined)
-
-    const [groupByProject, setGroupByProject] = useState<boolean>(false)
+    const [isLimitPopoverOpen, setIsLimitPopoverOpen] = useState<boolean>(false)
 
     const [tasksCompleted, setTasksCompleted] = useState(0)
 
@@ -109,18 +95,37 @@ export function TasksCard(
 
     const [progression, setProgression] = useState(0)
 
-    // Add a ref to track if this is the first render
-    const isSavedFiltersBeenUsed = useRef(false);
+    // Use localStorage hook for persisting filters
+    const [savedFilters, setSavedFilters] = useLocalStorage<Partial<tasksFilters>>('tasks_filters', {
+        completed: initialCompleted,
+        limit: initialLimit,
+        orderBy: initialOrderBy,
+        orderingDirection: initialOrderingDirection,
+        selectedProjects: [],
+        removedProjects: [],
+        dueBeforeDate: undefined,
+        groupByProject: false
+    });
+
+    const [completed, setCompleted] = useState<boolean | undefined>(savedFilters.completed ?? initialCompleted)
+    const [limit, setLimit] = useState<number>(savedFilters.limit ?? initialLimit)
+    const [orderBy, setOrderBy] = useState<keyof Task.Task.Select>(savedFilters.orderBy ?? initialOrderBy)
+    const [orderingDirection, setOrderingDirection] = useState<"asc" | "desc">(savedFilters.orderingDirection ?? initialOrderingDirection)
+    const [selectedProjects, setSelectedProjects] = useState<simplifiedProject[]>(savedFilters.selectedProjects ?? [])
+    const [removedProjects, setRemovedProjects] = useState<simplifiedProject[]>(savedFilters.removedProjects ?? [])
+    const [dueBeforeDate, setDueBeforeDate] = useState<Date | undefined>(() => {
+        if (savedFilters.dueBeforeDate && typeof savedFilters.dueBeforeDate === 'string') {
+            const d = new Date(savedFilters.dueBeforeDate)
+            return !isNaN(d.getTime()) ? d : undefined
+        }
+        return undefined
+    })
+    const [groupByProject, setGroupByProject] = useState<boolean>(savedFilters.groupByProject ?? false)
 
     // -------------------- Data Fetching --------------------
-    const {projects, isLoading: projectsLoading} = useProjects({
-        completed: false,
-        taskCompleted: completed,
-        taskDueDate: dueBeforeDate,
-        taskDeleted: false,
-    })
+    const { projects, isLoading: projectsLoading } = useProjects({ includeCompleted: false })
 
-    const {tasks, isLoading} = useTasks({
+    const { tasks, isLoading } = useTasks({
         completed,
         orderBy,
         limit,
@@ -140,7 +145,7 @@ export function TasksCard(
     }), [groupByProject, selectedProjects, removedProjects, dueBeforeDate, today, tomorrow])
 
     const {
-        data: numberOfTasks,
+        data: numberOfTasks = [],
         isLoading: isCountLoading,
         isError: isCountError
     } = useNumberOfTasks(numberOfTasksParams)
@@ -148,17 +153,17 @@ export function TasksCard(
     // -------------------- Effects --------------------
 
     useEffect(() => {
-        if (numberOfTasks && numberOfTasks.length > 0) {
+        if (numberOfTasks && Array.isArray(numberOfTasks) && numberOfTasks.length > 0) {
             // Filter tasks by due date if dueBeforeDate is set
-            const filteredTasks = numberOfTasks.filter(task => {
+            const filteredTasks = numberOfTasks.filter((task: any) => {
                 // Ensure task.due is a valid date before comparison
                 if (!task.due) return false;
                 const taskDueDate = new Date(task.due);
                 return taskDueDate <= (dueBeforeDate !== undefined ? dueBeforeDate : tomorrow);
             })
 
-            const completedCount = filteredTasks.reduce((sum, task) => sum + Number(task.completed_count), 0);
-            const uncompletedCount = filteredTasks.reduce((sum, task) => sum + Number(task.uncompleted_count), 0);
+            const completedCount = filteredTasks.reduce((sum: number, task: any) => sum + Number(task.completed_count), 0);
+            const uncompletedCount = filteredTasks.reduce((sum: number, task: any) => sum + Number(task.uncompleted_count), 0);
             const totalCount = completedCount + uncompletedCount
 
             setTasksCompleted(completedCount)
@@ -168,13 +173,9 @@ export function TasksCard(
         }
     }, [dueBeforeDate, numberOfTasks, tomorrow])
 
-    // Update localStorage when filters change
+    // Auto-save filters to localStorage whenever they change
     useEffect(() => {
-        if (!isSavedFiltersBeenUsed.current) {
-            return;
-        }
-
-        const serialized = JSON.stringify({
+        setSavedFilters({
             completed,
             limit,
             orderBy,
@@ -183,52 +184,8 @@ export function TasksCard(
             removedProjects,
             dueBeforeDate: dueBeforeDate?.toISOString(),
             groupByProject
-        } as tasksFilters)
-
-        window.localStorage.setItem("tasks_filters", serialized)
-    }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject]);
-
-    useEffect(() => {
-        const raw = window.localStorage.getItem("tasks_filters")
-        if (raw) {
-            try {
-                const savedFilters = JSON.parse(raw) as Partial<tasksFilters>
-
-                if (typeof savedFilters.completed === "boolean") {
-                    setCompleted(savedFilters.completed)
-                }
-                if (typeof savedFilters.limit === "number" && Number.isFinite(savedFilters.limit)) {
-                    setLimit(savedFilters.limit)
-                }
-                if (typeof savedFilters.orderBy === "string") {
-                    setOrderBy(savedFilters.orderBy as keyof Task.Task.Select)
-                }
-                if (savedFilters.orderingDirection === "asc" || savedFilters.orderingDirection === "desc") {
-                    setOrderingDirection(savedFilters.orderingDirection)
-                }
-                if (Array.isArray(savedFilters.selectedProjects)) {
-                    setSelectedProjects(savedFilters.selectedProjects)
-                }
-                if (Array.isArray(savedFilters.removedProjects)) {
-                    setRemovedProjects(savedFilters.removedProjects)
-                }
-                if (typeof savedFilters.dueBeforeDate === "string") {
-                    const d = new Date(savedFilters.dueBeforeDate)
-                    if (!isNaN(d.getTime())) {
-                        setDueBeforeDate(d)
-                    }
-                }
-                if (typeof savedFilters.groupByProject === "boolean") {
-                    setGroupByProject(savedFilters.groupByProject)
-                }
-            } catch (e) {
-                // ignore malformed JSON
-                console.error("Error parsing saved filters:", e)
-            }
-        }
-
-        isSavedFiltersBeenUsed.current = true;
-    }, [])
+        });
+    }, [completed, limit, orderBy, orderingDirection, selectedProjects, removedProjects, dueBeforeDate, groupByProject, setSavedFilters])
 
     // -------------------- Callbacks --------------------
 
@@ -278,7 +235,7 @@ export function TasksCard(
                 const projectName = projects?.find((p) => p.id === task.project_id)?.title || "No Project"
 
                 if (!acc[projectId]) {
-                    acc[projectId] = {name: projectName, tasks: []}
+                    acc[projectId] = { name: projectName, tasks: [] }
                 }
 
                 acc[projectId].tasks.push(task)
@@ -294,13 +251,13 @@ export function TasksCard(
         >
             <CardHeader className="flex flex-col sticky top-0 bg-background z-10 pt-6 md:pt-6">
                 <div className="absolute top-0 left-0 w-full h-1 bg-muted"
-                     title={`${tasksCompleted} task${tasksCompleted > 1 ? 's' : ''} completed out of ${tasksTotal} task${tasksTotal > 1 ? 's' : ''}`}>
+                    title={`${tasksCompleted} task${tasksCompleted > 1 ? 's' : ''} completed out of ${tasksTotal} task${tasksTotal > 1 ? 's' : ''}`}>
                     <div
                         className={cn(
                             "absolute top-0 left-0 h-full transition-all duration-300",
                             isCountLoading ? "bg-muted animate-pulse" : "bg-primary"
                         )}
-                        style={{width: isCountLoading ? "100%" : `${progression}%`}}
+                        style={{ width: isCountLoading ? "100%" : `${progression}%` }}
                     />
                     <div className="w-full flex justify-between items-center pt-2 px-1">
                         {isCountLoading || isCountError ? null : (
@@ -328,7 +285,7 @@ export function TasksCard(
                             tooltip="Filter/group the tasks"
                             className="h-10 py-2 flex items-center border-none"
                         >
-                            <Filter className="h-4 w-4"/>
+                            <Filter className="h-4 w-4" />
                         </Button>
                         {/*<TaskModal />*/}
                         <Button
@@ -340,7 +297,7 @@ export function TasksCard(
                                 taskModal.openModal()
                             }}
                         >
-                            <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]"/>
+                            <PlusIcon className="min-w-[24px] max-w-[24px] min-h-[24px]" />
                         </Button>
                     </div>
                 </div>
@@ -356,7 +313,7 @@ export function TasksCard(
                                     tooltip="Filter by due date"
                                     className="flex items-center gap-1"
                                 >
-                                    <Calendar className="h-4 w-4"/>
+                                    <Calendar className="h-4 w-4" />
                                     {dueBeforeDate ? format(dueBeforeDate, "MMM d") : "Due Before"}
                                 </Button>
                             </PopoverTrigger>
@@ -382,18 +339,115 @@ export function TasksCard(
                 `}
                         >
                             {completed === true ? (
-                                <Square className="rounded-xs bg-card-foreground h-4 w-4"/>
+                                <Square className="rounded-xs bg-card-foreground h-4 w-4" />
                             ) : completed === false ? (
-                                <Square className="h-4 w-4"/>
+                                <Square className="h-4 w-4" />
                             ) : (
-                                <SquareMinus className="h-4 w-4"/>
+                                <SquareMinus className="h-4 w-4" />
                             )}
                         </Button>
-                        <RadioButtons
-                            values={[5, 10, 25, 50]}
-                            currentValue={limit}
-                            onChange={setLimit}
-                            disabled={isPending || isLoading}/>
+                        {/* Limit dropdown */}
+                        <Popover modal={false} open={isLimitPopoverOpen} onOpenChange={setIsLimitPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isPending || isLoading}
+                                    tooltip="Number of tasks to display"
+                                    className="h-9 px-2 gap-1 min-w-14"
+                                >
+                                    {limit}
+                                    <ChevronDown className="h-3 w-3" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-1" align="start">
+                                <div className="flex flex-col gap-0.5">
+                                    {[5, 25, 50, 100].map((value) => (
+                                        <Button
+                                            key={value}
+                                            variant={limit === value ? "secondary" : "ghost"}
+                                            size="sm"
+                                            className="justify-start h-8 px-2"
+                                            onClick={() => {
+                                                setLimit(value)
+                                                setIsLimitPopoverOpen(false)
+                                            }}
+                                        >
+                                            {limit === value && <Check className="h-3 w-3 mr-1" />}
+                                            {value} tasks
+                                        </Button>
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                        {/* Order by & direction combined */}
+                        <Popover modal={false}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isPending || isLoading}
+                                    tooltip="Sort options"
+                                    className="h-9 px-2 gap-1"
+                                >
+                                    <ArrowUpDown className="h-4 w-4" />
+                                    {orderingDirection === "asc" ? (
+                                        <ArrowUp className="h-3 w-3" />
+                                    ) : (
+                                        <ArrowDown className="h-3 w-3" />
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-2" align="start">
+                                <div className="flex flex-col gap-2">
+                                    <p className="text-xs text-muted-foreground font-medium px-1">Order by</p>
+                                    <div className="flex flex-col gap-0.5">
+                                        {[
+                                            { value: "due", label: "Due date" },
+                                            { value: "created_at", label: "Created" },
+                                            { value: "updated_at", label: "Updated" },
+                                            { value: "title", label: "Title" },
+                                            { value: "importance", label: "Importance" },
+                                            { value: "duration", label: "Duration" },
+                                        ].map((option) => (
+                                            <Button
+                                                key={option.value}
+                                                variant={orderBy === option.value ? "secondary" : "ghost"}
+                                                size="sm"
+                                                className="justify-start h-8 px-2"
+                                                onClick={() => setOrderBy(option.value as keyof Task.Task.Select)}
+                                            >
+                                                {orderBy === option.value && <Check className="h-3 w-3 mr-1" />}
+                                                {option.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="border-t pt-2 mt-1">
+                                        <p className="text-xs text-muted-foreground font-medium px-1 mb-1">Direction</p>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant={orderingDirection === "asc" ? "secondary" : "ghost"}
+                                                size="sm"
+                                                className="flex-1 h-8 gap-1"
+                                                onClick={() => setOrderingDirection("asc")}
+                                            >
+                                                <ArrowUp className="h-3 w-3" />
+                                                Asc
+                                            </Button>
+                                            <Button
+                                                variant={orderingDirection === "desc" ? "secondary" : "ghost"}
+                                                size="sm"
+                                                className="flex-1 h-8 gap-1"
+                                                onClick={() => setOrderingDirection("desc")}
+                                            >
+                                                <ArrowDown className="h-3 w-3" />
+                                                Desc
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                         <Button
                             variant={groupByProject ? "default" : "outline"}
                             size="sm"
@@ -401,7 +455,7 @@ export function TasksCard(
                             disabled={isPending || isLoading}
                             tooltip="Group by project"
                         >
-                            <FolderTree className="h-4 w-4"/>
+                            <FolderTree className="h-4 w-4" />
                         </Button>
                     </div>
                     <div className="flex items-center justify-between w-full">
@@ -429,19 +483,20 @@ export function TasksCard(
                     // Show loading state
                     Array(5)
                         .fill(null)
-                        .map((_, i) => <TaskDisplay key={i}/>)
+                        .map((_, i) => <TaskDisplay key={i} />)
                 ) : tasks?.length > 0 ? (
                     // Show tasks, grouped or ungrouped based on the groupByProject state
                     groupByProject ? (
                         // Grouped by project
                         Object.entries(groupedTodos)
+                            .filter(([, { tasks }]) => tasks.length > 0)
                             .sort(([, a], [, b]) => (a.name || "").localeCompare(b.name))
                             .map(([projectId, {
                                 name,
                                 tasks
                             }]) => (
                                 <div key={projectId} className="mb-2 ">
-                                    <h3 className="font-medium text-sm rounded-md">{tasks.length > 0 ? tasks[0].project?.title : name}</h3>
+                                    <h3 className="font-medium text-sm rounded-md">{name}</h3>
                                     <div className="border-l ml-1 pl-1">
                                         {tasks.map(
                                             (
@@ -472,7 +527,7 @@ export function TasksCard(
                                         task={task}
                                         orderedBy={orderBy}
                                         currentLimit={limit}
-                                        currentDueBefore={dueBeforeDate}/>
+                                        currentDueBefore={dueBeforeDate} />
                                 ),
                             )
                     )

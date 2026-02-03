@@ -11,6 +11,25 @@ type Existing = lib.Schema.Project.Select
 // ## Create
 
 export async function createProject(userId: string, title: string, description?: string) {
+    if (typeof title === 'string' && title.trim() === '') {
+        throw new Error("Title cannot be empty")
+    }
+
+    // Check if a project with the same title already exists
+    const existingProject = await lib.db
+        .select()
+        .from(table)
+        .where(lib.and(
+            lib.eq(table.title, title),
+            lib.eq(table.user_id, userId),
+            lib.isNull(table.deleted_at),
+        ))
+        .limit(1) as Existing[]
+
+    if (existingProject && existingProject.length > 0) {
+        throw new Error("A project with this title already exists")
+    }
+
     const result = await lib.db
         .insert(table)
         .values({
@@ -75,48 +94,37 @@ export async function getProjectByTitle(userId: string, title: string): Promise<
     return dbresult[0];
 }
 
-export async function getProjects(userId: string, limit = 50): Promise<Existing[]> {
-    return await lib.db
+interface GetProjectsOptions {
+    limit?: number
+    includeNoProject?: boolean
+    includeCompleted?: boolean
+}
+
+export async function getProjects(userId: string, options: GetProjectsOptions = {}): Promise<Existing[]> {
+    const { limit = 50, includeNoProject = true, includeCompleted = true } = options
+
+    const conditions = [
+        lib.isNull(table.deleted_at),
+        lib.eq(table.user_id, userId),
+    ]
+
+    // Exclude completed projects if requested
+    if (!includeCompleted) {
+        conditions.push(lib.eq(table.completed, false))
+    }
+
+    const projects = await lib.db
         .select()
         .from(table)
-        .where(lib.and(
-            lib.isNull(table.deleted_at),
-            lib.eq(table.user_id, userId),
-        ))
-        .groupBy(table.id)
+        .where(lib.and(...conditions))
+        .orderBy(lib.asc(table.title))
         .limit(limit === -1 ? Number.MAX_SAFE_INTEGER : limit) as Existing[]
-}
 
-export async function getProjectsWithTasks(userId: string, completed?: boolean, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted?: boolean): Promise<Existing[]> {
-    const projectsIds = (await lib.db
-        .selectDistinct({
-            id: lib.Schema.Task.Task.table.project_id,
-        })
-        .from(lib.Schema.Task.Task.table)
-        .where(lib.and(
-            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
-            completed ? lib.isNotNull(lib.Schema.Task.Task.table.completed_at) : completed === false ? lib.isNull(lib.Schema.Task.Task.table.completed_at) : lib.sql`1 = 1`,
-            taskDeleted ? lib.isNotNull(lib.Schema.Task.Task.table.deleted_at) : taskDeleted === false ? lib.isNull(lib.Schema.Task.Task.table.deleted_at) : lib.sql`1 = 1`,
-            taskCompleted ? lib.isNotNull(lib.Schema.Task.Task.table.completed_at) : taskCompleted === false ? lib.isNull(lib.Schema.Task.Task.table.completed_at) : lib.sql`1 = 1`,
-            taskDueDate ? lib.lte(lib.Schema.Task.Task.table.due, taskDueDate) : lib.sql`1 = 1`,
-        ))).map(row => row.id)
-
-    if (projectsIds.length === 0) {
-        return []
-    }
-
-    const projects: Existing[] = await lib.db
-        .select()
-        .from(table)
-        .where(lib.and(
-            lib.inArray(table.id, projectsIds.filter(id => id !== null)),
-        ))
-
-    if (projectsIds.includes(null)) {
-        projects.push({
+    if (includeNoProject) {
+        projects.unshift({
             id: -1,
-            title: "No project",
-            description: null,
+            title: "No Project",
+            description: "All entities without a project",
             completed: false,
             created_at: new Date(0),
             updated_at: new Date(0),
@@ -125,138 +133,130 @@ export async function getProjectsWithTasks(userId: string, completed?: boolean, 
         })
     }
 
-    return projects;
-}
-
-export async function getCompletedProjectsWithTasks(userId: string, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted: boolean = false) {
-    return getProjectsWithTasks(userId, true, taskDeleted, taskDueDate, taskCompleted);
-}
-
-export async function getUncompletedProjectsWithTasks(userId: string, taskDeleted?: boolean, taskDueDate?: Date, taskCompleted: boolean = false) {
-    return getProjectsWithTasks(userId, false, taskDeleted, taskDueDate, taskCompleted);
-}
-
-export async function getProjectsWithNotes(
-    userId: string,
-) {
-    const projectsIds = (await lib.db
-        .selectDistinct({
-            id: lib.Schema.Note.Note.table.project_id,
-        })
-        .from(lib.Schema.Note.Note.table)
-        .where(lib.and(
-            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
-        ))).map(row => row.id)
-
-    if (projectsIds.length === 0) {
-        return []
-    }
-
-    const projects: Existing[] = await lib.db
-        .select()
-        .from(table)
-        .where(lib.and(
-            lib.inArray(table.id, projectsIds.filter(id => id !== null)),
-        ))
-
-    if (projectsIds.includes(null)) {
-        projects.push({
-            id: -1,
-            title: "No project",
-            description: null,
-            completed: false,
-            created_at: new Date(0),
-            updated_at: new Date(0),
-            deleted_at: null,
-            user_id: userId,
-        })
-    }
-
-    return projects;
+    return projects
 }
 
 // ## Update
 
-export async function updateProject(userId: string, title: string, new_title?: string, description?: string) {
+export async function updateProject(userId: string, id: number, title?: string, description?: string, completed?: boolean) {
+    const updateData: any = {
+        updated_at: lib.sql`CURRENT_TIMESTAMP`,
+    }
+    
+    if (title !== undefined) {
+        // Check if another project with the same title exists
+        const existingProject = await lib.db
+            .select()
+            .from(table)
+            .where(lib.and(
+                lib.eq(table.title, title),
+                lib.eq(table.user_id, userId),
+                lib.isNull(table.deleted_at),
+                lib.not(lib.eq(table.id, id)), // Exclude current project
+            ))
+            .limit(1) as Existing[]
+
+        if (existingProject && existingProject.length > 0) {
+            throw new Error("A project with this title already exists")
+        }
+
+        updateData.title = title
+    }
+    
+    if (description !== undefined) {
+        updateData.description = description
+    }
+    
+    if (completed !== undefined) {
+        updateData.completed = completed
+    }
+    
     const result = await lib.db
         .update(table)
-        .set({
-            title: new_title ? new_title : title,
-            description: description,
-            updated_at: lib.sql`CURRENT_TIMESTAMP`,
-        })
+        .set(updateData)
         .where(lib.and(
-            lib.eq(table.title, title),
+            lib.eq(table.id, id),
             lib.eq(table.user_id, userId),
         ))
-        .returning({title: table.title})
+        .returning({id: table.id, title: table.title})
 
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')
 
-    if (!result) {
+    if (!result || result.length === 0) {
         return null
     }
 
-    return result[0].title
+    return result[0]
 }
 
-export async function completeProject(userId: string, title: string) {
-    const result = await lib.db
-        .update(table)
-        .set({
-            completed: true,
-            updated_at: lib.sql`CURRENT_TIMESTAMP`,
-        })
+// ## Merge
+
+export async function mergeProjects(userId: string, sourceProjectId: number, targetProjectId: number) {
+    // First, reassign all tasks from source project to target project
+    await lib.db.update(lib.Schema.Task.Task.table)
+        .set({ project_id: targetProjectId })
         .where(lib.and(
-            lib.eq(table.title, title),
-            lib.eq(table.user_id, userId),
+            lib.eq(lib.Schema.Task.Task.table.project_id, sourceProjectId),
+            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
         ))
-        .returning({title: table.title})
 
-    // Revalidate all pages that might show projects
-    lib.revalidatePath("/my", 'layout')
-
-    if (!result) {
-        return null
-    }
-
-    return result[0].title
-}
-
-export async function uncompleteProject(userId: string, title: string) {
-    const result = await lib.db
-        .update(table)
-        .set({
-            completed: false,
-            updated_at: lib.sql`CURRENT_TIMESTAMP`,
-        })
+    // Reassign all notes from source project to target project
+    await lib.db.update(lib.Schema.Note.Note.table)
+        .set({ project_id: targetProjectId })
         .where(lib.and(
-            lib.eq(table.title, title),
-            lib.eq(table.user_id, userId),
+            lib.eq(lib.Schema.Note.Note.table.project_id, sourceProjectId),
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
         ))
-        .returning({title: table.title})
 
-    // Revalidate all pages that might show projects
-    lib.revalidatePath("/my", 'layout')
-
-    if (!result) {
-        return null
-    }
-
-    return result[0].title
-}
-
-// ## Delete
-
-export async function deleteProject(userId: string, title: string) {
+    // Then soft-delete the source project
     const result = await lib.db.update(table)
         .set({
             deleted_at: lib.sql`CURRENT_TIMESTAMP`,
             updated_at: lib.sql`CURRENT_TIMESTAMP`
         })
         .where(lib.and(
-            lib.eq(table.title, title),
+            lib.eq(table.id, sourceProjectId),
+            lib.eq(table.user_id, userId),
+        ))
+        .returning({title: table.title})
+
+    // Revalidate all pages that might show projects
+    lib.revalidatePath("/my", 'layout')
+
+    if (result && result.length > 0) {
+        return result[0].title
+    }
+
+    return null
+}
+
+// ## Delete
+
+export async function deleteProject(userId: string, id: number) {
+    // First, unlink all tasks and notes from this project
+    await lib.db.update(lib.Schema.Task.Task.table)
+        .set({ project_id: null })
+        .where(lib.and(
+            lib.eq(lib.Schema.Task.Task.table.project_id, id),
+            lib.eq(lib.Schema.Task.Task.table.user_id, userId),
+        ))
+
+    await lib.db.update(lib.Schema.Note.Note.table)
+        .set({ project_id: null })
+        .where(lib.and(
+            lib.eq(lib.Schema.Note.Note.table.project_id, id),
+            lib.eq(lib.Schema.Note.Note.table.user_id, userId),
+        ))
+
+    // Then soft-delete the project
+    const result = await lib.db.update(table)
+        .set({
+            deleted_at: lib.sql`CURRENT_TIMESTAMP`,
+            updated_at: lib.sql`CURRENT_TIMESTAMP`
+        })
+        .where(lib.and(
+            lib.eq(table.id, id),
             lib.eq(table.user_id, userId),
         ))
         .returning({title: table.title})

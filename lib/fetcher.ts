@@ -20,3 +20,23 @@ export const fetcher = async (url: string, api_key: string) => {
   return res.json()
 }
 
+/**
+ * Base fetch wrapper with auth
+ */
+export async function fetchWithAuth<T>(url: string, apiKey: string, options?: RequestInit): Promise<T> {
+    const res = await fetch(url, {
+        ...options,
+        headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            ...options?.headers,
+        }
+    })
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Unknown error" }))
+        throw new Error(errorData.message || errorData.error || `HTTP ${res.status}`)
+    }
+
+    return res.json()
+}

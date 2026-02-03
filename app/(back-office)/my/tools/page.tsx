@@ -1,6 +1,7 @@
 import type React from 'react';
 import { isToolCard, isToolsCategorie, type ToolCardProps, tools, ToolsCategorieProps } from '@/lib/tools-data';
 import Link from 'next/link';
+import { devEnv } from '@/lib/utils';
 
 function ToolCard(tool: ToolCardProps) {
   function ToolCardLayout(tool: ToolCardProps) {
@@ -15,7 +16,7 @@ function ToolCard(tool: ToolCardProps) {
     );
   }
 
-  if (tool.available || process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
+  if (tool.available || devEnv()) {
     return (
       <Link
         href={tool.href}
@@ -36,7 +37,7 @@ function ToolCard(tool: ToolCardProps) {
 function ToolsCategorie(categorie: ToolsCategorieProps) {
   return (
     <div className={'group/category'}>
-      <header className={'flex flex-col lg:flex-row items-baseline lg:gap-6'}>
+      <header className={'flex flex-col md:flex-row items-baseline md:gap-4 lg:gap-6'}>
         <h2 className="page-title">{categorie.name}</h2>
         <p className="text-muted-foreground mb-6 lg:opacity-0 duration-300 lg:group-hover/category:opacity-100">
           {categorie.description}

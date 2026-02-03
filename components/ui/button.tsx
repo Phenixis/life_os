@@ -5,6 +5,7 @@ import {cva, type VariantProps} from "class-variance-authority"
 import {cn} from "@/lib/utils"
 
 import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip"
+import {Loader2, Check, X} from "lucide-react"
 
 const buttonVariants = cva(
     "cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -41,20 +42,47 @@ export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement>,
         VariantProps<typeof buttonVariants> {
     asChild?: boolean,
-    tooltip?: string
+    tooltip?: string,
+    loading?: boolean,
+    success?: boolean,
+    error?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({className, variant, size, asChild = false, tooltip, ...props}, ref) => {
+    ({className, variant, size, asChild = false, tooltip, loading, success, error, children, disabled, ...props}, ref) => {
         const Comp = asChild ? Slot : "button"
+        
+        const getContent = () => {
+            if (loading) {
+                return <Loader2 className="h-4 w-4 animate-spin" />
+            }
+            if (success) {
+                return <Check className="h-4 w-4" />
+            }
+            if (error) {
+                return <X className="h-4 w-4" />
+            }
+            return children
+        }
+        
+        const isDisabled = disabled || loading || success
+        
         return (
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Comp
-                        className={cn(buttonVariants({variant, size, className}))}
+                        className={cn(
+                            buttonVariants({variant, size, className}),
+                            success && "bg-green-600 hover:bg-green-600",
+                            error && "bg-destructive hover:bg-destructive",
+                            !disabled && "disabled:opacity-100"
+                        )}
                         ref={ref}
+                        disabled={isDisabled}
                         {...props}
-                    />
+                    >
+                        {getContent()}
+                    </Comp>
                 </TooltipTrigger>
                 {
                     tooltip && (

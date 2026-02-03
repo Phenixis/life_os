@@ -1,8 +1,8 @@
 "use client"
 
-import {useCallback, useEffect, useState} from "react"
-import {Moon, Sun} from "lucide-react"
-import {cn} from "@/lib/utils"
+import { useCallback, useEffect, useState } from "react"
+import { Moon, Sun } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
     Dialog,
     DialogContent,
@@ -11,22 +11,22 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import {Button} from "@/components/ui/button"
-import {type DarkModeCookie} from "@/lib/flags"
-import {useDarkMode} from "@/hooks/use-dark-mode"
-import {useAutoDarkModeTimer} from "@/hooks/use-auto-dark-mode-timer"
+import { Button } from "@/components/ui/button"
+import { type DarkModeCookie } from "@/lib/flags"
+import { useDarkMode } from "@/hooks/use-dark-mode"
+import { useAutoDarkModeTimer } from "@/hooks/use-auto-dark-mode-timer"
 
 export default function DarkModeToggle({
-                                           className,
-                                           initialCookie,
-                                       }: {
+    className,
+    initialCookie,
+}: {
     initialCookie: DarkModeCookie
     className?: string
 }) {
     const [cookie, setCookie] = useState<DarkModeCookie>(initialCookie)
     const [showAutoDarkModeDialog, setShowAutoDarkModeDialog] = useState(false)
 
-    const {darkMode, isLoading, toggleDarkMode, shouldShowAutoDarkModeDialog, updateDarkModeSettings} = useDarkMode()
+    const { darkMode, isLoading, toggleDarkMode, shouldShowAutoDarkModeDialog, updateDarkModeSettings } = useDarkMode()
 
     // Handle automatic dark mode timer updates
     useAutoDarkModeTimer(cookie, async (newDarkMode: boolean, newCookie: DarkModeCookie) => {
@@ -88,7 +88,7 @@ export default function DarkModeToggle({
                     className,
                 )}
             >
-                {cookie.dark_mode ? <Moon/> : <Sun/>}
+                {cookie.dark_mode ? <Moon /> : <Sun />}
             </div>
 
             {!cookie.has_jarvis_asked_dark_mode && (
@@ -98,8 +98,8 @@ export default function DarkModeToggle({
                             <DialogTitle>Hi sir, Jarvis Here</DialogTitle>
                             <DialogDescription>
                                 It&apos;s getting late.
-                                <br/>
-                                <br/>
+                                <br />
+                                <br />
                                 Do you want me to automatically turn on dark mode
                                 between {cookie.startHour < 10 ? "0" + cookie.startHour : cookie.startHour}:{cookie.startMinute < 10 ? "0" + cookie.startMinute : cookie.startMinute} and {cookie.endHour}:
                                 {cookie.endMinute < 10 && "0"}

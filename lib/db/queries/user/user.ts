@@ -1,9 +1,9 @@
 "use server"
 
 import * as lib from "../lib"
-import {hashPassword} from "@/lib/utils/password"
-import {getClientSession} from "@/lib/auth/session"
-import {DarkModeCookie} from "@/lib/flags"
+import { hashPassword } from "@/lib/utils/password"
+import { getClientSession } from "@/lib/auth/session"
+import { DarkModeCookie } from "@/lib/flags"
 
 const table = lib.Schema.User.User.table
 type Existing = lib.Schema.User.User.Select
@@ -222,10 +222,19 @@ export async function getAllUsers() {
     return users
 }
 
+export async function getNbUsers() {
+    const result = await lib.db.select({
+        count: lib.count(table.id)
+    })
+        .from(table)
+
+    return result[0].count
+}
+
 export async function updateDarkModePreferences({
-                                                    userId,
-                                                    darkModeCookie
-                                                }: {
+    userId,
+    darkModeCookie
+}: {
     userId: string
     darkModeCookie: DarkModeCookie
 }) {
@@ -247,19 +256,19 @@ export async function updateDarkModePreferences({
         // Revalidate the flags to update the theme
         lib.revalidateTag("flags", "max")
 
-        return {success: true}
+        return { success: true }
     } catch (error) {
         console.error("Failed to update dark mode preferences:", error)
-        return {success: false, error: "Failed to update preferences"}
+        return { success: false, error: "Failed to update preferences" }
     }
 }
 
 export async function updateUserDraftNote({
-                                              userId,
-                                              note_title,
-                                              note_content,
-                                              note_project_title
-                                          }: {
+    userId,
+    note_title,
+    note_content,
+    note_project_title
+}: {
     userId: string
     note_title: string
     note_content: string
@@ -275,19 +284,19 @@ export async function updateUserDraftNote({
             })
             .where(lib.eq(table.id, userId))
 
-        return {success: true}
+        return { success: true }
     } catch (error) {
         console.error("Failed to update draft note:", error)
-        return {success: false, error: "Failed to update draft"}
+        return { success: false, error: "Failed to update draft" }
     }
 }
 
 export async function updateUserProfile({
-                                            userId,
-                                            first_name,
-                                            last_name,
-                                            email
-                                        }: {
+    userId,
+    first_name,
+    last_name,
+    email
+}: {
     userId: string
     first_name: string
     last_name: string
@@ -304,17 +313,17 @@ export async function updateUserProfile({
             })
             .where(lib.eq(table.id, userId))
 
-        return {success: true}
+        return { success: true }
     } catch (error) {
         console.error("Failed to update user profile:", error)
-        return {success: false, error: "Failed to update profile"}
+        return { success: false, error: "Failed to update profile" }
     }
 }
 
 export async function updateUserPassword({
-                                             userId,
-                                             newPassword
-                                         }: {
+    userId,
+    newPassword
+}: {
     userId: string
     newPassword: string
 }) {
@@ -329,10 +338,10 @@ export async function updateUserPassword({
             })
             .where(lib.eq(table.id, userId))
 
-        return {success: true}
+        return { success: true }
     } catch (error) {
         console.error("Failed to update user password:", error)
-        return {success: false, error: "Failed to update password"}
+        return { success: false, error: "Failed to update password" }
     }
 }
 
@@ -354,7 +363,7 @@ export async function updateUserStripeCustomerId(userId: string, stripeCustomerI
 
         lib.revalidateTag(`user-${userId}`, "max")
 
-        return {success: true}
+        return { success: true }
     } catch (error) {
         console.error("Error updating user Stripe customer ID:", error)
         return {

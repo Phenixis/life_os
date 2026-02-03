@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import { Fragment } from "react"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -43,10 +43,21 @@ export function ConfirmationDialog({
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
-                    <AlertDialogDescription>{description}</AlertDialogDescription>
+                    <AlertDialogDescription>
+                        {
+                            description.split('\n').map((line, index) => (
+                                <Fragment key={index}>
+                                    {line}
+                                    <br />
+                                </Fragment>
+                            ))
+                        }
+                    </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>{cancelText}</AlertDialogCancel>
+                    <AlertDialogCancel>
+                        {cancelText}
+                    </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={handleConfirm}
                         className={variant === "destructive" ? "bg-red-600 hover:bg-red-700" : ""}

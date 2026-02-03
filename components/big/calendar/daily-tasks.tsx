@@ -47,6 +47,11 @@ export function DailyTasks({ dayStart, dayEnd, showNumberOfTasks = true, onDataS
   });
 
   const combinedTasks = useMemo(() => {
+    // Guard against undefined arrays
+    if (!uncompletedTasks || !completedTasks) {
+      return []
+    }
+
     const taskMap = new Map<number, (typeof uncompletedTasks)[number]>();
     uncompletedTasks.forEach(task => {
       taskMap.set(task.id, task);

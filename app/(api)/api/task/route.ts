@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
 
   const searchParams = request.nextUrl.searchParams;
   const completedParam = searchParams.get('completed');
-  const orderBy = searchParams.get('orderBy') as keyof Task.Task.Select | null;
+  const orderByParam = searchParams.get('orderBy');
+  const orderBy = orderByParam && orderByParam in ({} as Task.Task.Select)
+    ? orderByParam as keyof Task.Task.Select
+    : null;
   const limitParam = searchParams.get('limit');
   const orderingDirection = searchParams.get('orderingDirection') as 'asc' | 'desc' | undefined;
   const projectIds = searchParams.get('projectIds')
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest) {
   const dueBefore = searchParams.get('dueBefore') ? new Date(searchParams.get('dueBefore') as string) : undefined;
   const dueAfter = searchParams.get('dueAfter') ? new Date(searchParams.get('dueAfter') as string) : undefined;
   const state = searchParams.get('state') || undefined;
-  const limit = limitParam ? Number.parseInt(limitParam) : undefined;
+  const limit = limitParam ? Number.parseInt(limitParam) : -1;
   const completed: boolean | undefined =
     completedParam === 'true' ? true : completedParam === 'false' ? false : undefined;
 
@@ -31,17 +34,17 @@ export async function GET(request: NextRequest) {
     const tasks =
       completed === true
         ? await TaskQueries.Task.getCompletedTasks(
-            verification.userId,
-            orderBy || undefined,
-            orderingDirection,
-            limit,
-            projectIds,
-            excludedProjectIds,
-            dueBefore,
-            dueAfter
-          )
+          verification.userId,
+          orderBy || undefined,
+          orderingDirection,
+          limit,
+          projectIds,
+          excludedProjectIds,
+          dueBefore,
+          dueAfter
+        )
         : completed === false
-        ? await TaskQueries.Task.getUncompletedTasks(
+          ? await TaskQueries.Task.getUncompletedTasks(
             verification.userId,
             orderBy || undefined,
             orderingDirection,
@@ -51,7 +54,7 @@ export async function GET(request: NextRequest) {
             dueBefore,
             dueAfter
           )
-        : await TaskQueries.Task.getTasks(
+          : await TaskQueries.Task.getTasks(
             verification.userId,
             orderBy || undefined,
             orderingDirection,
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, importance, dueDate, duration, project, toDoAfterId } = body;
+    const { title, importance, dueDate, duration, project } = body;
 
     // Validation
     if (isEmpty(title) || isEmpty(dueDate) || isEmpty(duration) || isEmpty(importance)) {
@@ -93,13 +96,12 @@ export async function POST(request: NextRequest) {
       if (foundProject) {
         projectId = foundProject.id;
       } else {
-        projectId = await ProjectQueries.createProject(verification.userId, project.title);
+        try {
+          projectId = await ProjectQueries.createProject(verification.userId, project.title)
+        } catch (error) {
+          console.error("Error creating project while creating note:", error)
+        }
       }
-    }
-
-    const toDoAfter = toDoAfterId && (await TaskQueries.Task.getTaskById(Number(toDoAfterId)));
-    if (!toDoAfter && toDoAfterId != '-1') {
-      return NextResponse.json({ error: 'Invalid toDoAfterId' }, { status: 400 });
     }
 
     const dueDateAtMidnight = new Date(dueDate);
@@ -112,10 +114,6 @@ export async function POST(request: NextRequest) {
       project_id: projectId,
       user_id: verification.userId
     } as Task.Task.Insert);
-
-    if (toDoAfterId && toDoAfterId != '-1') {
-      await TaskQueries.Task.createTaskToDoAfter(taskId, Number(toDoAfterId));
-    }
 
     return NextResponse.json({ id: taskId }, { status: 201 });
   } catch (error) {
@@ -131,7 +129,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, title, importance, dueDate: initialDueDate, duration, project, toDoAfterId, state } = body;
+    const { id, title, importance, dueDate: initialDueDate, duration, project, state } = body;
 
     // Validation
     if (!id || !title || importance === undefined || initialDueDate === undefined || duration === undefined) {
@@ -141,49 +139,15 @@ export async function PUT(request: NextRequest) {
     let dueDate = initialDueDate;
 
     let projectId = project.id >= 0 ? project.id : undefined;
-    if (projectId === undefined) {
+    if (projectId === undefined && project.title != '') {
       const foundProject = await ProjectQueries.getProjectByTitle(verification.userId, project.title);
       if (foundProject) {
         projectId = foundProject.id;
       } else {
-        projectId = await ProjectQueries.createProject(verification.userId, project.title);
-      }
-    }
-
-    // Validate toDoAfterId if provided
-    if (toDoAfterId !== undefined) {
-      // Check if the referenced task exists
-      if (toDoAfterId !== -1) {
-        const toDoAfter = await TaskQueries.Task.getTaskById(Number(toDoAfterId));
-        if (!toDoAfter) {
-          return NextResponse.json({ error: 'Invalid toDoAfterId' }, { status: 400 });
-        }
-        if (new Date(toDoAfter.due) > new Date(dueDate)) {
-          dueDate = toDoAfter.due;
-        }
-
-        // Get existing toDoAfter relations for this task
-        const existingRelations = await TaskQueries.Task.getTasksToDoAfter(Number(id));
-
-        const filteredRelations = existingRelations.filter(relation => relation.deleted_at === null);
-
-        // Create new relation if there isn't already one, toDoAfterId is provided and not -1
-        if (filteredRelations.length === 0 && toDoAfterId) {
-          await TaskQueries.Task.createTaskToDoAfter(Number(id), Number(toDoAfterId));
-        } else {
-          filteredRelations.map(async relation => {
-            const task = await TaskQueries.Task.getTaskById(relation.after_task_id);
-            if (task) {
-              await TaskQueries.Task.updateTask(task.id, {
-                user_id: verification.userId,
-                title: task.title,
-                importance: task.importance,
-                due: new Date(task.due) < new Date(dueDate) ? new Date(dueDate) : new Date(task.due),
-                duration: task.duration,
-                project_id: task.project_id || undefined
-              });
-            }
-          });
+        try {
+          projectId = await ProjectQueries.createProject(verification.userId, project.title)
+        } catch (error) {
+          console.error("Error creating project while creating note:", error)
         }
       }
     }
@@ -235,33 +199,6 @@ export async function PATCH(request: NextRequest) {
 
     const task = await TaskQueries.Task.getTaskById(typeof taskId === 'number' ? taskId : taskId.done_task_id);
 
-    if (task) {
-      // Si le task a une relation toDoAfter, on la supprime
-      const existingToDoAfterRelations = await TaskQueries.Task.getTasksToDoAfter(
-        typeof taskId === 'number' ? taskId : taskId.done_task_id
-      );
-
-      const filteredToDoAfterRelations = existingToDoAfterRelations.filter(relation => relation.deleted_at === null);
-
-      if (filteredToDoAfterRelations.length > 0) {
-        for (const relation of filteredToDoAfterRelations) {
-          await TaskQueries.Task.deleteTaskToDoAfterById(relation.id);
-        }
-      }
-
-      const existingToDoBeforeRelations = await TaskQueries.Task.getTasksToDoBefore(
-        typeof taskId === 'number' ? taskId : taskId.done_task_id
-      );
-
-      const filteredToDoBeforeRelations = existingToDoBeforeRelations.filter(relation => relation.deleted_at === null);
-
-      if (filteredToDoBeforeRelations.length > 0) {
-        for (const relation of filteredToDoBeforeRelations) {
-          await TaskQueries.Task.deleteTaskToDoAfterById(relation.id);
-        }
-      }
-    }
-
     return NextResponse.json({ id: typeof taskId === 'number' ? taskId : taskId.done_task_id });
   } catch (error) {
     console.error('Error toggling task completion:', error);
@@ -283,12 +220,6 @@ export async function DELETE(request: NextRequest) {
     }
 
     const id = Number(idParam);
-
-    // Delete any task dependency relationships
-    // 1. Where this task depends on another task
-    await TaskQueries.Task.deleteTaskToDoAfterByTodoId(id);
-    // 2. Where other tasks depend on this task
-    await TaskQueries.Task.deleteTaskToDoAfterByAfterId(id);
 
     const taskId = await TaskQueries.Task.deleteTaskById(verification.userId, id);
 

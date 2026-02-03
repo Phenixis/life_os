@@ -1,4 +1,4 @@
-import {Car, Dumbbell, Film, Grid2X2, LayoutGrid, MessagesSquare, ShoppingBag} from "lucide-react"
+import {Car, CigaretteOff, Dumbbell, Film, Grid2X2, LayoutGrid, MessagesSquare, ShoppingBag} from "lucide-react"
 import type {ReactNode} from "react"
 
 export interface ToolsCategorieProps {
@@ -54,6 +54,14 @@ export const tools: (ToolCardProps | ToolsCategorieProps)[] = [
                 available: true,
                 alternativeNames: ["workout", "exercise", "gym"],
             },
+            {
+                name: "Addiction Tracker",
+                href: "/my/tools/addiction-tracker",
+                icon: <CigaretteOff className="size-4"/>,
+                description: "Track your progress in quitting an addiction, visualize your improvements and stay motivated.",
+                available: true,
+                alternativeNames: ["addiction", "quit", "stop"],
+            }
         ]
     },
     {

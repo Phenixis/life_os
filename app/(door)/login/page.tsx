@@ -7,6 +7,7 @@ import type {ActionState} from "@/proxy"
 import {Loader} from "lucide-react"
 import {Card, CardContent, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card"
 import {Button} from "@/components/ui/button"
+import {PasswordInput} from "@/components/ui/password-input"
 import {InputOTP, InputOTPGroup, InputOTPSlot,} from "@/components/ui/input-otp"
 import {REGEXP_ONLY_DIGITS} from "input-otp"
 import Link from "next/link"
@@ -116,8 +117,7 @@ export default function Login() {
                         </InputOTPGroup>
                     </InputOTP>
                     <Label required>Enter your password</Label>
-                    <Input
-                        type="password"
+                    <PasswordInput
                         value={password}
                         ref={passwordRef}
                         onChange={(e) => setPassword(e.target.value)}

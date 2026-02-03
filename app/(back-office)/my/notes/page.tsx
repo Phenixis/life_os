@@ -7,9 +7,10 @@ import { NoteWithProject } from "@/lib/db/queries/note"
 import { useState, useMemo, useEffect } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { FolderOpen } from "lucide-react"
+import { FolderOpen, PanelLeft } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useSwipeToOpen } from "@/hooks/use-swipe-to-open"
 
 export default function NotesPage() {
     const mobile = useIsMobile()
@@ -67,6 +68,13 @@ export default function NotesPage() {
         setIsMobileOpen(mobile)
     }, [mobile])
 
+    // Swipe gesture detection for opening sidebar
+    useSwipeToOpen({
+        isOpen: isMobileOpen,
+        onOpen: () => setIsMobileOpen(true),
+        isEnabled: mobile,
+    })
+
     const handleNoteSelect = (note: NoteWithProject) => {
         setSelectedNote(note)
         setIsMobileOpen(false) // Close drawer on mobile after selecting
@@ -95,17 +103,17 @@ export default function NotesPage() {
 
             {/* Mobile Sidebar - Sheet/Drawer */}
             <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-                <SheetTrigger asChild className="md:hidden fixed bottom-4 left-4 z-50">
+                <SheetTrigger asChild className="md:hidden fixed bottom-20 left-4 z-50">
                     <Button 
                         size="sm" 
                         variant="outline" 
                         className="flex items-center gap-2 shadow-md bg-background/95 backdrop-blur"
                     >
-                        <FolderOpen className="h-4 w-4" />
-                        {/* <span className="text-sm">Notes</span> */}
+                        <PanelLeft className="size-4"/>
+                        <span className="sr-only">Notes sidebar</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-80 h-full flex flex-col">
+                <SheetContent side="left" className="p-0 w-80 h-full flex flex-col" showCloseButton={false}>
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full p-4 text-center text-muted-foreground">
                             Loading notes...

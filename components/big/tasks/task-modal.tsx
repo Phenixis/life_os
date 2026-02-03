@@ -1,37 +1,27 @@
 "use client"
 
-import React, {useCallback, useEffect, useRef, useState} from "react"
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog"
-import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {Label} from "@/components/ui/label"
-import type {Project, Task} from "@/lib/db/schema"
-import {ChevronDown, CircleHelp, Minus, Plus} from "lucide-react"
-import {useSWRConfig} from "swr"
-import {Calendar, TaskCount} from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {calculateUrgency} from "@/lib/utils/task"
-import {format} from "date-fns"
-import {useDebouncedCallback} from "use-debounce"
-import {useSearchTasks} from "@/hooks/use-search-tasks"
-import {useImportanceAndDuration} from "@/hooks/use-importance-and-duration"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+import { DatePicker } from "@/components/big/date-picker"
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
-import Tooltip from "../tooltip"
-import {useUser} from "@/hooks/use-user"
-import {toast} from "sonner"
-import {simplifiedProject, tasksFilters} from "./tasks-card"
-import SearchProjectsInput from "../projects/search-projects-input"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useTaskModal } from "@/contexts/modal-commands-context"
+import { useCreateTask, useUpdateTask } from '@/hooks/queries/use-task-mutations'
+import { useImportanceAndDuration } from "@/hooks/use-importance-and-duration"
+import { useLocalStorage } from "@/hooks/use-local-storage"
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 import Help from "../help"
-import {Checkbox} from "@/components/ui/checkbox";
-import {useTaskModal} from "@/contexts/modal-commands-context";
-import {DatePicker} from "@/components/big/date-picker";
+import SearchProjectsInput from "../projects/search-projects-input"
+import { simplifiedProject, tasksFilters } from "./tasks-card"
 
 export default function TaskModal() {
-    const user = useUser().user;
-    const {isOpen, task, openModal, closeModal, dueDate: contextDueDate} = useTaskModal();
+    const { isOpen, task, openModal, closeModal, dueDate: contextDueDate } = useTaskModal();
 
     // State management for the dialog
     const mode = task ? "edit" : "create"
@@ -43,7 +33,6 @@ export default function TaskModal() {
         initialDate.setHours(0, 0, 0, 0)
         return initialDate
     })
-    const [showCalendar, setShowCalendar] = useState(false)
 
     const [project, setProject] = useState<simplifiedProject>(task && task.project ? {
         title: task.project.title,
@@ -56,7 +45,7 @@ export default function TaskModal() {
     // Keep project state in sync when the task prop arrives/changes (e.g., when opening in edit mode)
     useEffect(() => {
         if (task && task.project) {
-            setProject({title: task.project.title, id: task.project.id})
+            setProject({ title: task.project.title, id: task.project.id })
         }
         if (task) {
             setImportance(task.importance?.toString() || "0")
@@ -73,21 +62,17 @@ export default function TaskModal() {
         }
     }, [task, contextDueDate])
 
-    const [toDoAfter, setToDoAfter] = useState<number>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].id : -1)
-    const [toDoAfterInputValue, setToDoAfterInputValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
-    const [toDoAfterDebounceValue, setToDoAfterDebounceValue] = useState<string>(task && task.tasksToDoAfter && task.tasksToDoAfter.length > 0 && task.tasksToDoAfter[0].deleted_at === null ? task.tasksToDoAfter[0].title : "")
-    const {tasks, isLoading: isLoadingTasks, isError: isErrorTasks} = useSearchTasks({
-        query: toDoAfterDebounceValue, limit: 5, excludeIds: task ? [
-            task.id,
-            task.tasksToDoBefore ? task.tasksToDoBefore.map((task) => task.id) : -1,
-        ].flat() : []
-    })
+    const { importanceData, durationData } = useImportanceAndDuration()
 
-    const {importanceData, durationData} = useImportanceAndDuration()
-    const {mutate} = useSWRConfig()
+    // Use localStorage hook for reading filters
+    const [taskFilters] = useLocalStorage<Partial<tasksFilters>>('tasks_filters', {})
+
+    // Mutation hooks
+    const createTaskMutation = useCreateTask()
+    const updateTaskMutation = useUpdateTask()
+
     const [formChanged, setFormChanged] = useState(false)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-    const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
 
     // Use refs to access field values
     const closeDialogRef = useRef<() => void>(() => {
@@ -106,12 +91,8 @@ export default function TaskModal() {
             initialDate.setHours(0, 0, 0, 0)
             return initialDate
         })
-        setProject({title: "", id: -1})
-        setToDoAfter(-1)
-        setToDoAfterInputValue("")
-        setToDoAfterDebounceValue("")
+        setProject({ title: "", id: -1 })
         setFormChanged(false)
-        setShowAdvancedOptions(false)
         setImportance("0")
         setDuration("0")
         if (titleRef.current) {
@@ -122,8 +103,7 @@ export default function TaskModal() {
     useEffect(() => {
         if (isOpen) {
             if (mode === "create") {
-                const raw = window.localStorage.getItem("tasks_filters")
-                const projectFromSearchParams = (JSON.parse(raw || "{}") as tasksFilters | null)?.selectedProjects
+                const projectFromSearchParams = taskFilters?.selectedProjects
 
                 setProject(projectFromSearchParams && projectFromSearchParams.length === 1 ? projectFromSearchParams[0] : {
                     title: "",
@@ -133,7 +113,7 @@ export default function TaskModal() {
         } else {
             resetForm()
         }
-    }, [isOpen])
+    }, [isOpen, taskFilters, mode, resetForm])
 
 
     // Reset form state when dialog opens
@@ -155,299 +135,56 @@ export default function TaskModal() {
             const title = titleRef.current?.value || ""
             const importanceValue = Number.parseInt(importance || "0")
             const durationValue = Number.parseInt(duration || "0")
-            const id = task?.id
 
             if (!title.trim()) {
                 isSubmittingRef.current = false
                 return
             }
 
-            const urgency = calculateUrgency(dueDate)
-            const score = importanceValue * urgency - durationValue
-            // Generate a unique temporary ID for optimistic updates (negative timestamp to avoid conflicts)
-            const optimisticId = mode === "edit" ? id : -Date.now()
-
-            const todoData = {
-                id: optimisticId,
-                user_id: user?.id,
-                title: title,
+            // Prepare data for API
+            const taskData = {
+                title: title.trim(),
                 importance: importanceValue,
-                urgency: urgency,
+                dueDate: dueDate.toISOString(),
                 duration: durationValue,
-                score: score,
-                due: dueDate,
-                project_id: project.id >= 0 ? project.id : null,
-                created_at: mode === "create" ? new Date() : task?.created_at,
-                updated_at: new Date(),
-                deleted_at: task?.deleted_at || null,
-                completed_at: task?.completed_at || null,
-                project: project.id >= 0 ? {
-                    id: project.id,
-                    title: project.title,
-                    completed: false,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                    user_id: user?.id || "",
-                    description: null,
-                    deleted_at: null,
-                } as Project.Select : null,
-                importanceDetails: {
-                    level: importanceValue,
-                    name: importanceData?.find((item) => item.level === importanceValue)?.name || "",
-                },
-                durationDetails: {
-                    level: durationValue,
-                    name: durationData?.find((item) => item.level === durationValue)?.name || "",
-                },
-                tasksToDoAfter: tasks?.filter((task) => task.id === toDoAfter).map((task) => ({
-                    ...task
-                })) || [],
-                tasksToDoBefore: task?.tasksToDoBefore || [],
-                recursive: true,
-            } as Task.Task.TaskWithRelations
+                project: {
+                    id: project.id >= 0 ? project.id : -1,
+                    title: project.title || ""
+                }
+            }
 
+            // Close modal or reset form based on keepCreating
             if (!keepCreating) {
                 closeModal()
             } else {
-                resetForm();
+                resetForm()
             }
 
-            mutate(
-                (key: unknown) => typeof key === "string" && (key === "/api/task/count" || key.startsWith("/api/task/count?")),
-                async (currentData: unknown): Promise<TaskCount[] | unknown> => {
-                    if (!Array.isArray(currentData)) return currentData
-
-                    if (mode === "create") {
-                        const updatedData: TaskCount[] = currentData.map((item: TaskCount) => {
-                            if (new Date(item.due).toDateString() === new Date(todoData.due).toDateString()) {
-                                return {
-                                    ...item,
-                                    uncompleted_count: Number(item.uncompleted_count) + 1,
-                                }
-                            }
-                            return item
-                        })
-
-                        if (!updatedData.some((item) => new Date(item.due).toDateString() === new Date(todoData.due).toDateString())) {
-                            updatedData.push({
-                                due: todoData.due.toISOString(),
-                                uncompleted_count: 1,
-                                completed_count: 0,
-                            })
-                        }
-
-                        return updatedData
-                    } else {
-                        let updatedData: TaskCount[]
-                        if (todoData.completed_at) {
-                            updatedData = currentData.map((item: TaskCount) => {
-                                if (new Date(item.due).toDateString() === new Date(todoData.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        completed_count: Number(item.completed_count) + 1,
-                                    }
-                                } else if (task?.due && new Date(item.due).toDateString() === new Date(task?.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        completed_count: Number(item.completed_count) - 1,
-                                    }
-                                }
-                                return item
-                            })
-
-                            if (!updatedData.some((item) => new Date(item.due).toDateString() === new Date(todoData.due).toDateString())) {
-                                updatedData.push({
-                                    due: todoData.due.toISOString(),
-                                    uncompleted_count: 0,
-                                    completed_count: 1,
-                                })
-                            }
-                        } else {
-                            updatedData = currentData.map((item: TaskCount) => {
-                                if (new Date(item.due).toDateString() === new Date(todoData.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        uncompleted_count: Number(item.uncompleted_count) + 1,
-                                    }
-                                } else if (task?.due && new Date(item.due).toDateString() === new Date(task?.due).toDateString()) {
-                                    return {
-                                        ...item,
-                                        uncompleted_count: Number(item.uncompleted_count) - 1,
-                                    }
-                                }
-                                return item
-                            })
-
-                            if (!updatedData.some((item) => new Date(item.due).toDateString() === new Date(todoData.due).toDateString())) {
-                                updatedData.push({
-                                    due: todoData.due.toISOString(),
-                                    uncompleted_count: 1,
-                                    completed_count: 0,
-                                })
-                            }
-                        }
-
-                        return updatedData
-                    }
-                },
-                {revalidate: false},
-            )
-
-            mutate(
-                (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
-                async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
-                    if (!Array.isArray(currentData)) return currentData
-
-                    let updatedData: Task.Task.TaskWithRelations[]
-                    if (mode === "edit") {
-                        updatedData = currentData.map((item: Task.Task.TaskWithRelations) => (item.id === id ? todoData : item.id === toDoAfter ? {
-                                ...item,
-                                tasksToDoBefore: [
-                                    ...(item.tasksToDoBefore ?? []),
-                                    {
-                                        ...todoData,
-                                        tasksToDoAfter: todoData.tasksToDoAfter?.map((task) => ({
-                                            id: -1,
-                                            task_id: task.id,
-                                            after_task_id: item.id,
-                                            created_at: new Date(),
-                                            updated_at: new Date(),
-                                            deleted_at: null,
-                                        })),
-                                        recursive: false,
-                                    } as Task.Task.TaskWithNonRecursiveRelations,
-                                ],
-                            } : item
-                        ))
-                    } else {
-                        updatedData = [todoData, ...currentData]
-                    }
-
-                    const raw = window.localStorage.getItem("tasks_filters")
-                    const savedFilters = (JSON.parse(raw || "{}") as tasksFilters | null)
-
-                    const filteredData: Task.Task.TaskWithRelations[] = updatedData.filter((item: Task.Task.TaskWithRelations) => {
-                        const dueBeforeFromSearchParams = savedFilters?.dueBeforeDate
-                        const projectsFromSearchParams = savedFilters?.selectedProjects ?? []
-                        const completedFromSearchParams = savedFilters?.completed
-
-                        if (completedFromSearchParams !== undefined && item.completed_at !== null && !completedFromSearchParams) {
-                            return false
-                        }
-
-                        if (dueBeforeFromSearchParams && item.due > new Date(dueBeforeFromSearchParams)) return false
-
-                        if (projectsFromSearchParams && projectsFromSearchParams.length > 0) {
-                            return projectsFromSearchParams.some((project: simplifiedProject) => item.project_id === project.id)
-                        }
-                        return true
-                    })
-
-                    const orderByFromSearchParams = savedFilters?.orderBy
-                    const orderingDirectionFromSearchParams = savedFilters?.orderingDirection === "desc" ? -1 : 1
-                    const sortedData: Task.Task.TaskWithRelations[] = filteredData.sort(
-                        (a: Task.Task.TaskWithRelations, b: Task.Task.TaskWithRelations) => {
-                            if (orderByFromSearchParams) {
-                                const aValue = a[orderByFromSearchParams]
-                                const bValue = b[orderByFromSearchParams]
-
-                                if (typeof aValue === "string" && typeof bValue === "string") {
-                                    return orderingDirectionFromSearchParams * aValue.localeCompare(bValue)
-                                } else if (typeof aValue === "number" && typeof bValue === "number") {
-                                    return orderingDirectionFromSearchParams * (aValue - bValue)
-                                }
-                            }
-                            // Default fallback sorting by score and title
-                            return orderingDirectionFromSearchParams * (b.score - a.score || (a.title || "").localeCompare(b.title || ""))
-                        }
-                    )
-                    const limitFromSearchParams = savedFilters?.limit
-                    return limitFromSearchParams ? sortedData.slice(0, limitFromSearchParams) : sortedData
-                },
-                {revalidate: false},
-            )
-
-            // Show success message immediately for better UX
-            toast.success(`Task ${mode === "edit" ? "updated" : "created"} successfully`)
-
-            fetch("/api/task", {
-                method: mode === "edit" ? "PUT" : "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user?.api_key}`
-                },
-                body: JSON.stringify({
-                    id: mode === "edit" ? id : undefined,
-                    title,
-                    importance: importanceValue,
-                    dueDate: dueDate.toISOString(),
-                    duration: durationValue,
-                    project: project,
-                    toDoAfterId: toDoAfter,
-                }),
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`Erreur HTTP: ${response.status}`)
-                    }
-                    return response.json()
-                })
-                .then((responseData: { id: number }) => {
-                    // After successful API call, replace the optimistic task with real data
-                    if (mode === "create") {
-                        mutate(
-                            (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
-                            async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
-                                if (!Array.isArray(currentData)) return currentData
-
-                                // Replace the optimistic task (with optimisticId) with the real task data
-                                return currentData.map((item: Task.Task.TaskWithRelations) => {
-                                    if (item.id === optimisticId) {
-                                        // Replace with real data, keeping the same position
-                                        return {
-                                            ...item,
-                                            id: responseData.id,
-                                        }
-                                    }
-                                    return item
-                                })
-                            },
-                            {revalidate: false},
-                        )
-                    }
-
-                    // Invalidate all task-related cache keys to ensure calendar and other components refresh
-                    mutate((key) => {
-                        if (typeof key === "string") {
-                            return key.startsWith("/api/task") ||
-                                key.startsWith("/api/number-of-tasks") ||
-                                key === "/api/task/count" ||
-                                key.startsWith("/api/task/count?")
-                        }
-                        return false
-                    })
-                })
-                .catch((error) => {
-                    console.error("Erreur lors de l'opération:", error)
-                    // On error, remove the optimistic update
-                    mutate(
-                        (key: unknown) => typeof key === "string" && (key === "/api/task" || key.startsWith("/api/task?")),
-                        async (currentData: unknown): Promise<Task.Task.TaskWithRelations[] | unknown> => {
-                            if (!Array.isArray(currentData)) return currentData
-
-                            // Remove the failed optimistic task
-                            return currentData.filter((item: Task.Task.TaskWithRelations) => item.id !== optimisticId)
+            // Use appropriate mutation based on mode
+            if (mode === "edit" && task?.id) {
+                updateTaskMutation.mutate(
+                    { id: task.id, data: taskData },
+                    {
+                        onSettled: () => {
+                            isSubmittingRef.current = false
                         },
-                        {revalidate: false},
-                    )
-                    toast.error(`Failed to ${mode === "edit" ? "update" : "create"} task. Try again later.`)
-                })
+                    }
+                )
+            } else {
+                createTaskMutation.mutate(
+                    taskData,
+                    {
+                        onSettled: () => {
+                            isSubmittingRef.current = false
+                        },
+                    }
+                )
+            }
 
-            resetForm();
-            isSubmittingRef.current = false
+            resetForm()
         } catch (error) {
             toast.error(`Failed to ${mode === "edit" ? "update" : "create"} task. Try again later.`)
-            console.error("Erreur lors de la soumission:", error)
+            console.error("Error submitting task:", error)
             isSubmittingRef.current = false
         }
     }
@@ -473,21 +210,6 @@ export default function TaskModal() {
     useEffect(() => {
         isSubmittingRef.current = false
     }, [isOpen])
-
-    const handleDateChange = (date: Date | undefined) => {
-        if (date) {
-            date.setHours(0, 0, 0, 0)
-            setDueDate(date)
-            setFormChanged(
-                (mode === "edit" && task && date.toDateString() !== new Date(task.due).toDateString()) || date.toDateString() !== new Date().toDateString()
-            )
-        }
-        setShowCalendar(false)
-    }
-
-    const handleToDoAfterChange = useDebouncedCallback((value: string) => {
-        setToDoAfterDebounceValue(value)
-    }, 200)
 
     // Handle dialog close attempt
     const handleCloseAttempt = () => {
@@ -529,10 +251,10 @@ export default function TaskModal() {
                 <DialogContent
                     className=""
                     aria-describedby={undefined}
-                    maxHeight="max-h-110"
+                    maxHeight="max-h-135 md:max-h-95"
                 >
                     <form id="task-form" onSubmit={handleSubmit}
-                          className="space-y-4 h-full flex flex-col justify-between">
+                        className="space-y-4 h-full flex flex-col justify-between">
                         <main className="space-y-4">
                             <DialogHeader>
                                 <DialogTitle>{mode === "edit" ? "Edit Task" : "Create Task"}</DialogTitle>
@@ -565,7 +287,7 @@ export default function TaskModal() {
                                         }}
                                     >
                                         <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select importance"/>
+                                            <SelectValue placeholder="Select importance" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {importanceData ? (
@@ -620,7 +342,7 @@ export default function TaskModal() {
                                         }}
                                     >
                                         <SelectTrigger ref={durationTriggerRef} className="w-full">
-                                            <SelectValue placeholder="Select duration"/>
+                                            <SelectValue placeholder="Select duration" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {durationData ? (
@@ -648,76 +370,6 @@ export default function TaskModal() {
                                     enabled={isOpen}
                                 />
                             </div>
-                            <Collapsible className="w-full" open={showAdvancedOptions}
-                                         onOpenChange={setShowAdvancedOptions}>
-                                <CollapsibleTrigger className="flex text-sm font-medium text-muted-foreground mb-4">
-                                    Advanced Options
-                                    <ChevronDown
-                                        className={`ml-2 h-4 w-4 duration-300 ${showAdvancedOptions && "rotate-180"}`}/>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="space-y-4">
-                                    <div className="flex space-x-4">
-                                        <div className="w-full">
-                                            <Label htmlFor="task" className="flex items-center space-x-2 pb-1">
-                                                To do before
-                                                <Tooltip
-                                                    tooltip={`Select a task that needs to be done before this task.<br/>For example, if you are ${mode === 'edit' ? "editing" : "creating"} a Task B that needs to be done after a Task A, enter the title of the Task A here.`}>
-                                                    <CircleHelp className="ml-1 size-4 text-muted-foreground"/>
-                                                </Tooltip>
-                                            </Label>
-                                            <Input
-                                                type="text"
-                                                id="task"
-                                                name="task"
-                                                value={toDoAfterInputValue}
-                                                onChange={(e) => {
-                                                    setToDoAfterInputValue(e.target.value)
-                                                    handleToDoAfterChange(e.target.value)
-                                                    setFormChanged(
-                                                        (mode === "edit" && task && e.target.value !== task.project?.title) || e.target.value !== ""
-                                                    )
-                                                }}
-                                            />
-                                            {toDoAfterInputValue && !(tasks && tasks.length == 1 && tasks[0].id == toDoAfter) && (
-                                                <div
-                                                    className="mt-1 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
-                                                    {isLoadingTasks ? (
-                                                        <div className="p-2 text-sm text-muted-foreground">Loading
-                                                            tasks...</div>
-                                                    ) : isErrorTasks ? (
-                                                        <div className="p-2 text-sm text-destructive">Error loading
-                                                            tasks</div>
-                                                    ) : tasks && tasks.length > 0 ? (
-                                                        <ul className="py-1">
-                                                            {tasks.map((currentTask, index) => (
-                                                                <li
-                                                                    key={index}
-                                                                    className="cursor-pointer px-3 py-2 text-sm lg:hover:bg-accent"
-                                                                    onClick={() => {
-                                                                        setToDoAfterInputValue(currentTask.title)
-                                                                        setToDoAfterDebounceValue(currentTask.title)
-                                                                        setToDoAfter(currentTask.id)
-                                                                        setTimeout(() => {
-                                                                            if (durationTriggerRef.current) {
-                                                                                durationTriggerRef.current.focus()
-                                                                            }
-                                                                        }, 0)
-                                                                    }}
-                                                                >
-                                                                    {currentTask.title}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : (
-                                                        <div className="p-2 text-sm text-muted-foreground">No tasks
-                                                            found</div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CollapsibleContent>
-                            </Collapsible>
                         </main>
                         <DialogFooter className="w-full sm:justify-between">
                             <div className={"flex items-center gap-2"}>

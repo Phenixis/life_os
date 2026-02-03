@@ -51,27 +51,95 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  showCloseButton?: boolean
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      {...props}
-    >
-      {children}
-      <SheetPrimitive.Close className="absolute right-4 top-5 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+>(({ side = "right", className, children, showCloseButton = true, ...props }, ref) => {
+  const [dragOffset, setDragOffset] = React.useState(0)
+  const startYRef = React.useRef(0)
+  const isDraggingRef = React.useRef(false)
+  const closeButtonRef = React.useRef<HTMLButtonElement>(null)
+  
+  // Threshold in pixels to trigger close
+  const closeThreshold = 100
+  
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Only handle swipe on bottom and top sheets
+    if (side !== "bottom" && side !== "top") return
+    
+    isDraggingRef.current = true
+    startYRef.current = e.touches[0].clientY
+  }
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingRef.current) return
+    if (side !== "bottom" && side !== "top") return
+    
+    const currentY = e.touches[0].clientY
+    const diff = currentY - startYRef.current
+    
+    // For bottom sheet: only allow dragging down (positive diff)
+    // For top sheet: only allow dragging up (negative diff)
+    if (side === "bottom" && diff > 0) {
+      setDragOffset(diff)
+    } else if (side === "top" && diff < 0) {
+      setDragOffset(diff)
+    }
+  }
+  
+  const handleTouchEnd = () => {
+    if (!isDraggingRef.current) return
+    if (side !== "bottom" && side !== "top") return
+    
+    isDraggingRef.current = false
+    
+    // Check if dragged far enough to close
+    const shouldClose = 
+      (side === "bottom" && dragOffset > closeThreshold) ||
+      (side === "top" && Math.abs(dragOffset) > closeThreshold)
+    
+    if (shouldClose) {
+      // Trigger close - don't reset dragOffset so it closes from dragged position
+      closeButtonRef.current?.click()
+    } else {
+      // Only reset drag offset if not closing (snap back to original position)
+      setDragOffset(0)
+    }
+  }
+  
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className={cn(sheetVariants({ side }), className)}
+        style={{
+          transform: dragOffset !== 0 ? `translateY(${dragOffset}px)` : undefined,
+          transition: dragOffset !== 0 ? "none" : undefined,
+        }}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <SheetPrimitive.Close 
+            ref={closeButtonRef}
+            className="absolute right-4 top-5 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        )}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  )
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

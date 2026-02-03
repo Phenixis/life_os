@@ -12,10 +12,12 @@ export function DatePicker(
         value,
         onChange,
         minDate,
+        maxDate,
     }: {
         value: Date
         onChange: (date: Date) => void
         minDate?: Date
+        maxDate?: Date
     }
 ) {
     const [showCalendar, setShowCalendar] = useState(false)
@@ -70,7 +72,12 @@ export function DatePicker(
                             if (minDate) {
                                 const min = new Date(minDate)
                                 min.setHours(0, 0, 0, 0)
-                                return date < min
+                                if (date < min) return true
+                            }
+                            if (maxDate) {
+                                const max = new Date(maxDate)
+                                max.setHours(0, 0, 0, 0)
+                                if (date > max) return true
                             }
                             return false
                         }}
@@ -84,7 +91,17 @@ export function DatePicker(
                 className="hidden md:block px-2"
                 onClick={() => {
                     const nextDate = new Date(value.getTime() + 24 * 60 * 60 * 1000)
-                    onChange(nextDate)
+                    if (maxDate) {
+                        const max = new Date(maxDate)
+                        max.setHours(0, 0, 0, 0)
+                        if (nextDate <= max) {
+                            onChange(nextDate)
+                        } else {
+                            onChange(max)
+                        }
+                    } else {
+                        onChange(nextDate)
+                    }
                 }}
             >
                 <Plus/>

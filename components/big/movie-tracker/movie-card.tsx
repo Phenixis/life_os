@@ -39,6 +39,8 @@ import { Movie } from '@/lib/db/schema';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import Tooltip from '../tooltip';
+import { DatePicker } from '@/components/big/date-picker';
+import { cn } from '@/lib/utils';
 
 interface MovieCardProps {
     movie: Movie.Movie.Select;
@@ -48,6 +50,7 @@ export function MovieCard({ movie }: MovieCardProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editRating, setEditRating] = useState(movie.user_rating || 0);
     const [editComment, setEditComment] = useState(movie.user_comment || '');
+    const [editWatchDate, setEditWatchDate] = useState<Date | undefined>(movie.watched_date ? new Date(movie.watched_date) : undefined);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isCommentExpanded, setIsCommentExpanded] = useState(false);
     const [shouldShowSeeMore, setShouldShowSeeMore] = useState(false);
@@ -85,13 +88,14 @@ export function MovieCard({ movie }: MovieCardProps) {
         try {
             await updateMovie(movie.id, {
                 user_rating: editRating > 0 ? editRating : null,
-                user_comment: editComment.trim() || null
+                user_comment: editComment.trim() || null,
+                watched_date: editWatchDate?.toISOString()
             }, {
                 optimistic: true,
                 originalMovie: movie
             });
             setIsEditing(false);
-            toast.success('Rating and comment updated!');
+            toast.success('Movie updated!');
         } catch (error: unknown) {
             console.error('Failed to update movie:', error);
             toast.error('Failed to update');
@@ -101,12 +105,14 @@ export function MovieCard({ movie }: MovieCardProps) {
     const handleEdit = () => {
         setEditRating(movie.user_rating || 0);
         setEditComment(movie.user_comment || '');
+        setEditWatchDate(movie.watched_date ? new Date(movie.watched_date) : undefined);
         setIsEditing(true);
     };
 
     const handleCancel = () => {
         setEditRating(movie.user_rating || 0);
         setEditComment(movie.user_comment || '');
+        setEditWatchDate(movie.watched_date ? new Date(movie.watched_date) : undefined);
         setIsEditing(false);
     };
 
@@ -159,17 +165,18 @@ export function MovieCard({ movie }: MovieCardProps) {
 
     return (
         <>
-            <Card className="group overflow-hidden lg:hover:shadow-md transition-all duration-200 border-0 bg-card/50">
+            <Card className="@container/card group overflow-hidden lg:hover:shadow-md transition-all duration-200 border bg-card/50">
                 <CardContent className="" fullPadding>
-                    <div className={`flex ${isEditing ? "" : "gap-4"} `}>
+                    <div className={cn("flex", !isEditing && 'gap-4')}>
                         {/* Poster */}
                         {/* Poster - slides out when editing */}
                         <div
-                            className={`shrink-0 flex justify-center items-center transition-all duration-200
-                                ${isEditing ? '-translate-x-24 opacity-0 pointer-events-none w-0' : 'translate-x-0 opacity-100 w-16'}
+                            className={`hidden @xs/card:flex shrink-0 justify-center items-center transition-all duration-300 ease-in-out overflow-hidden
+                                ${isEditing
+                                    ? '@md/card:w-0 @md/card:opacity-0 w-0 h-0 opacity-0'
+                                    : '@md/card:w-16 w-16 opacity-100'
+                                }
                             `}
-                            style={{ minWidth: isEditing ? 0 : '4rem', width: isEditing ? 0 : '4rem' }}
-                            aria-hidden={isEditing}
                         >
                             {posterUrl ? (
                                 <img
@@ -192,7 +199,7 @@ export function MovieCard({ movie }: MovieCardProps) {
                         <div className="flex flex-col justify-between flex-1 min-w-0">
                             {/* Header */}
                             <div className="flex items-start justify-between">
-                                <div className="flex flex-col items-start md:flex-row gap-2 md:items-center flex-1 min-w-0">
+                                <div className="flex flex-col items-start @md/card:flex-row gap-2 @md/card:items-center flex-1 min-w-0 mb-2 @md/card:mb-0">
                                     <h3 className="font-medium text-sm line-clamp-2 underline-offset-2 leading-tight underline lg:no-underline lg:group-hover:underline mt-1">
                                         <a href={`https://google.com/search?q=${movie.title}+%28${movie.media_type === 'tv' ? 'TV' : 'Movie'}${" " + movie.release_date}%29`} target='_blank' rel='noopener noreferrer'>
                                             {movie.title}
@@ -259,6 +266,13 @@ export function MovieCard({ movie }: MovieCardProps) {
                                         />
                                     </div>
                                     <div>
+                                        <label className="text-sm font-medium mb-1.5 block text-foreground">Watch Date</label>
+                                        <DatePicker
+                                            value={editWatchDate ?? new Date()}
+                                            onChange={setEditWatchDate}
+                                        />
+                                    </div>
+                                    <div>
                                         <label className="text-sm font-medium mb-1.5 block text-foreground">Comment</label>
                                         <Textarea
                                             value={editComment}
@@ -271,8 +285,10 @@ export function MovieCard({ movie }: MovieCardProps) {
                                     </div>
                                     <div className="flex gap-2 pt-1">
                                         <Button size="sm" onClick={handleSave} className="h-8 px-3">
-                                            <Check className="w-3 h-3 mr-1.5" />
-                                            Save
+                                            <Check className="w-3 h-3 @md/card:mr-1.5" />
+                                            <span className="hidden @md/card:inline-block">
+                                                Save
+                                            </span>
                                         </Button>
                                         <Button
                                             size="sm"
@@ -280,8 +296,10 @@ export function MovieCard({ movie }: MovieCardProps) {
                                             onClick={handleCancel}
                                             className="h-8 px-3"
                                         >
-                                            <X className="w-3 h-3 mr-1.5" />
-                                            Cancel
+                                            <X className="w-3 h-3 @md/card:mr-1.5" />
+                                            <span className="hidden @md/card:inline-block">
+                                                Cancel
+                                            </span>
                                         </Button>
                                     </div>
                                 </div>

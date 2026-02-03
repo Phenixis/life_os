@@ -6,7 +6,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import {
     AlertDialog,
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Angry, Frown, Laugh, Meh, Smile, SmilePlus } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { useUser } from "@/hooks/use-user"
 import { useDailyMoods } from "@/hooks/use-daily-moods"
@@ -28,33 +27,23 @@ import { useSWRConfig } from "swr"
 import { DailyMood } from "@/lib/db/schema"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useDailyMoodModal } from "@/contexts/modal-commands-context"
 
-export default function DailyMoodModal({
-    date,
-    children,
-    isOpen,
-    onOpenChange
-}: {
-    date?: Date
-    children?: React.ReactNode
-    isOpen?: boolean
-    onOpenChange?: (open: boolean) => void
-}) {
+export default function DailyMoodModal() {
     const { user } = useUser()
-
-    // State - use external control if provided
-    const [internalOpen, setInternalOpen] = useState(false)
-    const open = isOpen !== undefined ? isOpen : internalOpen
-    const setOpen = onOpenChange || setInternalOpen
+    const { isOpen, openModal, closeModal, date } = useDailyMoodModal()
 
     const [selectedMood, setSelectedMood] = useState<number | null>(null)
     const [comment, setComment] = useState("")
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [formChanged, setFormChanged] = useState(false)
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+    const closeDialogRef = useRef<(() => void)>(() => {})
 
     // Use the passed date or fallback to today
     const targetDate = date || new Date()
     const normalizedDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0)
-    const nextDay = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate() + 1, 0, 0, 0)
+    const nextDay = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate() + 1, 0, 0, 0, -1) // One millisecond before next day
     const { mutate } = useSWRConfig()
 
     const { data: dailyMoods, mutate: mutateDailyMoods } = useDailyMoods({
@@ -62,18 +51,31 @@ export default function DailyMoodModal({
         endDate: nextDay,
     })
 
-    // Get current mood for the target date // Use the last mood entry if multiple exist because the first one might be the one from the previous day
-    const currentMood = dailyMoods && dailyMoods.length > 0 ? dailyMoods[dailyMoods.length - 1].mood : null
-    const currentComment = dailyMoods && dailyMoods.length > 0 ? dailyMoods[dailyMoods.length - 1].comment : ""
+    // Get current mood for the target date - filter to ensure exact date match
+    const currentMoodData = dailyMoods?.find((mood: DailyMood.Select) => {
+        const moodDate = new Date(mood.date)
+        return moodDate.toDateString() === normalizedDate.toDateString()
+    })
+    const currentMood = currentMoodData?.mood ?? null
+    const currentComment = currentMoodData?.comment ?? ""
 
-    // Initialize form state when dialog opens
-    const handleOpenChange = (newOpen: boolean) => {
-        if (newOpen) {
+    // Initialize form state when dialog opens or date changes
+    useEffect(() => {
+        if (isOpen) {
             setSelectedMood(currentMood)
             setComment(currentComment || "")
+            setFormChanged(false)
         }
-        setOpen(newOpen)
-    }
+    }, [isOpen, currentMood, currentComment, normalizedDate.getTime()])
+
+    // Track form changes
+    useEffect(() => {
+        if (isOpen) {
+            const moodChanged = selectedMood !== currentMood
+            const commentChanged = comment !== (currentComment || "")
+            setFormChanged(moodChanged || commentChanged)
+        }
+    }, [selectedMood, comment, currentMood, currentComment, isOpen])
 
     // Function to get mood icon based on mood value
     const getMoodIcon = (mood: number | null) => {
@@ -104,7 +106,7 @@ export default function DailyMoodModal({
             return
         }
 
-        setOpen(false)
+        closeModal()
 
         // Generate monthly query key for calendar optimistic updates
         const monthStart = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), 1)
@@ -203,7 +205,7 @@ export default function DailyMoodModal({
             return
         }
 
-        setOpen(false)
+        closeModal()
         const method = dailyMoods.length == 0 ? "POST" : "PUT"
 
         // Generate monthly query key for calendar optimistic updates (using same logic as useFilteredData)
@@ -355,34 +357,39 @@ export default function DailyMoodModal({
         return normalizedDate > today
     }
 
+    // Handle dialog close attempt
+    const handleCloseAttempt = () => {
+        if (formChanged) {
+            // Store the close function for later use
+            closeDialogRef.current = () => closeModal()
+            // Show confirmation dialog
+            setShowConfirmDialog(true)
+        } else {
+            // No changes, close immediately
+            closeModal()
+        }
+    }
+
+    // Handle confirmation dialog result
+    const handleConfirmDiscard = () => {
+        // Close confirmation dialog
+        setShowConfirmDialog(false)
+        // Execute the stored close function
+        setTimeout(() => {
+            closeDialogRef.current()
+        }, 100)
+    }
+
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-            {children ? (
-                <DialogTrigger asChild>
-                    {children}
-                </DialogTrigger>
-            ) : (
-                <DialogTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        className={`h-10 px-2 flex items-center border-none w-fit text-xs ${isFutureDate() ? "opacity-50 cursor-not-allowed" : ""}`}
-                        disabled={isFutureDate()}
-                    >
-                        {getMoodIcon(currentMood)}
-                        <p className="hidden">
-                            {isFutureDate()
-                                ? `Cannot set mood for future date: ${normalizedDate.toLocaleDateString()}`
-                                : isToday()
-                                    ? "What's your mood today?"
-                                    : `Mood for ${normalizedDate.toLocaleDateString()}`
-                            }
-                        </p>
-                    </Button>
-                </DialogTrigger>
-            )}
+        <Dialog open={isOpen} onOpenChange={(newOpenState) => {
+            if (isOpen && !newOpenState) {
+                // Attempting to close
+                handleCloseAttempt()
+            }
+        }}>
             <DialogContent
                 className="md:max-w-[425px] lg:max-w-[425px]"
-                maxHeight="max-h-96"
+                maxHeight="h-fit max-h-150"
                 showCloseButton={false}
             >
                 <DialogHeader>
@@ -395,63 +402,63 @@ export default function DailyMoodModal({
                         }
                     </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-4 lg:flex lg:space-y-0 lg:space-x-4 w-full">
                     <div>
-                        <Label>Select your mood</Label>
-                        <div className="grid grid-cols-5 gap-2 mt-2">
+                        <Label className="lg:sr-only">Select your mood</Label>
+                        <div className="grid grid-cols-5 lg:grid-cols-1 gap-2 mt-2">
                             <Button
-                                variant={selectedMood === 0 ? "default" : "outline"}
+                                variant={selectedMood === 4 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 0 ? "bg-red-100 border border-red-500 dark:bg-red-900/30 lg:hover:bg-red-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(0)}
+                                className={`p-3 flex flex-col gap-1 h-auto aspect-square order-5 lg:order-1 ${selectedMood === 4 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(4)}
                                 disabled={isFutureDate()}
                             >
-                                <Angry className="size-6 text-red-700 flex-shrink-0" />
-                                <span className="text-xs">Angry</span>
-                            </Button>
-                            <Button
-                                variant={selectedMood === 1 ? "default" : "outline"}
-                                size="sm"
-                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 1 ? "bg-blue-100 border border-blue-500 dark:bg-blue-900/30 lg:hover:bg-blue-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(1)}
-                                disabled={isFutureDate()}
-                            >
-                                <Frown className="size-6 text-blue-400 flex-shrink-0" />
-                                <span className="text-xs">Sad</span>
-                            </Button>
-                            <Button
-                                variant={selectedMood === 2 ? "default" : "outline"}
-                                size="sm"
-                                className={`p-3 flex flex-col gap-1 h-fit aspect-square ${selectedMood === 2 ? "bg-amber-100 border border-amber-500 dark:bg-amber-900/30 lg:hover:bg-amber-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(2)}
-                                disabled={isFutureDate()}
-                            >
-                                <Meh className="size-6 text-amber-300 flex-shrink-0" />
-                                <span className="text-xs">Meh</span>
+                                <Laugh className="size-6 text-green-800 shrink-0" />
+                                <span className="text-xs lg:sr-only">Amazing</span>
                             </Button>
                             <Button
                                 variant={selectedMood === 3 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 3 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
+                                className={`p-3 flex flex-col gap-1 h-auto aspect-square order-4 lg:order-2 ${selectedMood === 3 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
                                 onClick={() => setSelectedMood(3)}
                                 disabled={isFutureDate()}
                             >
-                                <Smile className="size-6 text-green-400 flex-shrink-0" />
-                                <span className="text-xs">Happy</span>
+                                <Smile className="size-6 text-green-400 shrink-0" />
+                                <span className="text-xs lg:sr-only">Happy</span>
                             </Button>
                             <Button
-                                variant={selectedMood === 4 ? "default" : "outline"}
+                                variant={selectedMood === 2 ? "default" : "outline"}
                                 size="sm"
-                                className={`p-3 flex flex-col gap-1 h-auto aspect-square ${selectedMood === 4 ? "bg-green-100 border border-green-500 dark:bg-green-900/30 lg:hover:bg-green-200 text-black dark:text-white" : ""}`}
-                                onClick={() => setSelectedMood(4)}
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square order-3 lg:order-3 ${selectedMood === 2 ? "bg-amber-100 border border-amber-500 dark:bg-amber-900/30 lg:hover:bg-amber-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(2)}
                                 disabled={isFutureDate()}
                             >
-                                <Laugh className="size-6 text-green-800 flex-shrink-0" />
-                                <span className="text-xs">Amazing</span>
+                                <Meh className="size-6 text-amber-300 shrink-0" />
+                                <span className="text-xs lg:sr-only">Meh</span>
+                            </Button>
+                            <Button
+                                variant={selectedMood === 1 ? "default" : "outline"}
+                                size="sm"
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square order-2 lg:order-4 ${selectedMood === 1 ? "bg-blue-100 border border-blue-500 dark:bg-blue-900/30 lg:hover:bg-blue-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(1)}
+                                disabled={isFutureDate()}
+                            >
+                                <Frown className="size-6 text-blue-400 shrink-0" />
+                                <span className="text-xs lg:sr-only">Sad</span>
+                            </Button>
+                            <Button
+                                variant={selectedMood === 0 ? "default" : "outline"}
+                                size="sm"
+                                className={`p-3 flex flex-col gap-1 h-fit aspect-square order-1 lg:order-5 ${selectedMood === 0 ? "bg-red-100 border border-red-500 dark:bg-red-900/30 lg:hover:bg-red-200 text-black dark:text-white" : ""}`}
+                                onClick={() => setSelectedMood(0)}
+                                disabled={isFutureDate()}
+                            >
+                                <Angry className="size-6 text-red-700 shrink-0" />
+                                <span className="text-xs lg:sr-only">Angry</span>
                             </Button>
                         </div>
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <Label htmlFor="comment">Comment (optional)</Label>
                         <Textarea
                             id="comment"
@@ -459,8 +466,9 @@ export default function DailyMoodModal({
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             disabled={isFutureDate()}
-                            className="mt-1"
+                            className="mt-1 resize-none"
                             rows={3}
+                            maxHeight={260}
                         />
                     </div>
                 </div>
@@ -479,6 +487,14 @@ export default function DailyMoodModal({
                             Delete Mood
                         </Button>
                     )}
+                    <div className="flex-1" />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCloseAttempt}
+                    >
+                        Cancel
+                    </Button>
                     <Button
                         type="button"
                         onClick={handleMoodSubmit}
@@ -488,7 +504,26 @@ export default function DailyMoodModal({
                     </Button>
                 </DialogFooter>
             </DialogContent>
-
+            {/* Unsaved Changes Confirmation Dialog */}
+            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You have unsaved changes. Are you sure you want to close without saving?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDiscard}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Discard
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                 <AlertDialogContent>
