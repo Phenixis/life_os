@@ -15,7 +15,7 @@ export async function GET(
         const note = await NoteQueries.getSharedNote(token)
         
         if (!note) {
-            return NextResponse.json({error: "Note not found or not shared"}, {status: 404})
+            return NextResponse.json({error: "Note not found"}, {status: 404})
         }
 
         // Don't share encrypted notes - return error

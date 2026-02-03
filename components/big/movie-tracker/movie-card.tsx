@@ -160,7 +160,7 @@ export function MovieCard({ movie }: MovieCardProps) {
     return (
         <>
             <Card className="group overflow-hidden lg:hover:shadow-md transition-all duration-200 border-0 bg-card/50">
-                <CardContent className="">
+                <CardContent className="" fullPadding>
                     <div className={`flex ${isEditing ? "" : "gap-4"} `}>
                         {/* Poster */}
                         {/* Poster - slides out when editing */}
