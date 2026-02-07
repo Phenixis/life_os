@@ -69,6 +69,7 @@ function ResponsiveModalTrigger({ children, ...props }: React.ComponentProps<typ
 }
 
 interface ResponsiveModalContentProps extends React.ComponentProps<typeof DialogContent> {
+    /** Drawer position on mobile devices only. Has no effect on desktop. */
     side?: "top" | "bottom" | "left" | "right"
 }
 
@@ -95,6 +96,7 @@ function ResponsiveModalContent({
         )
     }
 
+    // maxHeight only applies to desktop Dialog
     return (
         <DialogContent 
             className={className}

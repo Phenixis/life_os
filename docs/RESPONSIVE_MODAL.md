@@ -109,9 +109,9 @@ Content wrapper with different rendering based on screen size.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `side` | `"top" \| "bottom" \| "left" \| "right"` | `"bottom"` | Drawer position on mobile |
-| `maxHeight` | `string` | `"max-h-124 lg:max-h-124"` | Maximum height (desktop only) |
-| `showCloseButton` | `boolean` | `true` | Show/hide close button |
+| `side` | `"top" \| "bottom" \| "left" \| "right"` | `"bottom"` | Drawer position on mobile only (no effect on desktop) |
+| `maxHeight` | `string` | `"max-h-124 lg:max-h-124"` | Maximum height for desktop dialog only (no effect on mobile) |
+| `showCloseButton` | `boolean` | `true` | Show/hide close button. On desktop: displays Mac-style window buttons. On mobile: displays X icon in top-right |
 | `className` | `string` | - | Additional CSS classes |
 
 ### Other Components
@@ -154,6 +154,17 @@ See the demo component at `components/big/responsive-modal-demo.tsx` or visit `/
 - **Mobile**: Uses `Sheet` component with bottom slide-in animation
 - **Desktop**: Uses `Dialog` component with center positioning and expand functionality
 - **Detection**: Uses `useIsMobile` hook with `window.matchMedia` for responsive detection
+- **Performance**: Uses React Context to call `useIsMobile` only once, sharing the value across all sub-components
+
+### Prop Behavior Differences
+
+Some props behave differently based on device type:
+
+- **`side`**: Only affects mobile drawer position (top, bottom, left, right). Ignored on desktop.
+- **`maxHeight`**: Only affects desktop dialog height. Mobile drawers use default Sheet sizing.
+- **`showCloseButton`**: 
+  - On desktop: Shows Mac-style window buttons (red close, green expand)
+  - On mobile: Shows a simple X icon in the top-right corner
 
 ## Browser Support
 

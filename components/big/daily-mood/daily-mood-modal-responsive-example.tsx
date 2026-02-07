@@ -49,8 +49,8 @@ export default function DailyMoodModalResponsive() {
     // Use the passed date or fallback to today
     const targetDate = date || new Date()
     const normalizedDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0)
-    const nextDay = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate() + 1, 0, 0, 0, 0)
-    nextDay.setMilliseconds(-1) // Set to last millisecond of current day
+    // Get the last millisecond of the current day
+    const nextDay = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999)
     const { mutate } = useSWRConfig()
 
     const { data: dailyMoods, mutate: mutateDailyMoods } = useDailyMoods({
