@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ResponsiveModal as Dialog, ResponsiveModalContent as DialogContent, ResponsiveModalFooter as DialogFooter, ResponsiveModalHeader as DialogHeader, ResponsiveModalTitle as DialogTitle } from "@/components/ui/responsive-modal"
 import { Button } from "@/components/ui/button"
 import { Camera, ChevronDown, Eye, EyeOff, Mic } from "lucide-react"
 import { useUser } from "@/hooks/use-user"

@@ -11,11 +11,11 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
+    ResponsiveModal as Dialog,
+    ResponsiveModalContent as DialogContent,
+    ResponsiveModalHeader as DialogHeader,
+    ResponsiveModalTitle as DialogTitle,
+} from "@/components/ui/responsive-modal"
 import { HorizontalList, HorizontalListSkeleton } from "@/components/ui/horizontal-list"
 import { useRelapseRecorderModal } from "@/contexts/modal-commands-context"
 import { useAddictionsQuery } from "@/hooks/use-addiction-tracker"

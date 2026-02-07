@@ -1,11 +1,11 @@
 "use client"
 
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
+    ResponsiveModal as Dialog,
+    ResponsiveModalContent as DialogContent,
+    ResponsiveModalHeader as DialogHeader,
+    ResponsiveModalTitle as DialogTitle,
+} from "@/components/ui/responsive-modal"
 import {
     AlertDialog,
     AlertDialogAction,

@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ResponsiveModal as Dialog, ResponsiveModalContent as DialogContent, ResponsiveModalFooter as DialogFooter, ResponsiveModalHeader as DialogHeader, ResponsiveModalTitle as DialogTitle } from "@/components/ui/responsive-modal"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
