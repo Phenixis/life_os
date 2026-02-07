@@ -123,7 +123,9 @@ function ResponsiveModalHeader({
     desktopClassName, 
     ...props 
 }: React.ComponentProps<typeof DialogHeader> & { 
+    /** Additional className applied only on mobile (<768px) */
     mobileClassName?: string
+    /** Additional className applied only on desktop (≥768px) */
     desktopClassName?: string 
 }) {
     const isMobile = useResponsiveModalContext()
@@ -142,7 +144,9 @@ function ResponsiveModalFooter({
     desktopClassName, 
     ...props 
 }: React.ComponentProps<typeof DialogFooter> & { 
+    /** Additional className applied only on mobile (<768px) */
     mobileClassName?: string
+    /** Additional className applied only on desktop (≥768px) */
     desktopClassName?: string 
 }) {
     const isMobile = useResponsiveModalContext()
@@ -161,7 +165,9 @@ function ResponsiveModalTitle({
     desktopClassName, 
     ...props 
 }: React.ComponentProps<typeof DialogTitle> & { 
+    /** Additional className applied only on mobile (<768px) */
     mobileClassName?: string
+    /** Additional className applied only on desktop (≥768px) */
     desktopClassName?: string 
 }) {
     const isMobile = useResponsiveModalContext()
@@ -180,7 +186,9 @@ function ResponsiveModalDescription({
     desktopClassName, 
     ...props 
 }: React.ComponentProps<typeof DialogDescription> & { 
+    /** Additional className applied only on mobile (<768px) */
     mobileClassName?: string
+    /** Additional className applied only on desktop (≥768px) */
     desktopClassName?: string 
 }) {
     const isMobile = useResponsiveModalContext()
