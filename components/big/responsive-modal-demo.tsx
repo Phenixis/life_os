@@ -41,7 +41,7 @@ export default function ResponsiveModalDemo() {
                             <ResponsiveModalHeader>
                                 <ResponsiveModalTitle>Edit Profile</ResponsiveModalTitle>
                                 <ResponsiveModalDescription>
-                                    Make changes to your profile here. On mobile, this appears as a drawer from the bottom. On desktop, it&apos;s a centered dialog.
+                                    Make changes to your profile here. On mobile, this appears as a drawer from the bottom. On desktop, it's a centered dialog.
                                 </ResponsiveModalDescription>
                             </ResponsiveModalHeader>
                             <div className="space-y-4 py-4">

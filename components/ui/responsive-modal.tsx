@@ -23,6 +23,17 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 
+// Context to share isMobile state across all sub-components
+const ResponsiveModalContext = React.createContext<boolean | undefined>(undefined)
+
+function useResponsiveModalContext() {
+    const context = React.useContext(ResponsiveModalContext)
+    if (context === undefined) {
+        throw new Error("ResponsiveModal sub-components must be used within ResponsiveModal")
+    }
+    return context
+}
+
 interface ResponsiveModalProps {
     open?: boolean
     onOpenChange?: (open: boolean) => void
@@ -32,23 +43,23 @@ interface ResponsiveModalProps {
 function ResponsiveModal({ open, onOpenChange, children }: ResponsiveModalProps) {
     const isMobile = useIsMobile()
 
-    if (isMobile) {
-        return (
-            <Sheet open={open} onOpenChange={onOpenChange}>
-                {children}
-            </Sheet>
-        )
-    }
-
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            {children}
-        </Dialog>
+        <ResponsiveModalContext.Provider value={isMobile}>
+            {isMobile ? (
+                <Sheet open={open} onOpenChange={onOpenChange}>
+                    {children}
+                </Sheet>
+            ) : (
+                <Dialog open={open} onOpenChange={onOpenChange}>
+                    {children}
+                </Dialog>
+            )}
+        </ResponsiveModalContext.Provider>
     )
 }
 
 function ResponsiveModalTrigger({ children, ...props }: React.ComponentProps<typeof DialogTrigger>) {
-    const isMobile = useIsMobile()
+    const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
         return <SheetTrigger {...props}>{children}</SheetTrigger>
@@ -69,7 +80,7 @@ function ResponsiveModalContent({
     side = "bottom",
     ...props 
 }: ResponsiveModalContentProps) {
-    const isMobile = useIsMobile()
+    const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
         return (
@@ -97,7 +108,7 @@ function ResponsiveModalContent({
 }
 
 function ResponsiveModalHeader({ children, className, ...props }: React.ComponentProps<typeof DialogHeader>) {
-    const isMobile = useIsMobile()
+    const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
         return <SheetHeader className={className} {...props}>{children}</SheetHeader>
@@ -107,7 +118,7 @@ function ResponsiveModalHeader({ children, className, ...props }: React.Componen
 }
 
 function ResponsiveModalFooter({ children, className, ...props }: React.ComponentProps<typeof DialogFooter>) {
-    const isMobile = useIsMobile()
+    const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
         return <SheetFooter className={className} {...props}>{children}</SheetFooter>
@@ -117,7 +128,7 @@ function ResponsiveModalFooter({ children, className, ...props }: React.Componen
 }
 
 function ResponsiveModalTitle({ children, className, ...props }: React.ComponentProps<typeof DialogTitle>) {
-    const isMobile = useIsMobile()
+    const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
         return <SheetTitle className={className} {...props}>{children}</SheetTitle>
@@ -127,7 +138,7 @@ function ResponsiveModalTitle({ children, className, ...props }: React.Component
 }
 
 function ResponsiveModalDescription({ children, className, ...props }: React.ComponentProps<typeof DialogDescription>) {
-    const isMobile = useIsMobile()
+    const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
         return <SheetDescription className={className} {...props}>{children}</SheetDescription>
@@ -137,7 +148,7 @@ function ResponsiveModalDescription({ children, className, ...props }: React.Com
 }
 
 function ResponsiveModalClose({ children, ...props }: React.ComponentProps<typeof DialogClose>) {
-    const isMobile = useIsMobile()
+    const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
         return <SheetClose {...props}>{children}</SheetClose>

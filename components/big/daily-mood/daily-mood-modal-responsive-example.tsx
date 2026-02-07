@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Angry, Frown, Laugh, Meh, Smile, SmilePlus } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { useUser } from "@/hooks/use-user"
 import { useDailyMoods } from "@/hooks/use-daily-moods"
@@ -45,12 +45,12 @@ export default function DailyMoodModalResponsive() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [formChanged, setFormChanged] = useState(false)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-    const closeDialogRef = useRef<(() => void)>(() => {})
 
     // Use the passed date or fallback to today
     const targetDate = date || new Date()
     const normalizedDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0)
-    const nextDay = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate() + 1, 0, 0, 0, -1)
+    const nextDay = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate() + 1, 0, 0, 0, 0)
+    nextDay.setMilliseconds(-1) // Set to last millisecond of current day
     const { mutate } = useSWRConfig()
 
     const { data: dailyMoods, mutate: mutateDailyMoods } = useDailyMoods({
