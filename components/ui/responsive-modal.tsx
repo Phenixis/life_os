@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { cn } from "@/lib/utils"
 import {
     Dialog,
     DialogClose,
@@ -71,11 +72,17 @@ function ResponsiveModalTrigger({ children, ...props }: React.ComponentProps<typ
 interface ResponsiveModalContentProps extends React.ComponentProps<typeof DialogContent> {
     /** Drawer position on mobile devices only. Has no effect on desktop. */
     side?: "top" | "bottom" | "left" | "right"
+    /** Additional className applied only on mobile (<768px) */
+    mobileClassName?: string
+    /** Additional className applied only on desktop (≥768px) */
+    desktopClassName?: string
 }
 
 function ResponsiveModalContent({ 
     children, 
     className,
+    mobileClassName,
+    desktopClassName,
     showCloseButton = true,
     maxHeight,
     side = "bottom",
@@ -87,7 +94,7 @@ function ResponsiveModalContent({
         return (
             <SheetContent 
                 side={side} 
-                className={className}
+                className={cn(className, mobileClassName)}
                 showCloseButton={showCloseButton}
                 {...props}
             >
@@ -99,7 +106,7 @@ function ResponsiveModalContent({
     // maxHeight only applies to desktop Dialog
     return (
         <DialogContent 
-            className={className}
+            className={cn(className, desktopClassName)}
             showCloseButton={showCloseButton}
             maxHeight={maxHeight}
             {...props}
@@ -109,44 +116,80 @@ function ResponsiveModalContent({
     )
 }
 
-function ResponsiveModalHeader({ children, className, ...props }: React.ComponentProps<typeof DialogHeader>) {
+function ResponsiveModalHeader({ 
+    children, 
+    className, 
+    mobileClassName, 
+    desktopClassName, 
+    ...props 
+}: React.ComponentProps<typeof DialogHeader> & { 
+    mobileClassName?: string
+    desktopClassName?: string 
+}) {
     const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
-        return <SheetHeader className={className} {...props}>{children}</SheetHeader>
+        return <SheetHeader className={cn(className, mobileClassName)} {...props}>{children}</SheetHeader>
     }
 
-    return <DialogHeader className={className} {...props}>{children}</DialogHeader>
+    return <DialogHeader className={cn(className, desktopClassName)} {...props}>{children}</DialogHeader>
 }
 
-function ResponsiveModalFooter({ children, className, ...props }: React.ComponentProps<typeof DialogFooter>) {
+function ResponsiveModalFooter({ 
+    children, 
+    className, 
+    mobileClassName, 
+    desktopClassName, 
+    ...props 
+}: React.ComponentProps<typeof DialogFooter> & { 
+    mobileClassName?: string
+    desktopClassName?: string 
+}) {
     const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
-        return <SheetFooter className={className} {...props}>{children}</SheetFooter>
+        return <SheetFooter className={cn(className, mobileClassName)} {...props}>{children}</SheetFooter>
     }
 
-    return <DialogFooter className={className} {...props}>{children}</DialogFooter>
+    return <DialogFooter className={cn(className, desktopClassName)} {...props}>{children}</DialogFooter>
 }
 
-function ResponsiveModalTitle({ children, className, ...props }: React.ComponentProps<typeof DialogTitle>) {
+function ResponsiveModalTitle({ 
+    children, 
+    className, 
+    mobileClassName, 
+    desktopClassName, 
+    ...props 
+}: React.ComponentProps<typeof DialogTitle> & { 
+    mobileClassName?: string
+    desktopClassName?: string 
+}) {
     const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
-        return <SheetTitle className={className} {...props}>{children}</SheetTitle>
+        return <SheetTitle className={cn(className, mobileClassName)} {...props}>{children}</SheetTitle>
     }
 
-    return <DialogTitle className={className} {...props}>{children}</DialogTitle>
+    return <DialogTitle className={cn(className, desktopClassName)} {...props}>{children}</DialogTitle>
 }
 
-function ResponsiveModalDescription({ children, className, ...props }: React.ComponentProps<typeof DialogDescription>) {
+function ResponsiveModalDescription({ 
+    children, 
+    className, 
+    mobileClassName, 
+    desktopClassName, 
+    ...props 
+}: React.ComponentProps<typeof DialogDescription> & { 
+    mobileClassName?: string
+    desktopClassName?: string 
+}) {
     const isMobile = useResponsiveModalContext()
 
     if (isMobile) {
-        return <SheetDescription className={className} {...props}>{children}</SheetDescription>
+        return <SheetDescription className={cn(className, mobileClassName)} {...props}>{children}</SheetDescription>
     }
 
-    return <DialogDescription className={className} {...props}>{children}</DialogDescription>
+    return <DialogDescription className={cn(className, desktopClassName)} {...props}>{children}</DialogDescription>
 }
 
 function ResponsiveModalClose({ children, ...props }: React.ComponentProps<typeof DialogClose>) {
