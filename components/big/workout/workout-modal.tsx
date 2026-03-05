@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ResponsiveModal as Dialog, ResponsiveModalContent as DialogContent, ResponsiveModalDescription as DialogDescription, ResponsiveModalTitle as DialogTitle, ResponsiveModalTrigger as DialogTrigger } from '@/components/ui/responsive-modal';
 import {
   AlertDialog,
   AlertDialogAction,
