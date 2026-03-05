@@ -1,6 +1,9 @@
 "use server"
 
+import { cacheThrough, cacheThroughOne, invalidate } from "@/lib/cache/cache-through";
 import * as lib from "../lib"
+
+const TABLE_NAME = "habit";
 
 //=============================================================================
 // # HABIT
@@ -40,22 +43,29 @@ export async function createHabit(
 // ## Read
 
 export async function getHabitById(id: number): Promise<lib.Schema.Habit.Habit.Select | null> {
-    const result = await lib.db
-        .select()
-        .from(lib.Schema.Habit.Habit.table)
-        .where(
-            lib.and(
-                lib.eq(lib.Schema.Habit.Habit.table.id, id),
-                lib.isNull(lib.Schema.Habit.Habit.table.deleted_at)
-            )
-        )
+    return cacheThroughOne<lib.Schema.Habit.Habit.Select>(
+        TABLE_NAME,
+        id,
+        async () => {
+            const result = await lib.db
+                .select()
+                .from(lib.Schema.Habit.Habit.table)
+                .where(
+                    lib.and(
+                        lib.eq(lib.Schema.Habit.Habit.table.id, id),
+                        lib.isNull(lib.Schema.Habit.Habit.table.deleted_at)
+                    )
+                )
 
-    return result[0] || null
+            return result[0] || null
+        }
+    )
 }
 
 export async function getUserHabits(userId: string, activeOnly: boolean = true): Promise<lib.Schema.Habit.Habit.Select[]> {
-    return await lib.db
-        .select()
+    // Step 1: Get IDs matching the search criteria
+    const idRows = await lib.db
+        .select({ id: lib.Schema.Habit.Habit.table.id })
         .from(lib.Schema.Habit.Habit.table)
         .where(lib.and(
             lib.eq(lib.Schema.Habit.Habit.table.user_id, userId),
@@ -63,6 +73,21 @@ export async function getUserHabits(userId: string, activeOnly: boolean = true):
             activeOnly ? lib.eq(lib.Schema.Habit.Habit.table.is_active, true) : lib.sql`1 = 1`
         ))
         .orderBy(lib.desc(lib.Schema.Habit.Habit.table.created_at))
+
+    if (idRows.length === 0) return []
+
+    // Step 2-4: Cache-through
+    return cacheThrough<lib.Schema.Habit.Habit.Select>(
+        TABLE_NAME,
+        idRows.map(r => r.id),
+        async (missingIds) => {
+            return await lib.db
+                .select()
+                .from(lib.Schema.Habit.Habit.table)
+                .where(lib.inArray(lib.Schema.Habit.Habit.table.id, missingIds as number[]))
+        },
+        (habit) => habit.id
+    )
 }
 
 export async function getHabitsByFrequency(
@@ -130,6 +155,8 @@ export async function updateHabit(
         ))
         .returning({ id: lib.Schema.Habit.Habit.table.id })
 
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show habits
     lib.revalidatePath("/my", "layout")
 
@@ -156,6 +183,8 @@ export async function toggleHabitActive(id: number): Promise<boolean | null> {
         ))
         .returning({ is_active: lib.Schema.Habit.Habit.table.is_active })
 
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show habits
     lib.revalidatePath("/my", "layout")
 
@@ -180,6 +209,8 @@ export async function deleteHabit(userId: string, id: number): Promise<number | 
             lib.eq(lib.Schema.Habit.Habit.table.user_id, userId)
         ))
         .returning({ id: lib.Schema.Habit.Habit.table.id })
+
+    await invalidate(TABLE_NAME, id)
 
     // Revalidate all pages that might show habits
     lib.revalidatePath("/my", "layout")

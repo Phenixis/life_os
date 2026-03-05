@@ -1,4 +1,7 @@
+import { cacheThrough, invalidate } from "@/lib/cache/cache-through";
 import * as lib from "./lib"
+
+const TABLE_NAME = "daily_mood";
 
 export async function createDailyMood(
     userId: string,
@@ -34,8 +37,9 @@ export async function getDailyMoods(
     startDate: Date,
     endDate: Date
 ): Promise<lib.Schema.DailyMood.Select[]> {
-    const dailyMood = await lib.db
-        .select()
+    // Step 1: Get IDs
+    const idRows = await lib.db
+        .select({ id: lib.Schema.DailyMood.table.id })
         .from(lib.Schema.DailyMood.table)
         .where(
             lib.and(
@@ -49,11 +53,22 @@ export async function getDailyMoods(
 
     lib.revalidatePath("/my");
 
-    if (!dailyMood || dailyMood.length === 0) {
+    if (!idRows || idRows.length === 0) {
         throw new Error("No mood found for this period");
     }
 
-    return dailyMood;
+    // Step 2-4: Cache-through
+    return cacheThrough<lib.Schema.DailyMood.Select>(
+        TABLE_NAME,
+        idRows.map(r => r.id),
+        async (missingIds) => {
+            return await lib.db
+                .select()
+                .from(lib.Schema.DailyMood.table)
+                .where(lib.inArray(lib.Schema.DailyMood.table.id, missingIds as number[]))
+        },
+        (mood) => mood.id
+    )
 }
 
 export async function getDailyMood(
@@ -102,6 +117,10 @@ export async function updateDailyMood(
         )
         .returning()
 
+    if (dailyMood[0]) {
+        await invalidate(TABLE_NAME, dailyMood[0].id)
+    }
+
     lib.revalidatePath("/my");
 
     return dailyMood[0];
@@ -124,6 +143,10 @@ export async function deleteDailyMood(
             )
         )
         .returning()
+
+    if (dailyMood[0]) {
+        await invalidate(TABLE_NAME, dailyMood[0].id)
+    }
 
     lib.revalidatePath("/my");
 
