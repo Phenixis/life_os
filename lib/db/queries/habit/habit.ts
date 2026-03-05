@@ -77,14 +77,14 @@ export async function getUserHabits(userId: string, activeOnly: boolean = true):
     if (idRows.length === 0) return []
 
     // Step 2-4: Cache-through
-    return cacheThrough<lib.Schema.Habit.Habit.Select>(
+    return cacheThrough<lib.Schema.Habit.Habit.Select, number>(
         TABLE_NAME,
         idRows.map(r => r.id),
         async (missingIds) => {
             return await lib.db
                 .select()
                 .from(lib.Schema.Habit.Habit.table)
-                .where(lib.inArray(lib.Schema.Habit.Habit.table.id, missingIds as number[]))
+                .where(lib.inArray(lib.Schema.Habit.Habit.table.id, missingIds))
         },
         (habit) => habit.id
     )

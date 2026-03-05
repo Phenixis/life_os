@@ -58,14 +58,14 @@ export async function getDailyMoods(
     }
 
     // Step 2-4: Cache-through
-    return cacheThrough<lib.Schema.DailyMood.Select>(
+    return cacheThrough<lib.Schema.DailyMood.Select, number>(
         TABLE_NAME,
         idRows.map(r => r.id),
         async (missingIds) => {
             return await lib.db
                 .select()
                 .from(lib.Schema.DailyMood.table)
-                .where(lib.inArray(lib.Schema.DailyMood.table.id, missingIds as number[]))
+                .where(lib.inArray(lib.Schema.DailyMood.table.id, missingIds))
         },
         (mood) => mood.id
     )

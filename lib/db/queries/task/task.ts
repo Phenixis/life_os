@@ -220,7 +220,7 @@ export async function getTasks(
     const taskIds = distinctTasks.map((task) => task.id)
 
     // Step 2: Cache-through - get from Redis first, fetch missing from DB
-    const results = await cacheThrough<lib.Schema.Task.Task.TaskWithRelations>(
+    const results = await cacheThrough<lib.Schema.Task.Task.TaskWithRelations, number>(
         TABLE_NAME,
         taskIds,
         async (missingIds) => {
@@ -262,7 +262,7 @@ export async function getTasks(
                 .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
                 .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
                 .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
-                .where(lib.inArray(table.id, missingIds as number[]))
+                .where(lib.inArray(table.id, missingIds))
 
             const groupedTasks: Record<string, lib.Schema.Task.Task.TaskWithRelations> = {}
 

@@ -25,6 +25,8 @@ export function getRedis(): Redis | null {
 
         redis.on("error", (err) => {
             console.error("[Redis] Connection error:", err.message)
+            // Reset connection on persistent errors to allow reconnection
+            redis = null
         })
 
         return redis

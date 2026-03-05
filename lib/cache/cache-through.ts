@@ -12,17 +12,19 @@ const DEFAULT_TTL = 3600 // 1 hour
  *   4. Update Redis with newly fetched data
  *   5. Return combined results in original ID order
  *
+ * Records for IDs not found in cache or DB are omitted from the result.
+ *
  * @param tableName  - The table/entity name used as cache key prefix
  * @param ids        - The list of IDs matching the search criteria
  * @param fetchByIds - Function to fetch full records from DB for a subset of IDs
  * @param getId      - Function to extract the ID from a record
  * @param ttl        - Cache TTL in seconds (default: 1 hour)
  */
-export async function cacheThrough<T>(
+export async function cacheThrough<T, ID extends string | number = string | number>(
     tableName: string,
-    ids: (string | number)[],
-    fetchByIds: (missingIds: (string | number)[]) => Promise<T[]>,
-    getId: (record: T) => string | number,
+    ids: ID[],
+    fetchByIds: (missingIds: ID[]) => Promise<T[]>,
+    getId: (record: T) => ID,
     ttl: number = DEFAULT_TTL
 ): Promise<T[]> {
     if (ids.length === 0) return []
@@ -33,7 +35,7 @@ export async function cacheThrough<T>(
     // Step 2: Retrieve data NOT stored in Redis from DB
     let freshRecords: T[] = []
     if (missingIds.length > 0) {
-        freshRecords = await fetchByIds(missingIds)
+        freshRecords = await fetchByIds(missingIds as ID[])
 
         // Step 3: Update Redis with newly fetched data
         if (freshRecords.length > 0) {

@@ -20,14 +20,14 @@ export async function getUserMovies(userId: string): Promise<lib.Schema.Movie.Mo
     if (idRows.length === 0) return []
 
     // Step 2-4: Cache-through
-    return cacheThrough<lib.Schema.Movie.Movie.Select>(
+    return cacheThrough<lib.Schema.Movie.Movie.Select, number>(
         TABLE_NAME,
         idRows.map(r => r.id),
         async (missingIds) => {
             return await lib.db
                 .select()
                 .from(lib.Schema.Movie.Movie.table)
-                .where(lib.inArray(lib.Schema.Movie.Movie.table.id, missingIds as number[]))
+                .where(lib.inArray(lib.Schema.Movie.Movie.table.id, missingIds))
         },
         (movie) => movie.id
     )

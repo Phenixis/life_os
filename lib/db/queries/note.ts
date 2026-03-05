@@ -136,7 +136,7 @@ export async function getNotes(
 
     // Cache-through: get from Redis first, fetch missing from DB
     const notes = noteIds.length > 0
-        ? await cacheThrough<NoteWithProject>(
+        ? await cacheThrough<NoteWithProject, number>(
             TABLE_NAME,
             noteIds,
             async (missingIds) => {
@@ -155,7 +155,7 @@ export async function getNotes(
                     project_title: lib.Schema.Project.table.title,
                 }).from(lib.Schema.Note.Note.table)
                     .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Note.Note.table.project_id, lib.Schema.Project.table.id))
-                    .where(lib.inArray(lib.Schema.Note.Note.table.id, missingIds as number[]))
+                    .where(lib.inArray(lib.Schema.Note.Note.table.id, missingIds))
             },
             (note) => note.id
         )
