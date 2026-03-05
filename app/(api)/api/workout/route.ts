@@ -6,6 +6,7 @@ import * as ExerciceQueries from "@/lib/db/queries/workout/exercice"
 import * as SetQueries from "@/lib/db/queries/workout/set"
 import * as lib from "@/lib/db/queries/lib"
 import type { CreateWorkoutRequest, UpdateWorkoutRequest } from "@/lib/types/workout"
+import { cachedJsonResponse } from "@/lib/api/cached-response";
 
 // List all workouts
 export async function GET(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
         // Use getPastWorkouts to get properly formatted workout data with exercises and sets
         const workouts = await PastWorkoutQueries.getPastWorkouts(userId, limit, offset, dateAfter, dateBefore)
 
-        return NextResponse.json({ workouts })
+        return cachedJsonResponse({ workouts })
     } catch (error) {
         console.error('Error fetching workouts:', error)
         return NextResponse.json(

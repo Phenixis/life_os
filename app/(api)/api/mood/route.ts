@@ -1,6 +1,7 @@
 import { verifyRequest } from "@/lib/auth/api"
 import { getDailyMoods, createDailyMood, updateDailyMood, deleteDailyMood } from "@/lib/db/queries/daily-mood"
 import { NextRequest, NextResponse } from "next/server"
+import { cachedJsonResponse } from "@/lib/api/cached-response";
 
 export async function GET(request: NextRequest) {
     const verification = await verifyRequest(request)
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
         const startDate = new Date(startDateParam);
         const endDate = new Date(endDateParam);
         const result = await getDailyMoods(verification.userId, startDate, endDate)
-        return NextResponse.json(result)
+        return cachedJsonResponse(result)
     } catch (error) {
         if (error instanceof Error && error.message.includes("No mood found")) {
             return new Response(null, { status: 200 })

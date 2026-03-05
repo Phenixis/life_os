@@ -1,6 +1,7 @@
 import { ProjectQueries } from '@/lib/db/queries';
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/auth/api';
+import { cachedJsonResponse } from '@/lib/api/cached-response';
 
 // GET - Récupérer les projets
 export async function GET(request: NextRequest) {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
         ? await ProjectQueries.getProjectById(verification.userId, projectId)
         : await ProjectQueries.getProjects(verification.userId, { limit, includeNoProject, includeCompleted });
 
-    return NextResponse.json(projects);
+    return cachedJsonResponse(projects);
 }
 
 // POST - Créer un nouveau projet
