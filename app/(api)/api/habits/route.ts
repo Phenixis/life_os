@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server"
 import * as HabitQueries from "@/lib/db/queries/habit/habit"
 import { verifyRequest } from "@/lib/auth/api"
 import type { HabitColor, HabitFrequency } from "@/lib/types/habit"
+import { cachedJsonResponse } from "@/lib/api/cached-response";
 
 // List all habits
 export async function GET(request: NextRequest) {
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
             habits = await HabitQueries.getUserHabits(userId, activeOnly)
         }
 
-        return NextResponse.json({ habits })
+        return cachedJsonResponse({ habits })
     } catch (error) {
         console.error('Error fetching habits:', error)
         return NextResponse.json(

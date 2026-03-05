@@ -3,6 +3,7 @@ import type { Task } from '@/lib/db/schema';
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/auth/api';
 import { isEmpty } from '@/lib/utils';
+import { cachedJsonResponse } from '@/lib/api/cached-response';
 
 // GET - Récupérer les tasks
 export async function GET(request: NextRequest) {
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
             state
           );
 
-    return NextResponse.json(tasks);
+    return cachedJsonResponse(tasks);
   } catch (error) {
     console.error('Error fetching tasks:', error);
     return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });

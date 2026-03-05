@@ -1,6 +1,9 @@
 "use server"
 
+import { cacheThrough, cacheThroughOne, invalidate } from "@/lib/cache/cache-through";
 import * as lib from "./lib"
+
+const TABLE_NAME = "note";
 
 export type NoteWithProject = lib.Schema.Note.Note.Select & {
     project_title?: string | null
@@ -88,20 +91,9 @@ export async function getNotes(
             )
         )
 
-    // Get paginated notes
-    const notes = await lib.db.select({
+    // Get paginated note IDs
+    const noteIdRows = await lib.db.select({
         id: lib.Schema.Note.Note.table.id,
-        user_id: lib.Schema.Note.Note.table.user_id,
-        project_id: lib.Schema.Note.Note.table.project_id,
-        title: lib.Schema.Note.Note.table.title,
-        content: lib.Schema.Note.Note.table.content,
-        salt: lib.Schema.Note.Note.table.salt,
-        iv: lib.Schema.Note.Note.table.iv,
-        share_token: lib.Schema.Note.Note.table.share_token,
-        created_at: lib.Schema.Note.Note.table.created_at,
-        updated_at: lib.Schema.Note.Note.table.updated_at,
-        deleted_at: lib.Schema.Note.Note.table.deleted_at,
-        project_title: lib.Schema.Project.table.title,
     }).from(lib.Schema.Note.Note.table)
         .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Note.Note.table.project_id, lib.Schema.Project.table.id))
         .where(
@@ -139,6 +131,35 @@ export async function getNotes(
         .orderBy(lib.desc(lib.Schema.Note.Note.table.created_at))
         .offset((page - 1) * limit)
         .limit(limit)
+
+    const noteIds = noteIdRows.map(r => r.id)
+
+    // Cache-through: get from Redis first, fetch missing from DB
+    const notes = noteIds.length > 0
+        ? await cacheThrough<NoteWithProject, number>(
+            TABLE_NAME,
+            noteIds,
+            async (missingIds) => {
+                return await lib.db.select({
+                    id: lib.Schema.Note.Note.table.id,
+                    user_id: lib.Schema.Note.Note.table.user_id,
+                    project_id: lib.Schema.Note.Note.table.project_id,
+                    title: lib.Schema.Note.Note.table.title,
+                    content: lib.Schema.Note.Note.table.content,
+                    salt: lib.Schema.Note.Note.table.salt,
+                    iv: lib.Schema.Note.Note.table.iv,
+                    share_token: lib.Schema.Note.Note.table.share_token,
+                    created_at: lib.Schema.Note.Note.table.created_at,
+                    updated_at: lib.Schema.Note.Note.table.updated_at,
+                    deleted_at: lib.Schema.Note.Note.table.deleted_at,
+                    project_title: lib.Schema.Project.table.title,
+                }).from(lib.Schema.Note.Note.table)
+                    .leftJoin(lib.Schema.Project.table, lib.eq(lib.Schema.Note.Note.table.project_id, lib.Schema.Project.table.id))
+                    .where(lib.inArray(lib.Schema.Note.Note.table.id, missingIds))
+            },
+            (note) => note.id
+        )
+        : []
 
     return {
         notes,
@@ -203,6 +224,8 @@ export async function updateNote(userId: string, id: number, title: string, cont
         iv
     }).where(lib.and(lib.eq(lib.Schema.Note.Note.table.id, id), lib.eq(lib.Schema.Note.Note.table.user_id, userId)))
 
+    await invalidate(TABLE_NAME, id)
+
     lib.revalidatePath("/my", "layout");
 
     return note
@@ -212,6 +235,8 @@ export async function deleteNote(userId: string, id: number) {
     const note = await lib.db.update(lib.Schema.Note.Note.table).set({
         deleted_at: new Date()
     }).where(lib.and(lib.eq(lib.Schema.Note.Note.table.id, id), lib.eq(lib.Schema.Note.Note.table.user_id, userId)))
+
+    await invalidate(TABLE_NAME, id)
 
     lib.revalidatePath("/my", "layout");
 
@@ -272,6 +297,8 @@ export async function recoverNote(userId: string, id: number) {
         deleted_at: null
     }).where(lib.and(lib.eq(lib.Schema.Note.Note.table.id, id), lib.eq(lib.Schema.Note.Note.table.user_id, userId)))
 
+    await invalidate(TABLE_NAME, id)
+
     lib.revalidatePath("/my", "layout");
 
     return note
@@ -285,6 +312,8 @@ export async function permanentlyDeleteNote(userId: string, id: number) {
             lib.isNotNull(lib.Schema.Note.Note.table.deleted_at)
         ))
         .returning({id: lib.Schema.Note.Note.table.id})
+
+    await invalidate(TABLE_NAME, id)
 
     lib.revalidatePath("/my", "layout");
 

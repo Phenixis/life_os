@@ -1,8 +1,10 @@
 "use server"
 
+import { cacheThroughOne, invalidate } from "@/lib/cache/cache-through";
 import * as lib from "./lib"
 
 const table = lib.Schema.Project.table
+const TABLE_NAME = "project";
 type New = lib.Schema.Project.Insert
 type Existing = lib.Schema.Project.Select
 
@@ -61,20 +63,32 @@ export async function searchProjects(userId: string, title: string, limit = 50):
 }
 
 export async function getProjectById(userId: string, id: number): Promise<Existing> {
-    const dbresult = await lib.db
-        .select()
-        .from(table)
-        .where(lib.and(
-            lib.eq(table.id, id),
-            lib.isNull(table.deleted_at),
-            lib.eq(table.user_id, userId),
-        )) as Existing[]
+    const result = await cacheThroughOne<Existing>(
+        TABLE_NAME,
+        id,
+        async () => {
+            const dbresult = await lib.db
+                .select()
+                .from(table)
+                .where(lib.and(
+                    lib.eq(table.id, id),
+                    lib.isNull(table.deleted_at),
+                    lib.eq(table.user_id, userId),
+                )) as Existing[]
 
-    if (!dbresult) {
+            if (!dbresult || dbresult.length === 0) {
+                return null
+            }
+
+            return dbresult[0];
+        }
+    )
+
+    if (!result) {
         throw new Error("Project not found")
     }
 
-    return dbresult[0];
+    return result
 }
 
 export async function getProjectByTitle(userId: string, title: string): Promise<Existing> {
@@ -180,6 +194,8 @@ export async function updateProject(userId: string, id: number, title?: string, 
         ))
         .returning({id: table.id, title: table.title})
 
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')
 
@@ -221,6 +237,9 @@ export async function mergeProjects(userId: string, sourceProjectId: number, tar
         ))
         .returning({title: table.title})
 
+    await invalidate(TABLE_NAME, sourceProjectId)
+    await invalidate(TABLE_NAME, targetProjectId)
+
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')
 
@@ -260,6 +279,8 @@ export async function deleteProject(userId: string, id: number) {
             lib.eq(table.user_id, userId),
         ))
         .returning({title: table.title})
+
+    await invalidate(TABLE_NAME, id)
 
     // Revalidate all pages that might show projects
     lib.revalidatePath("/my", 'layout')

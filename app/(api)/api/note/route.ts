@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { verifyRequest } from "@/lib/auth/api"
 import { NoteQueries, ProjectQueries } from "@/lib/db/queries"
 import { isEmpty } from "@/lib/utils";
+import { cachedJsonResponse } from "@/lib/api/cached-response";
 
 export async function GET(request: NextRequest) {
     const verification = await verifyRequest(request)
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     try {
         const result = await NoteQueries.getNotes(verification.userId, title, projectTitle, limit, page, projectIds, excludedProjectIds, createdAfter, createdBefore)
-        return NextResponse.json(result)
+        return cachedJsonResponse(result)
     } catch (error) {
         console.error("Error fetching notes:", error)
         return NextResponse.json({ error: "Failed to fetch notes" }, { status: 500 })

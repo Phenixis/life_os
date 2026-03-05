@@ -1,17 +1,36 @@
+import { cacheThrough, cacheThroughOne, invalidate } from "@/lib/cache/cache-through";
 import * as lib from "../lib"
+
+const TABLE_NAME = "movie";
 
 /**
  * Get all movies for a user
  */
 export async function getUserMovies(userId: string): Promise<lib.Schema.Movie.Movie.Select[]> {
-    return await lib.db
-        .select()
+    // Step 1: Get IDs
+    const idRows = await lib.db
+        .select({ id: lib.Schema.Movie.Movie.table.id })
         .from(lib.Schema.Movie.Movie.table)
         .where(lib.and(
             lib.eq(lib.Schema.Movie.Movie.table.user_id, userId),
             lib.sql`${lib.Schema.Movie.Movie.table.deleted_at} IS NULL`
         ))
         .orderBy(lib.desc(lib.Schema.Movie.Movie.table.updated_at));
+
+    if (idRows.length === 0) return []
+
+    // Step 2-4: Cache-through
+    return cacheThrough<lib.Schema.Movie.Movie.Select, number>(
+        TABLE_NAME,
+        idRows.map(r => r.id),
+        async (missingIds) => {
+            return await lib.db
+                .select()
+                .from(lib.Schema.Movie.Movie.table)
+                .where(lib.inArray(lib.Schema.Movie.Movie.table.id, missingIds))
+        },
+        (movie) => movie.id
+    )
 }
 
 /**
@@ -51,16 +70,22 @@ export async function getMovieByTmdbId(userId: string, tmdbId: number, mediaType
  * Get movie by ID
  */
 export async function getMovieById(movieId: number): Promise<lib.Schema.Movie.Movie.Select | null> {
-    const results = await lib.db
-        .select()
-        .from(lib.Schema.Movie.Movie.table)
-        .where(lib.and(
-            lib.eq(lib.Schema.Movie.Movie.table.id, movieId),
-            lib.sql`${lib.Schema.Movie.Movie.table.deleted_at} IS NULL`
-        ))
-        .limit(1);
+    return cacheThroughOne<lib.Schema.Movie.Movie.Select>(
+        TABLE_NAME,
+        movieId,
+        async () => {
+            const results = await lib.db
+                .select()
+                .from(lib.Schema.Movie.Movie.table)
+                .where(lib.and(
+                    lib.eq(lib.Schema.Movie.Movie.table.id, movieId),
+                    lib.sql`${lib.Schema.Movie.Movie.table.deleted_at} IS NULL`
+                ))
+                .limit(1);
 
-    return results[0] || null;
+            return results[0] || null;
+        }
+    )
 }
 
 /**
@@ -102,6 +127,8 @@ export async function updateMovieRating(
         ))
         .returning();
 
+    await invalidate(TABLE_NAME, movieId)
+
     return results[0] || null;
 }
 
@@ -137,6 +164,8 @@ export async function updateWatchStatus(
         ))
         .returning();
 
+    await invalidate(TABLE_NAME, movieId)
+
     return results[0] || null;
 }
 
@@ -156,6 +185,8 @@ export async function deleteMovie(movieId: number, userId: string): Promise<bool
             lib.sql`${lib.Schema.Movie.Movie.table.deleted_at} IS NULL`
         ))
         .returning();
+
+    await invalidate(TABLE_NAME, movieId)
 
     return results.length > 0;
 }

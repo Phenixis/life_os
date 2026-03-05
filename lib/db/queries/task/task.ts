@@ -1,11 +1,13 @@
 "use server"
 
 import { calculateUrgency } from "@/lib/utils/task";
+import { cacheThrough, cacheThroughOne, invalidate } from "@/lib/cache/cache-through";
 import * as lib from "../lib";
 
 import * as RecurrencyQueries from "./recurrency"
 
 const table = lib.Schema.Task.Task.table;
+const TABLE_NAME = "task";
 type New = lib.Schema.Task.Task.Insert
 type Existing = lib.Schema.Task.Task.Select
 // # TASK
@@ -49,53 +51,59 @@ export async function duplicateTask(id: number, newValues: Partial<Existing> = {
 
 // ## Read
 export async function getTaskById(id: number, recursive: boolean = false) {
-    const dbresult = await lib.db
-        .select({
-            id: table.id,
-            title: table.title,
-            importance: table.importance,
-            duration: table.duration,
-            urgency: table.urgency,
-            due: table.due,
-            project_id: table.project_id,
-            state: table.state,
-            completed_at: table.completed_at,
-            created_at: table.created_at,
-            updated_at: table.updated_at,
-            deleted_at: table.deleted_at,
-            user_id: table.user_id,
-            project: {
-                id: lib.Schema.Project.table.id,
-                title: lib.Schema.Project.table.title,
-                description: lib.Schema.Project.table.description,
-                completed: lib.Schema.Project.table.completed,
-                created_at: lib.Schema.Project.table.created_at,
-                updated_at: lib.Schema.Project.table.updated_at,
-                deleted_at: lib.Schema.Project.table.deleted_at,
-                user_id: lib.Schema.Project.table.user_id,
-            },
-            importanceDetails: {
-                level: lib.Schema.Task.Importance.table.level,
-                name: lib.Schema.Task.Importance.table.name,
-            },
-            durationDetails: {
-                level: lib.Schema.Task.Duration.table.level,
-                name: lib.Schema.Task.Duration.table.name,
-            },
-        })
-        .from(table)
-        .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
-        .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
-        .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
-        .where(lib.and(
-            lib.eq(table.id, id),
-        ))
+    return cacheThroughOne<lib.Schema.Task.Task.TaskWithRelations>(
+        TABLE_NAME,
+        id,
+        async () => {
+            const dbresult = await lib.db
+                .select({
+                    id: table.id,
+                    title: table.title,
+                    importance: table.importance,
+                    duration: table.duration,
+                    urgency: table.urgency,
+                    due: table.due,
+                    project_id: table.project_id,
+                    state: table.state,
+                    completed_at: table.completed_at,
+                    created_at: table.created_at,
+                    updated_at: table.updated_at,
+                    deleted_at: table.deleted_at,
+                    user_id: table.user_id,
+                    project: {
+                        id: lib.Schema.Project.table.id,
+                        title: lib.Schema.Project.table.title,
+                        description: lib.Schema.Project.table.description,
+                        completed: lib.Schema.Project.table.completed,
+                        created_at: lib.Schema.Project.table.created_at,
+                        updated_at: lib.Schema.Project.table.updated_at,
+                        deleted_at: lib.Schema.Project.table.deleted_at,
+                        user_id: lib.Schema.Project.table.user_id,
+                    },
+                    importanceDetails: {
+                        level: lib.Schema.Task.Importance.table.level,
+                        name: lib.Schema.Task.Importance.table.name,
+                    },
+                    durationDetails: {
+                        level: lib.Schema.Task.Duration.table.level,
+                        name: lib.Schema.Task.Duration.table.name,
+                    },
+                })
+                .from(table)
+                .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
+                .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
+                .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
+                .where(lib.and(
+                    lib.eq(table.id, id),
+                ))
 
-    if (dbresult.length === 0) {
-        return null;
-    }
+            if (dbresult.length === 0) {
+                return null;
+            }
 
-    return dbresult[0] as lib.Schema.Task.Task.TaskWithRelations
+            return dbresult[0] as lib.Schema.Task.Task.TaskWithRelations
+        }
+    )
 }
 
 export async function getNumberOfTasks(userId: string, projectTitles?: string[], excludedProjectTitles?: string[], dueAfter?: Date, dueBefore?: Date) {
@@ -211,65 +219,70 @@ export async function getTasks(
     // Get the IDs of the distinct tasks
     const taskIds = distinctTasks.map((task) => task.id)
 
-    // Step 2: Now fetch all related data for these specific tasks
-    const rows = await lib.db
-        .select({
-            id: table.id,
-            title: table.title,
-            importance: table.importance,
-            urgency: table.urgency,
-            duration: table.duration,
-            due: table.due,
-            state: table.state,
-            completed_at: table.completed_at,
-            created_at: table.created_at,
-            updated_at: table.updated_at,
-            deleted_at: table.deleted_at,
-            project_id: table.project_id,
-            user_id: table.user_id,
-            project: {
-                id: lib.Schema.Project.table.id,
-                title: lib.Schema.Project.table.title,
-                description: lib.Schema.Project.table.description,
-                completed: lib.Schema.Project.table.completed,
-                created_at: lib.Schema.Project.table.created_at,
-                updated_at: lib.Schema.Project.table.updated_at,
-                deleted_at: lib.Schema.Project.table.deleted_at,
-                user_id: lib.Schema.Project.table.user_id,
-            },
-            importanceDetails: {
-                level: lib.Schema.Task.Importance.table.level,
-                name: lib.Schema.Task.Importance.table.name,
-            },
-            durationDetails: {
-                level: lib.Schema.Task.Duration.table.level,
-                name: lib.Schema.Task.Duration.table.name,
-            },
-        })
-        .from(table)
-        .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
-        .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
-        .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
-        .where(lib.inArray(table.id, taskIds))
+    // Step 2: Cache-through - get from Redis first, fetch missing from DB
+    const results = await cacheThrough<lib.Schema.Task.Task.TaskWithRelations, number>(
+        TABLE_NAME,
+        taskIds,
+        async (missingIds) => {
+            const rows = await lib.db
+                .select({
+                    id: table.id,
+                    title: table.title,
+                    importance: table.importance,
+                    urgency: table.urgency,
+                    duration: table.duration,
+                    due: table.due,
+                    state: table.state,
+                    completed_at: table.completed_at,
+                    created_at: table.created_at,
+                    updated_at: table.updated_at,
+                    deleted_at: table.deleted_at,
+                    project_id: table.project_id,
+                    user_id: table.user_id,
+                    project: {
+                        id: lib.Schema.Project.table.id,
+                        title: lib.Schema.Project.table.title,
+                        description: lib.Schema.Project.table.description,
+                        completed: lib.Schema.Project.table.completed,
+                        created_at: lib.Schema.Project.table.created_at,
+                        updated_at: lib.Schema.Project.table.updated_at,
+                        deleted_at: lib.Schema.Project.table.deleted_at,
+                        user_id: lib.Schema.Project.table.user_id,
+                    },
+                    importanceDetails: {
+                        level: lib.Schema.Task.Importance.table.level,
+                        name: lib.Schema.Task.Importance.table.name,
+                    },
+                    durationDetails: {
+                        level: lib.Schema.Task.Duration.table.level,
+                        name: lib.Schema.Task.Duration.table.name,
+                    },
+                })
+                .from(table)
+                .leftJoin(lib.Schema.Project.table, lib.eq(table.project_id, lib.Schema.Project.table.id))
+                .leftJoin(lib.Schema.Task.Importance.table, lib.eq(table.importance, lib.Schema.Task.Importance.table.level))
+                .leftJoin(lib.Schema.Task.Duration.table, lib.eq(table.duration, lib.Schema.Task.Duration.table.level))
+                .where(lib.inArray(table.id, missingIds))
 
-    const groupedTasks: Record<string, lib.Schema.Task.Task.TaskWithRelations> = {}
+            const groupedTasks: Record<string, lib.Schema.Task.Task.TaskWithRelations> = {}
 
-    for (const row of rows) {
-        const taskId = row.id
-
-        if (!groupedTasks[taskId]) {
-            groupedTasks[taskId] = {
-                ...row,
-                importanceDetails: row.importanceDetails!,
-                durationDetails: row.durationDetails!,
+            for (const row of rows) {
+                const taskId = row.id
+                if (!groupedTasks[taskId]) {
+                    groupedTasks[taskId] = {
+                        ...row,
+                        importanceDetails: row.importanceDetails!,
+                        durationDetails: row.durationDetails!,
+                    }
+                }
             }
-        }
-    }
 
-    // Preserve the original ordering from distinctTasks
-    const result = taskIds.map((id) => groupedTasks[id]).filter(Boolean)
+            return Object.values(groupedTasks)
+        },
+        (task) => task.id
+    )
 
-    return result as lib.Schema.Task.Task.TaskWithRelations[]
+    return results
 }
 
 export async function getCompletedTasks(userId: string, orderBy: keyof Existing = "completed_at", orderingDirection?: "asc" | "desc", limit = 50, projectIds?: number[], excludedProjectIds?: number[], dueBefore?: Date, dueAfter?: Date) {
@@ -410,6 +423,9 @@ export async function updateTask(id: number, values: Partial<Existing>) {
             lib.eq(table.id, id),
         ))
 
+    // Invalidate cache for this task
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
 
@@ -441,6 +457,8 @@ export async function updateTaskUrgency(userId: string, id: number) {
         ))
         .returning({ id: table.id })
 
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
 
@@ -467,6 +485,8 @@ export async function markTaskAsDone(userId: string, id: number): Promise<{
             lib.eq(table.user_id, userId),
         ))
         .returning({ id: table.id })
+
+    await invalidate(TABLE_NAME, id)
 
     await RecurrencyQueries.IncrementCurrentCount(id);
 
@@ -504,6 +524,8 @@ export async function markTaskAsUndone(userId: string, id: number) {
         ))
         .returning({ id: table.id })
 
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
 
@@ -525,6 +547,8 @@ export async function deleteTaskById(userId: string, id: number) {
         ))
         .returning({ id: table.id })
 
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
 
@@ -544,6 +568,8 @@ export async function recoverTaskById(userId: string, id: number) {
         ))
         .returning({ id: table.id })
 
+    await invalidate(TABLE_NAME, id)
+
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')
 
@@ -562,6 +588,8 @@ export async function permanentlyDeleteTaskById(userId: string, id: number) {
             lib.isNotNull(table.deleted_at)
         ))
         .returning({ id: table.id })
+
+    await invalidate(TABLE_NAME, id)
 
     // Revalidate all pages that might show todos
     lib.revalidatePath("/my", 'layout')

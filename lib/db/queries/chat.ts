@@ -1,4 +1,8 @@
+import { cacheThroughOne, invalidate } from "@/lib/cache/cache-through";
 import * as lib from "./lib"
+
+const TABLE_NAME_PROFILE = "ai_profile";
+const TABLE_NAME_CONVERSATION = "ai_conversation";
 
 // Profile queries
 export async function createProfile(
@@ -36,12 +40,18 @@ export async function getProfilesByUser(userId: string) {
 }
 
 export async function getProfile(profileId: string, userId: string) {
-  const [profile] = await lib.db
-    .select()
-    .from(lib.Schema.Ai.Profile.table)
-    .where(lib.and(lib.eq(lib.Schema.Ai.Profile.table.id, profileId), lib.eq(lib.Schema.Ai.Profile.table.user_id, userId), lib.isNull(lib.Schema.Ai.Profile.table.deleted_at)))
+  return cacheThroughOne(
+    TABLE_NAME_PROFILE,
+    profileId,
+    async () => {
+      const [profile] = await lib.db
+        .select()
+        .from(lib.Schema.Ai.Profile.table)
+        .where(lib.and(lib.eq(lib.Schema.Ai.Profile.table.id, profileId), lib.eq(lib.Schema.Ai.Profile.table.user_id, userId), lib.isNull(lib.Schema.Ai.Profile.table.deleted_at)))
 
-  return profile || null
+      return profile || null
+    }
+  )
 }
 
 export async function updateProfile(
@@ -64,6 +74,8 @@ export async function updateProfile(
     .where(lib.and(lib.eq(lib.Schema.Ai.Profile.table.id, profileId), lib.eq(lib.Schema.Ai.Profile.table.user_id, userId), lib.isNull(lib.Schema.Ai.Profile.table.deleted_at)))
     .returning()
 
+  await invalidate(TABLE_NAME_PROFILE, profileId)
+
   return updatedProfile || null
 }
 
@@ -76,6 +88,8 @@ export async function deleteProfile(profileId: string, userId: string) {
     })
     .where(lib.and(lib.eq(lib.Schema.Ai.Profile.table.id, profileId), lib.eq(lib.Schema.Ai.Profile.table.user_id, userId), lib.isNull(lib.Schema.Ai.Profile.table.deleted_at)))
     .returning()
+
+  await invalidate(TABLE_NAME_PROFILE, profileId)
 
   return !!deletedProfile
 }
@@ -113,12 +127,18 @@ export async function getConversationsByProfile(profileId: string, userId: strin
 }
 
 export async function getConversation(conversationId: string, userId: string) {
-  const [conv] = await lib.db
-    .select()
-    .from(lib.Schema.Ai.Conversation.table)
-    .where(lib.and(lib.eq(lib.Schema.Ai.Conversation.table.id, conversationId), lib.eq(lib.Schema.Ai.Conversation.table.user_id, userId), lib.isNull(lib.Schema.Ai.Conversation.table.deleted_at)))
+  return cacheThroughOne(
+    TABLE_NAME_CONVERSATION,
+    conversationId,
+    async () => {
+      const [conv] = await lib.db
+        .select()
+        .from(lib.Schema.Ai.Conversation.table)
+        .where(lib.and(lib.eq(lib.Schema.Ai.Conversation.table.id, conversationId), lib.eq(lib.Schema.Ai.Conversation.table.user_id, userId), lib.isNull(lib.Schema.Ai.Conversation.table.deleted_at)))
 
-  return conv || null
+      return conv || null
+    }
+  )
 }
 
 export async function deleteConversation(conversationId: string, userId: string) {
@@ -129,6 +149,8 @@ export async function deleteConversation(conversationId: string, userId: string)
     })
     .where(lib.and(lib.eq(lib.Schema.Ai.Conversation.table.id, conversationId), lib.eq(lib.Schema.Ai.Conversation.table.user_id, userId), lib.isNull(lib.Schema.Ai.Conversation.table.deleted_at)))
     .returning()
+
+  await invalidate(TABLE_NAME_CONVERSATION, conversationId)
 
   return !!deletedConversation
 }
@@ -147,6 +169,8 @@ export async function updateConversation(
     .where(lib.and(lib.eq(lib.Schema.Ai.Conversation.table.id, conversationId), lib.eq(lib.Schema.Ai.Conversation.table.user_id, userId), lib.isNull(lib.Schema.Ai.Conversation.table.deleted_at)))
     .returning()
 
+  await invalidate(TABLE_NAME_CONVERSATION, conversationId)
+
   return updatedConversation
 }
 
@@ -157,6 +181,8 @@ export async function updateConversationTimestamp(conversationId: string) {
       updated_at: new Date(),
     })
     .where(lib.eq(lib.Schema.Ai.Conversation.table.id, conversationId))
+
+  await invalidate(TABLE_NAME_CONVERSATION, conversationId)
 }
 
 // Message queries
