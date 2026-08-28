@@ -1,16 +1,16 @@
-import {cn} from "@/lib/utils";
-import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip"
-import {HelpCircle} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger, } from "@/components/ui/tooltip"
+import { HelpCircle } from "lucide-react";
 
 export default function Help({
-                                 size = "base",
-                                 className = "",
-                                 children
-                             }: {
+    size = "base",
+    className = "",
+    children
+}: Readonly<{
     size?: "xs" | "sm" | "base" | "lg" | "xl";
     className?: string;
     children?: React.ReactNode;
-}) {
+}>) {
     const sizeClass = {
         xs: "w-3 h-3",
         sm: "w-4 h-4",
@@ -22,7 +22,7 @@ export default function Help({
     return (
         <Tooltip>
             <TooltipTrigger>
-                <HelpCircle className={cn("cursor-pointer", sizeClass, className)}/>
+                <HelpCircle className={cn("cursor-pointer", sizeClass, className)} />
             </TooltipTrigger>
             <TooltipContent>
                 {children}

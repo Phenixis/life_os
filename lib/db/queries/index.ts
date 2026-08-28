@@ -4,6 +4,8 @@ export * as DailyMoodQueries from "./daily-mood"
 
 export * as HabitsQueries from "./habit/habit"
 
+export * as MealPlannerQueries from "./meal-planner"
+
 export * as MeteoQueries from "./meteo"
 
 export * as MovieQueries from "./movie/movie"

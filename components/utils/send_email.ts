@@ -463,6 +463,7 @@ export async function sendPasswordResetEmail(user: User.User.Select, resetReques
 
     await sendEmail(user.email, "Password Reset Request", emailContent);
 }
+
 export async function sendIdentifierEmail(user: User.User.Select) {
     const emailContent = `
             <html>

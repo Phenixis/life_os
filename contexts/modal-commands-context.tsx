@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { Note, Task } from '@/lib/db/schema';
 import { NoteWithProject } from '@/lib/db/queries/note';
+import { MealPlanner, Task } from '@/lib/db/schema';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 // Define the context interface
 interface ModalCommandsContextType {
@@ -49,6 +49,22 @@ interface ModalCommandsContextType {
     closeModal: () => void;
   };
 
+  ingredientModal: {
+    isOpen: boolean;
+    openModal: () => void;
+    closeModal: () => void;
+    ingredient?: MealPlanner.Ingredient.Select | null;
+    setIngredient: (ingredient?: MealPlanner.Ingredient.Select | null) => void;
+  };
+
+  mealModal: {
+    isOpen: boolean;
+    openModal: () => void;
+    closeModal: () => void;
+    meal?: MealPlanner.Meal.Select | null;
+    setMeal: (meal?: MealPlanner.Meal.Select | null) => void;
+  };
+
   someModalOpen: () => boolean;
 }
 
@@ -80,7 +96,15 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
   // Entry logger modal state
   const [entryLoggerModalOpen, setEntryLoggerModalOpen] = useState(false);
 
-  const modalsOpenState = [taskModalOpen, noteModalOpen, dailyMoodModalOpen, relapseRecorderModalOpen, addictionCreatorModalOpen, entryLoggerModalOpen];
+  // Ingredient modal state
+  const [ingredientModalOpen, setIngredientModalOpen] = useState(false);
+  const [ingredientModalData, setIngredientModalData] = useState<MealPlanner.Ingredient.Select | null | undefined>(undefined);
+
+  // Meal modal state
+  const [mealModalOpen, setMealModalOpen] = useState(false);
+  const [mealModalData, setMealModalData] = useState<MealPlanner.Meal.Select | null | undefined>(undefined);
+
+  const modalsOpenState = [taskModalOpen, noteModalOpen, dailyMoodModalOpen, relapseRecorderModalOpen, addictionCreatorModalOpen, entryLoggerModalOpen, ingredientModalOpen, mealModalOpen];
   const someModalOpen = () => modalsOpenState.some(modalState => modalState === true);
 
   const value: ModalCommandsContextType = {
@@ -168,6 +192,34 @@ export function ModalCommandsProvider({ children }: { children: ReactNode }) {
         setEntryLoggerModalOpen(false);
       }
     },
+    ingredientModal: {
+      isOpen: ingredientModalOpen,
+      openModal: () => {
+        if (!someModalOpen()) {
+          setIngredientModalOpen(true);
+        }
+      },
+      closeModal: () => {
+        setIngredientModalOpen(false);
+        setIngredientModalData(undefined);
+      },
+      ingredient: ingredientModalData,
+      setIngredient: setIngredientModalData
+    },
+    mealModal: {
+      isOpen: mealModalOpen,
+      openModal: () => {
+        if (!someModalOpen()) {
+          setMealModalOpen(true);
+        }
+      },
+      closeModal: () => {
+        setMealModalOpen(false);
+        setMealModalData(undefined);
+      },
+      meal: mealModalData,
+      setMeal: setMealModalData
+    },
     someModalOpen: someModalOpen
   };
 
@@ -221,6 +273,22 @@ export const useEntryLoggerModal = () => {
     throw new Error('useEntryLoggerModal must be used within a ModalCommandsProvider');
   }
   return context.entryLoggerModal;
+};
+
+export const useIngredientModal = () => {
+  const context = useContext(ModalCommandsContext);
+  if (!context) {
+    throw new Error('useIngredientModal must be used within a ModalCommandsProvider');
+  }
+  return context.ingredientModal;
+};
+
+export const useMealModal = () => {
+  const context = useContext(ModalCommandsContext);
+  if (!context) {
+    throw new Error('useMealModal must be used within a ModalCommandsProvider');
+  }
+  return context.mealModal;
 };
 
 export const useModalsState = () => {

@@ -8,6 +8,7 @@ export * as WMCDM from "./wmcdm";
 export * as Workout from "./workout";
 export * as User from "./user";
 export * as AddictionTracker from "./addiction-tracker";
+export * as MealPlanner from "./meal-planner";
 
 // FILE
 export * as DailyMood from "./daily-mood"

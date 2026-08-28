@@ -1,4 +1,4 @@
-import {Car, CigaretteOff, Dumbbell, Film, Grid2X2, LayoutGrid, MessagesSquare, ShoppingBag} from "lucide-react"
+import {CalendarDays, Car, CigaretteOff, CookingPot, Dumbbell, Film, Grid2X2, LayoutGrid, MessagesSquare, ShoppingBag} from "lucide-react"
 import type {ReactNode} from "react"
 
 export interface ToolsCategorieProps {
@@ -96,10 +96,10 @@ export const tools: (ToolCardProps | ToolsCategorieProps)[] = [
         description: "I'm currently working on these tools, they will be available in the next update !",
         tools: [
             {
-                name: "Grocery List Maker",
-                href: "/my/tools/grocery-list",
-                icon: <ShoppingBag className="size-4"/>,
-                description: "Create and manage grocery lists with ease.",
+                name: "Meal Planner",
+                href: "/my/tools/meal-planner",
+                icon: <CalendarDays className="size-4"/>,
+                description: "Plan your meals ahead and organize your grocery shopping efficiently.",
                 available: false,
                 alternativeNames: ["grocery", "shopping list"],
             },
