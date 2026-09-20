@@ -1,1 +1,1 @@
-DROP TABLE "task_to_do_after" CASCADE;
+DROP TABLE IF EXISTS "task_to_do_after" CASCADE;
